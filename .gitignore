@@ -1,0 +1,78 @@
+# --- Compiled / Build output ---
+dist/
+build/
+*.tsbuildinfo
+.tsbuildinfo
+
+# --- Dependencies ---
+node_modules/
+.pnp/
+.pnp.*
+
+# --- Logs ---
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# --- Environment / Secrets ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+secrets/
+credentials/
+service-account*.json
+gha-creds-*.json
+
+# --- Tests / Coverage ---
+coverage/
+.nyc_output/
+*.lcov
+
+# --- Caches ---
+.cache/
+.eslintcache
+.npm/
+.parcel-cache/
+.turbo/
+.swc/
+
+# --- Editor / IDE ---
+.idea/
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+.history/
+*.swp
+*.swo
+*~
+
+# --- OS ---
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# --- Temp / Misc ---
+tmp/
+temp/
+*.tmp
+*.bak
+
+# --- Prisma ---
+# 본 프로젝트는 prisma migrate를 사용하지 않습니다 (외부 관리 스키마).
+# generate 산출물(node_modules/.prisma)은 자동 무시됩니다.
+prisma/migrations/dev/
+prisma/*.db
+prisma/*.db-journal

@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"npm install @nestjs/swagger 2>&1\",\"description\":\"Install @nestjs/swagger with full output\"}",
+  "error": "Exit code 1\nnpm ERR! code ERESOLVE\nnpm ERR! ERESOLVE unable to resolve dependency tree\nnpm ERR! \nnpm ERR! While resolving: credbundle-be@0.0.1\nnpm ERR! Found: @nestjs/common@10.4.22\nnpm ERR! node_modules/@nestjs/common\nnpm ERR!   @nestjs/common@\"^10.4.4\" from the root project\nnpm ERR! \nnpm ERR! Could not resolve dependency:\nnpm ERR! peer @nestjs/common@\"^11.0.1\" from @nestjs/swagger@11.4.2\nnpm ERR! node_modules/@nestjs/swagger\nnpm ERR!   @nestjs/swagger@\"*\" from the root project\nnpm ERR! \nnpm ER...",
+  "timestamp": "2026-04-27T12:12:13.686Z",
+  "retry_count": 1
+}
