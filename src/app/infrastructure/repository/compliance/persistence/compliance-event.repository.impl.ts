@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { ComplianceEvent as ComplianceEventRow, Prisma } from '@prisma/client';
-import { ComplianceEvent } from '../../../../domain/compliance/compliance-event.entity';
-import { ComplianceEventType } from '../../../../domain/compliance/compliance-event-type.enum';
-import { ComplianceReason } from '../../../../domain/compliance/compliance-reason.enum';
-import { ComplianceTrigger } from '../../../../domain/compliance/compliance-trigger.enum';
-import { ComplianceEventRepository } from '../../../../domain/compliance/compliance-event.repository';
-import { CreateComplianceEventCommand } from '../../../../domain/compliance/create-compliance-event.command';
+import { ComplianceEvent } from '../../../../domain/compliance/entity/compliance-event.entity';
+import { ComplianceEventType } from '../../../../domain/compliance/enum/compliance-event-type.enum';
+import { ComplianceReason } from '../../../../domain/compliance/enum/compliance-reason.enum';
+import { ComplianceTrigger } from '../../../../domain/compliance/enum/compliance-trigger.enum';
+import { ComplianceEventRepository } from '../../../../domain/compliance/repository/compliance-event.repository';
+import { CreateComplianceEventCommand } from '../../../../domain/compliance/dto/create-compliance-event.command';
 import { PrismaService } from '../../../prisma/prisma.service';
 
 @Injectable()

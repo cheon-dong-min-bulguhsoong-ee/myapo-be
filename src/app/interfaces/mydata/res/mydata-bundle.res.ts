@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { MyDataBundleResult } from '../../../domain/mydata/mydata-bundle.result';
+import { MyDataBundleResult } from '../../../domain/mydata/dto/mydata-bundle.result';
 import { MyDataSnapshotRes } from './mydata-snapshot.res';
 
 export class MyDataBundleRes {

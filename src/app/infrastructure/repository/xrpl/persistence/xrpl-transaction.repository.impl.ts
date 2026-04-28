@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { XrplTransaction as XrplTransactionRow, Prisma } from '@prisma/client';
-import { XrplTransaction } from '../../../../domain/xrpl/xrpl-transaction.entity';
-import { XrplTxType } from '../../../../domain/xrpl/xrpl-tx-type.enum';
-import { XrplTransactionRepository } from '../../../../domain/xrpl/xrpl-transaction.repository';
-import { CreateXrplTransactionCommand } from '../../../../domain/xrpl/create-xrpl-transaction.command';
+import { XrplTransaction } from '../../../../domain/xrpl/entity/xrpl-transaction.entity';
+import { XrplTxType } from '../../../../domain/xrpl/enum/xrpl-tx-type.enum';
+import { XrplTransactionRepository } from '../../../../domain/xrpl/repository/xrpl-transaction.repository';
+import { CreateXrplTransactionCommand } from '../../../../domain/xrpl/dto/create-xrpl-transaction.command';
 import { PrismaService } from '../../../prisma/prisma.service';
 
 @Injectable()

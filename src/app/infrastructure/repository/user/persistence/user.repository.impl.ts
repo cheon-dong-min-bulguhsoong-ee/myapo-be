@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { User as UserRow } from '@prisma/client';
-import { User } from '../../../../domain/user/user.entity';
-import { UserStatus } from '../../../../domain/user/user-status.enum';
-import { UserRepository } from '../../../../domain/user/user.repository';
+import { User } from '../../../../domain/user/entity/user.entity';
+import { UserStatus } from '../../../../domain/user/enum/user-status.enum';
+import { UserRepository } from '../../../../domain/user/repository/user.repository';
 import { PrismaService } from '../../../prisma/prisma.service';
 
 @Injectable()

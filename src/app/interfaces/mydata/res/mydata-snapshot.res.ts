@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { MyDataSnapshot } from '../../../domain/mydata/mydata-snapshot.entity';
-import { MyDataCategory } from '../../../domain/mydata/mydata-category.enum';
+import { MyDataSnapshot } from '../../../domain/mydata/entity/mydata-snapshot.entity';
+import { MyDataCategory } from '../../../domain/common/enum/mydata-category.enum';
 
 export class MyDataSnapshotRes {
   @ApiProperty({ enum: MyDataCategory, enumName: 'MyDataCategory' })

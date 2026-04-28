@@ -1,6 +1,6 @@
 import { Controller, Get, Param } from '@nestjs/common';
 import { MyDataFacade } from '../../../application/mydata.facade';
-import { MyDataCategory } from '../../../domain/mydata/mydata-category.enum';
+import { MyDataCategory } from '../../../domain/common/enum/mydata-category.enum';
 import { CommonRes } from '../../common/common-res';
 import { MyDataBundleRes } from '../res/mydata-bundle.res';
 import { MyDataSnapshotRes } from '../res/mydata-snapshot.res';

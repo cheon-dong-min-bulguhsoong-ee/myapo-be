@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { VerifyAdmissionResult } from '../../../domain/gateway/verify-admission.result';
-import { AdmissionResult } from '../../../domain/gateway/admission-result.enum';
-import { MyDataCategory } from '../../../domain/mydata/mydata-category.enum';
+import { VerifyAdmissionResult } from '../../../domain/gateway/dto/verify-admission.result';
+import { AdmissionResult } from '../../../domain/gateway/enum/admission-result.enum';
+import { MyDataCategory } from '../../../domain/common/enum/mydata-category.enum';
 
 const MESSAGE_GRANTED = 'User meets all credential requirements';
 const MESSAGE_DENIED = 'User is missing required credentials';

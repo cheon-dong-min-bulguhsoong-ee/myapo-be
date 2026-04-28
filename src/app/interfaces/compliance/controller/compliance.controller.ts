@@ -1,6 +1,6 @@
 import { Body, Controller, Param, Post } from '@nestjs/common';
 import { ComplianceFacade } from '../../../application/compliance.facade';
-import { ComplianceTrigger } from '../../../domain/compliance/compliance-trigger.enum';
+import { ComplianceTrigger } from '../../../domain/compliance/enum/compliance-trigger.enum';
 import { CommonRes } from '../../common/common-res';
 import { ComplianceCheckReq } from '../req/compliance-check.req';
 import { ComplianceCheckRes } from '../res/compliance-check.res';

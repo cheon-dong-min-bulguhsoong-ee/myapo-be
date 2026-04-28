@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IssuanceBundleResult } from '../../../domain/issuer/issuance-bundle.result';
+import { IssuanceBundleResult } from '../../../domain/issuer/dto/issuance-bundle.result';
 import { IssueResultItemRes } from './issue-result-item.res';
 
 export class IssueBundleRes {

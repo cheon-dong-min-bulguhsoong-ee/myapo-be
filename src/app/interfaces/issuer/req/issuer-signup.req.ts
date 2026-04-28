@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsString, MaxLength, MinLength } from 'class-validator';
-import { IssuerCode } from '../../../domain/issuer/issuer-code.enum';
+import { IssuerCode } from '../../../domain/issuer/enum/issuer-code.enum';
 
 export class IssuerSignupReq {
   @ApiProperty({ enum: IssuerCode, enumName: 'IssuerCode', example: IssuerCode.MOJ })

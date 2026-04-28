@@ -1,6 +1,6 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { MyDataCategory } from '../../../domain/mydata/mydata-category.enum';
+import { MyDataCategory } from '../../../domain/common/enum/mydata-category.enum';
 import { ApiCommonRes } from '../../common/api-common-res.decorator';
 import { CommonRes } from '../../common/common-res';
 import { MyDataBundleRes } from '../res/mydata-bundle.res';

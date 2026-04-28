@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { AdmissionLog as AdmissionLogRow } from '@prisma/client';
-import { AdmissionLog } from '../../../../domain/gateway/admission-log.entity';
-import { AdmissionResult } from '../../../../domain/gateway/admission-result.enum';
-import { AdmissionLogRepository } from '../../../../domain/gateway/admission-log.repository';
-import { CreateAdmissionLogCommand } from '../../../../domain/gateway/create-admission-log.command';
+import { AdmissionLog } from '../../../../domain/gateway/entity/admission-log.entity';
+import { AdmissionResult } from '../../../../domain/gateway/enum/admission-result.enum';
+import { AdmissionLogRepository } from '../../../../domain/gateway/repository/admission-log.repository';
+import { CreateAdmissionLogCommand } from '../../../../domain/gateway/dto/create-admission-log.command';
 import { PrismaService } from '../../../prisma/prisma.service';
 
 @Injectable()

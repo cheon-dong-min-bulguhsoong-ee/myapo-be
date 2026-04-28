@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { GatewayFacade } from '../../application/gateway.facade';
-import { CredentialService } from '../../domain/issuer/credential.service';
-import { UserService } from '../../domain/user/user.service';
-import { AdmissionLogService } from '../../domain/gateway/admission-log.service';
-import { GatewayService } from '../../domain/gateway/gateway.service';
+import { CredentialService } from '../../domain/issuer/service/credential.service';
+import { UserService } from '../../domain/user/service/user.service';
+import { AdmissionLogService } from '../../domain/gateway/service/admission-log.service';
+import { GatewayService } from '../../domain/gateway/service/gateway.service';
 import { GatewayController } from './controller/gateway.controller';
 
 @Module({

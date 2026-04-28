@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
 import {
   MYDATA_CATEGORIES,
   MyDataCategory,
-} from '../../../domain/mydata/mydata-category.enum';
+} from '../../../domain/common/enum/mydata-category.enum';
 
 @Injectable()
 export class ParseMyDataCategoryPipe

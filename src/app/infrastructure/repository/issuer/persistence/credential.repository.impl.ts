@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Credential as CredentialRow } from '@prisma/client';
-import { Credential } from '../../../../domain/issuer/credential.entity';
-import { CredentialStatus } from '../../../../domain/issuer/credential-status.enum';
-import { MyDataCategory } from '../../../../domain/mydata/mydata-category.enum';
-import { CredentialRepository } from '../../../../domain/issuer/credential.repository';
-import { CreateCredentialCommand } from '../../../../domain/issuer/create-credential.command';
+import { Credential } from '../../../../domain/issuer/entity/credential.entity';
+import { CredentialStatus } from '../../../../domain/issuer/enum/credential-status.enum';
+import { MyDataCategory } from '../../../../domain/common/enum/mydata-category.enum';
+import { CredentialRepository } from '../../../../domain/issuer/repository/credential.repository';
+import { CreateCredentialCommand } from '../../../../domain/issuer/dto/create-credential.command';
 import { PrismaService } from '../../../prisma/prisma.service';
 
 @Injectable()

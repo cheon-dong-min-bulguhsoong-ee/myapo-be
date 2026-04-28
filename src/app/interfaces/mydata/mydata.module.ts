@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MyDataFacade } from '../../application/mydata.facade';
-import { MyDataService } from '../../domain/mydata/mydata.service';
-import { UserService } from '../../domain/user/user.service';
+import { MyDataService } from '../../domain/mydata/service/mydata.service';
+import { UserService } from '../../domain/user/service/user.service';
 import { MyDataController } from './controller/mydata.controller';
 import { ParseMyDataCategoryPipe } from './pipe/parse-mydata-category.pipe';
 

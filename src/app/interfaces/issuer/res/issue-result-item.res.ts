@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IssuanceResultItem } from '../../../domain/issuer/issuance-result-item';
-import { IssuanceResultStatus } from '../../../domain/issuer/issuance-result-status.enum';
-import { MyDataCategory } from '../../../domain/mydata/mydata-category.enum';
+import { IssuanceResultItem } from '../../../domain/issuer/dto/issuance-result-item';
+import { IssuanceResultStatus } from '../../../domain/issuer/enum/issuance-result-status.enum';
+import { MyDataCategory } from '../../../domain/common/enum/mydata-category.enum';
 
 export class IssueResultItemRes {
   @ApiProperty({ enum: MyDataCategory, enumName: 'MyDataCategory' })

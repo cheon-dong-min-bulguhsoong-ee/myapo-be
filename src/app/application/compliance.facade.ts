@@ -1,17 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ApiException } from '../interfaces/exception/api-exception';
 import { ExceptionCode } from '../interfaces/exception/exception-code';
-import { ComplianceCheckResult } from '../domain/compliance/compliance-check.result';
-import { ComplianceTrigger } from '../domain/compliance/compliance-trigger.enum';
-import { ComplianceService } from '../domain/compliance/compliance.service';
-import { ComplianceEventService } from '../domain/compliance/compliance-event.service';
-import { MyDataCategory } from '../domain/mydata/mydata-category.enum';
-import { MyDataService } from '../domain/mydata/mydata.service';
-import { User } from '../domain/user/user.entity';
-import { UserService } from '../domain/user/user.service';
-import { UserStatus } from '../domain/user/user-status.enum';
-import { XrplCredentialService } from '../domain/xrpl/xrpl-credential.service';
-import { XrplTransactionService } from '../domain/xrpl/xrpl-transaction.service';
+import { ComplianceCheckResult } from '../domain/compliance/dto/compliance-check.result';
+import { ComplianceTrigger } from '../domain/compliance/enum/compliance-trigger.enum';
+import { ComplianceService } from '../domain/compliance/service/compliance.service';
+import { ComplianceEventService } from '../domain/compliance/service/compliance-event.service';
+import { MyDataCategory } from '../domain/common/enum/mydata-category.enum';
+import { MyDataService } from '../domain/mydata/service/mydata.service';
+import { User } from '../domain/user/entity/user.entity';
+import { UserService } from '../domain/user/service/user.service';
+import { UserStatus } from '../domain/user/enum/user-status.enum';
+import { XrplCredentialService } from '../domain/xrpl/service/xrpl-credential.service';
+import { XrplTransactionService } from '../domain/xrpl/service/xrpl-transaction.service';
 
 @Injectable()
 export class ComplianceFacade {

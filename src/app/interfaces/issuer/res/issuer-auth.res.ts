@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IssuerAuthResult } from '../../../domain/issuer/issuer-auth.result';
-import { IssuerCode } from '../../../domain/issuer/issuer-code.enum';
+import { IssuerAuthResult } from '../../../domain/issuer/dto/issuer-auth.result';
+import { IssuerCode } from '../../../domain/issuer/enum/issuer-code.enum';
 
 class IssuerAdminSummary {
   @ApiProperty({ example: '1' })

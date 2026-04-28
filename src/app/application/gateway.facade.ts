@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { ApiException } from '../interfaces/exception/api-exception';
 import { ExceptionCode } from '../interfaces/exception/exception-code';
-import { VerifyAdmissionResult } from '../domain/gateway/verify-admission.result';
-import { GatewayService } from '../domain/gateway/gateway.service';
-import { UserService } from '../domain/user/user.service';
-import { User } from '../domain/user/user.entity';
-import { CredentialService } from '../domain/issuer/credential.service';
-import { AdmissionLogService } from '../domain/gateway/admission-log.service';
+import { VerifyAdmissionResult } from '../domain/gateway/dto/verify-admission.result';
+import { GatewayService } from '../domain/gateway/service/gateway.service';
+import { UserService } from '../domain/user/service/user.service';
+import { User } from '../domain/user/entity/user.entity';
+import { CredentialService } from '../domain/issuer/service/credential.service';
+import { AdmissionLogService } from '../domain/gateway/service/admission-log.service';
 
 const DEFAULT_DOMAIN_ID = 'CREDBUNDLE_LOAN_V1';
 

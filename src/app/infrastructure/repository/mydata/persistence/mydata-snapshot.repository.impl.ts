@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { MyDataSnapshot as MyDataSnapshotRow, Prisma } from '@prisma/client';
-import { MyDataSnapshot } from '../../../../domain/mydata/mydata-snapshot.entity';
-import { MyDataCategory } from '../../../../domain/mydata/mydata-category.enum';
-import { MyDataSnapshotRepository } from '../../../../domain/mydata/mydata-snapshot.repository';
-import { CreateMyDataSnapshotCommand } from '../../../../domain/mydata/create-mydata-snapshot.command';
+import { MyDataSnapshot } from '../../../../domain/mydata/entity/mydata-snapshot.entity';
+import { MyDataCategory } from '../../../../domain/common/enum/mydata-category.enum';
+import { MyDataSnapshotRepository } from '../../../../domain/mydata/repository/mydata-snapshot.repository';
+import { CreateMyDataSnapshotCommand } from '../../../../domain/mydata/dto/create-mydata-snapshot.command';
 import { PrismaService } from '../../../prisma/prisma.service';
 
 @Injectable()

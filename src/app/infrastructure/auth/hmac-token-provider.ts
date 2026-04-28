@@ -5,7 +5,7 @@ import {
   IssuedToken,
   TokenPayload,
   TokenProvider,
-} from '../../domain/common/token-provider';
+} from '../../domain/common/contract/token-provider';
 
 const DEFAULT_TTL_SECONDS = 60 * 60 * 12;
 const DEFAULT_DEV_SECRET = 'auth-dev-secret-change-me';

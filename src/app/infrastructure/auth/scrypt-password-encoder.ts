@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { randomBytes, scryptSync, timingSafeEqual } from 'crypto';
-import { PasswordEncoder } from '../../domain/common/password-encoder';
+import { PasswordEncoder } from '../../domain/common/contract/password-encoder';
 
 const KEYLEN = 64;
 const SALT_BYTES = 16;

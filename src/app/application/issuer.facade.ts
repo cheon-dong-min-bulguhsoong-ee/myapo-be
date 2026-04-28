@@ -1,26 +1,26 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ApiException } from '../interfaces/exception/api-exception';
 import { ExceptionCode } from '../interfaces/exception/exception-code';
-import { CredentialIssuanceService } from '../domain/issuer/credential-issuance.service';
-import { IssuanceBundleResult } from '../domain/issuer/issuance-bundle.result';
-import { IssuanceResultItem } from '../domain/issuer/issuance-result-item';
+import { CredentialIssuanceService } from '../domain/issuer/service/credential-issuance.service';
+import { IssuanceBundleResult } from '../domain/issuer/dto/issuance-bundle.result';
+import { IssuanceResultItem } from '../domain/issuer/dto/issuance-result-item';
 import {
   IssuerAuthError,
   IssuerAuthErrorReason,
-} from '../domain/issuer/issuer-auth.error';
-import { IssuerAuthResult } from '../domain/issuer/issuer-auth.result';
-import { IssuerAuthService } from '../domain/issuer/issuer-auth.service';
-import { IssuerCode } from '../domain/issuer/issuer-code.enum';
+} from '../domain/issuer/error/issuer-auth.error';
+import { IssuerAuthResult } from '../domain/issuer/dto/issuer-auth.result';
+import { IssuerAuthService } from '../domain/issuer/service/issuer-auth.service';
+import { IssuerCode } from '../domain/issuer/enum/issuer-code.enum';
 import {
   MYDATA_CATEGORIES,
   MyDataCategory,
-} from '../domain/common/mydata-category.enum';
-import { MyDataSnapshot } from '../domain/mydata/mydata-snapshot.entity';
-import { MyDataService } from '../domain/mydata/mydata.service';
-import { User } from '../domain/user/user.entity';
-import { UserService } from '../domain/user/user.service';
-import { XrplCredentialService } from '../domain/xrpl/xrpl-credential.service';
-import { XrplTransactionService } from '../domain/xrpl/xrpl-transaction.service';
+} from '../domain/common/enum/mydata-category.enum';
+import { MyDataSnapshot } from '../domain/mydata/entity/mydata-snapshot.entity';
+import { MyDataService } from '../domain/mydata/service/mydata.service';
+import { User } from '../domain/user/entity/user.entity';
+import { UserService } from '../domain/user/service/user.service';
+import { XrplCredentialService } from '../domain/xrpl/service/xrpl-credential.service';
+import { XrplTransactionService } from '../domain/xrpl/service/xrpl-transaction.service';
 
 @Injectable()
 export class IssuerFacade {

@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ComplianceCheckResult } from '../../../domain/compliance/compliance-check.result';
-import { ComplianceAction } from '../../../domain/compliance/compliance-action.enum';
-import { ComplianceReason } from '../../../domain/compliance/compliance-reason.enum';
+import { ComplianceCheckResult } from '../../../domain/compliance/dto/compliance-check.result';
+import { ComplianceAction } from '../../../domain/compliance/enum/compliance-action.enum';
+import { ComplianceReason } from '../../../domain/compliance/enum/compliance-reason.enum';
 
 export class ComplianceCheckRes {
   @ApiProperty({ example: 'rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh' })

@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { IssuerAdmin as IssuerAdminRow } from '@prisma/client';
-import { IssuerAdmin } from '../../../../domain/issuer/issuer-admin.entity';
-import { IssuerCode } from '../../../../domain/issuer/issuer-code.enum';
-import { IssuerAdminRepository } from '../../../../domain/issuer/issuer-admin.repository';
+import { IssuerAdmin } from '../../../../domain/issuer/entity/issuer-admin.entity';
+import { IssuerCode } from '../../../../domain/issuer/enum/issuer-code.enum';
+import { IssuerAdminRepository } from '../../../../domain/issuer/repository/issuer-admin.repository';
 import { PrismaService } from '../../../prisma/prisma.service';
 
 @Injectable()

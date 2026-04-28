@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional } from 'class-validator';
-import { ComplianceTrigger } from '../../../domain/compliance/compliance-trigger.enum';
+import { ComplianceTrigger } from '../../../domain/compliance/enum/compliance-trigger.enum';
 
 export class ComplianceCheckReq {
   @ApiPropertyOptional({ enum: ComplianceTrigger, enumName: 'ComplianceTrigger' })
