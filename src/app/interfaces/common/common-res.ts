@@ -1,32 +1,39 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ExceptionMessage } from '../exception/exception-message';
-import { ResultType } from './result-type.enum';
 
 export class CommonRes<T> {
-  @ApiProperty({ enum: ResultType, enumName: 'ResultType' })
-  public readonly resultType: ResultType;
+  @ApiProperty({ example: true })
+  public readonly success: boolean;
+
+  @ApiProperty({ nullable: true, example: null })
+  public readonly code: string | null;
+
+  @ApiProperty({ nullable: true, example: null })
+  public readonly message: string | null;
 
   @ApiProperty({ nullable: true })
   public readonly data: T | null;
 
-  @ApiProperty({ type: () => ExceptionMessage, nullable: true })
-  public readonly exception: ExceptionMessage | null;
-
   private constructor(
-    resultType: ResultType,
+    success: boolean,
+    code: string | null,
+    message: string | null,
     data: T | null,
-    exception: ExceptionMessage | null,
   ) {
-    this.resultType = resultType;
+    this.success = success;
+    this.code = code;
+    this.message = message;
     this.data = data;
-    this.exception = exception;
   }
 
   static success<T>(data: T): CommonRes<T> {
-    return new CommonRes<T>(ResultType.SUCCESS, data, null);
+    return new CommonRes<T>(true, null, null, data);
   }
 
-  static fail<T = null>(exception: ExceptionMessage): CommonRes<T> {
-    return new CommonRes<T>(ResultType.FAIL, null, exception);
+  static fail<T = null>(
+    code: string,
+    message: string,
+    data: T | null = null,
+  ): CommonRes<T> {
+    return new CommonRes<T>(false, code, message, data);
   }
 }

@@ -9,7 +9,6 @@ import {
 import { Request, Response } from 'express';
 import { CommonRes } from '../common/common-res';
 import { ApiException } from './api-exception';
-import { ExceptionMessage } from './exception-message';
 
 @Catch()
 export class ApiExceptionHandler implements ExceptionFilter {
@@ -42,7 +41,9 @@ export class ApiExceptionHandler implements ExceptionFilter {
       `[${request.method} ${request.url}] ${exception.code} ${exception.message}`,
     );
     const body = CommonRes.fail(
-      new ExceptionMessage(exception.code, exception.message, exception.data),
+      exception.code,
+      exception.message,
+      exception.data,
     );
     response.status(exception.httpStatus).json(body);
   }
@@ -55,7 +56,7 @@ export class ApiExceptionHandler implements ExceptionFilter {
     const raw = exception.getResponse();
     const message = this.extractHttpMessage(raw, exception.message);
     const code = HttpStatus[status] ?? 'HTTP_ERROR';
-    const body = CommonRes.fail(new ExceptionMessage(String(code), message));
+    const body = CommonRes.fail(String(code), message);
     response.status(status).json(body);
   }
 
@@ -71,11 +72,9 @@ export class ApiExceptionHandler implements ExceptionFilter {
       exception instanceof Error ? exception.stack : detail,
     );
     const body = CommonRes.fail(
-      new ExceptionMessage(
-        'ERR_INTERNAL_SERVER_ERROR',
-        '서버 내부 오류가 발생했습니다.',
-        detail,
-      ),
+      'ERR_INTERNAL_SERVER_ERROR',
+      '서버 내부 오류가 발생했습니다.',
+      detail,
     );
     response.status(HttpStatus.INTERNAL_SERVER_ERROR).json(body);
   }
