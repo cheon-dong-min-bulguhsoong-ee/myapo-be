@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { XrplCredentialClient } from '../../domain/xrpl/client/xrpl-credential.client';
-import { IssueXrplCredentialCommand } from '../../domain/xrpl/client/command/issue-xrpl-credential.command';
-import { SetDeepFreezeCommand } from '../../domain/xrpl/client/command/set-deep-freeze.command';
-import { VerifyDomainAdmissionCommand } from '../../domain/xrpl/client/command/verify-domain-admission.command';
-import { XrplAdmissionResult } from '../../domain/xrpl/client/result/xrpl-admission.result';
-import { XrplCredentialIssueResult } from '../../domain/xrpl/client/result/xrpl-credential-issue.result';
-import { XrplFreezeResult } from '../../domain/xrpl/client/result/xrpl-freeze.result';
+import { XrplCredentialClient } from '../../domain/xrpl/xrpl-credential.client';
+import { IssueXrplCredentialCommand } from '../../domain/xrpl/issue-xrpl-credential.command';
+import { SetDeepFreezeCommand } from '../../domain/xrpl/set-deep-freeze.command';
+import { VerifyDomainAdmissionCommand } from '../../domain/xrpl/verify-domain-admission.command';
+import { XrplAdmissionResult } from '../../domain/xrpl/xrpl-admission.result';
+import { XrplCredentialIssueResult } from '../../domain/xrpl/xrpl-credential-issue.result';
+import { XrplFreezeResult } from '../../domain/xrpl/xrpl-freeze.result';
 
 const SUCCESS_CODE = 'tesSUCCESS';
 

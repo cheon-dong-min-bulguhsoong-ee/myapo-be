@@ -1,14 +1,18 @@
 import { Module } from '@nestjs/common';
+import { MyDataFacade } from '../../application/mydata.facade';
+import { MyDataService } from '../../domain/mydata/mydata.service';
+import { UserService } from '../../domain/user/user.service';
 import { MyDataController } from './controller/mydata.controller';
-import { MyDataService } from '../../domain/mydata/service/mydata.service';
 import { ParseMyDataCategoryPipe } from './pipe/parse-mydata-category.pipe';
 
 @Module({
   controllers: [MyDataController],
   providers: [
+    UserService,
     MyDataService,
+    MyDataFacade,
     ParseMyDataCategoryPipe,
   ],
-  exports: [MyDataService],
+  exports: [MyDataFacade],
 })
 export class MyDataModule {}
