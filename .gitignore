@@ -76,3 +76,7 @@ temp/
 prisma/migrations/dev/
 prisma/*.db
 prisma/*.db-journal
+
+## AI 관련
+.omc
+.claude
