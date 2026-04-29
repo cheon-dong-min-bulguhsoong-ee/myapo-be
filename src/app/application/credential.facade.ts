@@ -18,6 +18,10 @@ export class CredentialFacade {
         xrplAddress: string,
         issuerCodes: IssuerCode[],
     ): Promise<CredentialBundleResult> {
+        if (!issuerCodes.includes(IssuerCode.TOSS_ARC)) {
+            throw new ApiException(ExceptionCode.Issuer.CREDENTIAL_KYC_REQUIRED);
+        }
+
         const user = await this.userService.findByXrplAddress(xrplAddress);
         if (user === null) {
             throw new ApiException(ExceptionCode.User.USER_NOT_FOUND, {xrplAddress});
