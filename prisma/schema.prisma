@@ -29,34 +29,12 @@ model User {
   updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
   isDelete      Boolean  @default(false) @map("is_delete")
 
-  profile          UserProfile?
-  mydataSnapshots  MyDataSnapshot[]
-  credentials      Credential[]
-  complianceEvents ComplianceEvent[]
-  admissionLogs    AdmissionLog[]
-  xrplTransactions XrplTransaction[]
+  credentialBundles  CredentialBundle[]
+  credentialRequests CredentialRequest[]
 
   @@index([status], map: "idx_users_status")
   @@index([xrplAddress], map: "idx_users_xrpl_address")
   @@map("users")
-  @@schema("tosalpee")
-}
-
-model UserProfile {
-  id            BigInt   @id @default(autoincrement())
-  userId        BigInt   @unique @map("user_id")
-  nameEnc       Bytes    @map("name_enc")
-  phoneEnc      Bytes    @map("phone_enc")
-  birthDateEnc  Bytes    @map("birth_date_enc")
-  nationality   String?  @db.Char(2)
-  visaType      String?  @map("visa_type") @db.VarChar(10)
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamp(0)
-  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
-  isDelete      Boolean  @default(false) @map("is_delete")
-
-  user User @relation(fields: [userId], references: [id])
-
-  @@map("user_profiles")
   @@schema("tosalpee")
 }
 
@@ -81,131 +59,58 @@ model IssuerAdmin {
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// MyData
+// Credential Bundle (사용자 한 번의 발급 요청 묶음 · SSE 구독 단위)
 // ─────────────────────────────────────────────────────────────────────
 
-model MyDataSnapshot {
-  id        BigInt   @id @default(autoincrement())
-  userId    BigInt   @map("user_id")
-  category  String   @db.VarChar(20)
-  rawData   Json     @map("raw_data")
-  dataHash  String   @map("data_hash") @db.Char(64)
-  source    String   @db.VarChar(50)
-  fetchedAt DateTime @default(now()) @map("fetched_at") @db.Timestamp(0)
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(0)
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
-  isDelete  Boolean  @default(false) @map("is_delete")
+model CredentialBundle {
+  id             BigInt    @id @default(autoincrement())
+  bundleCode     String    @unique @map("bundle_code") @db.Uuid
+  userId         BigInt    @map("user_id")
+  status         String    @default("PENDING") @db.VarChar(20)
+  totalCount     Int       @map("total_count")
+  completedCount Int       @default(0) @map("completed_count")
+  failedCount    Int       @default(0) @map("failed_count")
+  requestedAt    DateTime  @default(now()) @map("requested_at") @db.Timestamp(0)
+  completedAt    DateTime? @map("completed_at") @db.Timestamp(0)
+  expiresAt      DateTime? @map("expires_at") @db.Timestamp(0)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+  isDelete       Boolean   @default(false) @map("is_delete")
 
-  user        User         @relation(fields: [userId], references: [id])
-  credentials Credential[]
+  user     User                @relation(fields: [userId], references: [id])
+  requests CredentialRequest[]
 
-  @@index([dataHash], map: "idx_snapshots_hash")
-  @@index([userId, category, fetchedAt(sort: Desc)], map: "idx_snapshots_user_category")
-  @@map("mydata_snapshots")
+  @@index([userId, requestedAt(sort: Desc)], map: "idx_credential_bundles_user_time")
+  @@index([status, requestedAt(sort: Desc)], map: "idx_credential_bundles_status")
+  @@map("credential_bundles")
   @@schema("tosalpee")
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// Credentials (XLS-70)
+// Credential Request (S2-02 발급 대기 큐)
 // ─────────────────────────────────────────────────────────────────────
 
-model Credential {
-  id          BigInt    @id @default(autoincrement())
-  userId      BigInt    @map("user_id")
-  snapshotId  BigInt    @map("snapshot_id")
-  category    String    @db.VarChar(20)
-  xrplTxHash  String    @map("xrpl_tx_hash") @db.Char(64)
-  dataHash    String    @map("data_hash") @db.Char(64)
-  metadataUri String    @map("metadata_uri") @db.Text
-  issuedAt    DateTime  @map("issued_at") @db.Timestamp(0)
-  expiresAt   DateTime  @map("expires_at") @db.Timestamp(0)
-  status      String    @default("ACTIVE") @db.VarChar(20)
-  revokedAt   DateTime? @map("revoked_at") @db.Timestamp(0)
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
-  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
-  isDelete    Boolean   @default(false) @map("is_delete")
+model CredentialRequest {
+  id            BigInt    @id @default(autoincrement())
+  bundleId      BigInt    @map("bundle_id")
+  userId        BigInt    @map("user_id")
+  issuerCode    String    @map("issuer_code") @db.VarChar(20)
+  category      String    @db.VarChar(20)
+  status        String    @default("PENDING") @db.VarChar(20)
+  failureReason String?   @map("failure_reason") @db.Text
+  xrplTxHash    String?   @map("xrpl_tx_hash") @db.Char(64)
+  requestedAt   DateTime  @default(now()) @map("requested_at") @db.Timestamp(0)
+  processedAt   DateTime? @map("processed_at") @db.Timestamp(0)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+  isDelete      Boolean   @default(false) @map("is_delete")
 
-  user     User           @relation(fields: [userId], references: [id])
-  snapshot MyDataSnapshot @relation(fields: [snapshotId], references: [id])
+  bundle CredentialBundle @relation(fields: [bundleId], references: [id])
+  user   User             @relation(fields: [userId], references: [id])
 
-  @@index([userId], map: "idx_credentials_user")
-  @@map("credentials")
-  @@schema("tosalpee")
-}
-
-// ─────────────────────────────────────────────────────────────────────
-// Compliance (XLS-77d)
-// ─────────────────────────────────────────────────────────────────────
-
-model ComplianceEvent {
-  id          BigInt   @id @default(autoincrement())
-  userId      BigInt   @map("user_id")
-  eventType   String   @map("event_type") @db.VarChar(20)
-  reason      String?  @db.VarChar(30)
-  triggeredBy String   @map("triggered_by") @db.VarChar(20)
-  xrplTxHash  String?  @map("xrpl_tx_hash") @db.Char(64)
-  detail      Json?
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(0)
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
-  isDelete    Boolean  @default(false) @map("is_delete")
-
-  user User @relation(fields: [userId], references: [id])
-
-  @@index([eventType, createdAt(sort: Desc)], map: "idx_compliance_type")
-  @@index([userId, createdAt(sort: Desc)], map: "idx_compliance_user_time")
-  @@map("compliance_events")
-  @@schema("tosalpee")
-}
-
-// ─────────────────────────────────────────────────────────────────────
-// Gateway Admission (XLS-80)
-// ─────────────────────────────────────────────────────────────────────
-
-model AdmissionLog {
-  id          BigInt   @id @default(autoincrement())
-  userId      BigInt   @map("user_id")
-  domainId    String   @map("domain_id") @db.VarChar(64)
-  result      String   @db.VarChar(10)
-  missing     String[] @db.VarChar(20)
-  requester   String?  @db.VarChar(50)
-  requestedAt DateTime @default(now()) @map("requested_at") @db.Timestamp(0)
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(0)
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
-  isDelete    Boolean  @default(false) @map("is_delete")
-
-  user User @relation(fields: [userId], references: [id])
-
-  @@index([result, requestedAt(sort: Desc)], map: "idx_admission_result")
-  @@index([userId, requestedAt(sort: Desc)], map: "idx_admission_user_time")
-  @@map("admission_logs")
-  @@schema("tosalpee")
-}
-
-// ─────────────────────────────────────────────────────────────────────
-// XRPL Transactions
-// ─────────────────────────────────────────────────────────────────────
-
-model XrplTransaction {
-  id           BigInt   @id @default(autoincrement())
-  userId       BigInt?  @map("user_id")
-  txHash       String   @unique @map("tx_hash") @db.Char(64)
-  txType       String   @map("tx_type") @db.VarChar(30)
-  account      String   @db.VarChar(35)
-  subject      String?  @db.VarChar(35)
-  resultCode   String   @map("result_code") @db.VarChar(30)
-  feeDrops     BigInt?  @map("fee_drops")
-  ledgerIndex  BigInt?  @map("ledger_index")
-  rawResponse  Json     @map("raw_response")
-  submittedAt  DateTime @default(now()) @map("submitted_at") @db.Timestamp(0)
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamp(0)
-  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
-  isDelete     Boolean  @default(false) @map("is_delete")
-
-  user User? @relation(fields: [userId], references: [id])
-
-  @@index([ledgerIndex], map: "idx_xrpl_ledger")
-  @@index([subject], map: "idx_xrpl_subject")
-  @@index([userId, txType, submittedAt(sort: Desc)], map: "idx_xrpl_user_type")
-  @@map("xrpl_transactions")
+  @@index([issuerCode, status, requestedAt(sort: Desc)], map: "idx_credential_requests_issuer_status")
+  @@index([bundleId], map: "idx_credential_requests_bundle")
+  @@index([userId, requestedAt(sort: Desc)], map: "idx_credential_requests_user_time")
+  @@map("credential_requests")
   @@schema("tosalpee")
 }

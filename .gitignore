@@ -30,6 +30,7 @@ lerna-debug.log*
 *.pfx
 secrets/
 credentials/
+!src/app/interfaces/credentials/
 service-account*.json
 gha-creds-*.json
 

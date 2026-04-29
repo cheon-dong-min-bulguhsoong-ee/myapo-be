@@ -1,6 +1,0 @@
-export enum ComplianceEventType {
-  FREEZE = 'FREEZE',
-  UNFREEZE = 'UNFREEZE',
-  CHECK_NO_ACTION = 'CHECK_NO_ACTION',
-  CHECK_FAILED = 'CHECK_FAILED',
-}
