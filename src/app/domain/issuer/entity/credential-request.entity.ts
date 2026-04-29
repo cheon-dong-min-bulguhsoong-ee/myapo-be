@@ -14,6 +14,7 @@ export class CredentialRequest {
     public readonly xrplTxHash: string | null,
     public readonly requestedAt: Date,
     public readonly processedAt: Date | null,
+    public readonly revokedAt: Date | null,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
   ) {}

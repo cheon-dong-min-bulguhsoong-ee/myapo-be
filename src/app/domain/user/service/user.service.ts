@@ -11,8 +11,4 @@ export class UserService {
     findByXrplAddress(xrplAddress: string): Promise<User | null> {
         return this.userRepository.findByXrplAddress(xrplAddress);
     }
-
-    updateStatus(id: bigint, status: UserStatus): Promise<User> {
-        return this.userRepository.updateStatus(id, status);
-    }
 }

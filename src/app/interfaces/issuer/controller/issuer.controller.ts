@@ -1,12 +1,24 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { IssuerFacade } from '../../../application/issuer.facade';
+import { GetCredentialQueueCommand } from '../../../domain/issuer/dto/get-credential-queue.command';
 import { CommonRes } from '../../common/common-res';
+import { CredentialQueueReq } from '../req/credential-queue.req';
 import { IssuerLoginReq } from '../req/issuer-login.req';
 import { IssuerSignupReq } from '../req/issuer-signup.req';
+import { CredentialQueueRes } from '../res/credential-queue.res';
 import { IssuerAuthRes } from '../res/issuer-auth.res';
 import {
   IssuerApiTags,
   IssuerLoginSwaggerApi,
+  IssuerQueueSwaggerApi,
   IssuerSignupSwaggerApi,
 } from '../swagger/issuer.swagger.api';
 
@@ -41,5 +53,21 @@ export class IssuerController {
       request.password,
     );
     return CommonRes.success(IssuerAuthRes.from(result));
+  }
+
+  @Get('queue')
+  @HttpCode(HttpStatus.OK)
+  @IssuerQueueSwaggerApi()
+  async getQueue(
+    @Query() query: CredentialQueueReq,
+  ): Promise<CommonRes<CredentialQueueRes>> {
+    const command = new GetCredentialQueueCommand(
+      query.issuer,
+      query.status ?? null,
+      query.page ?? 1,
+      query.limit ?? 20,
+    );
+    const result = await this.issuerFacade.getQueue(command);
+    return CommonRes.success(CredentialQueueRes.from(result));
   }
 }

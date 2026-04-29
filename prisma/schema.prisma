@@ -101,6 +101,7 @@ model CredentialRequest {
   xrplTxHash    String?   @map("xrpl_tx_hash") @db.Char(64)
   requestedAt   DateTime  @default(now()) @map("requested_at") @db.Timestamp(0)
   processedAt   DateTime? @map("processed_at") @db.Timestamp(0)
+  revokedAt     DateTime? @map("revoked_at") @db.Timestamp(0)
   createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
   updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
   isDelete      Boolean   @default(false) @map("is_delete")

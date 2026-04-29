@@ -84,6 +84,7 @@ export class CredentialBundleRepositoryImpl extends CredentialBundleRepository {
       row.xrplTxHash,
       row.requestedAt,
       row.processedAt,
+      row.revokedAt,
       row.createdAt,
       row.updatedAt,
     );
