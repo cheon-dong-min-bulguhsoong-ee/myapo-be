@@ -25,6 +25,7 @@ model User {
   encryptedSeed String   @map("encrypted_seed") @db.Text
   kmsKeyId      String   @map("kms_key_id") @db.VarChar(255)
   status        String   @default("ACTIVE") @db.VarChar(20)
+  alias         String?  @map("alias") @db.VarChar(40)
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamp(0)
   updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
   isDelete      Boolean  @default(false) @map("is_delete")
@@ -91,20 +92,23 @@ model CredentialBundle {
 // ─────────────────────────────────────────────────────────────────────
 
 model CredentialRequest {
-  id            BigInt    @id @default(autoincrement())
-  bundleId      BigInt    @map("bundle_id")
-  userId        BigInt    @map("user_id")
-  issuerCode    String    @map("issuer_code") @db.VarChar(20)
-  category      String    @db.VarChar(20)
-  status        String    @default("PENDING") @db.VarChar(20)
-  failureReason String?   @map("failure_reason") @db.Text
-  xrplTxHash    String?   @map("xrpl_tx_hash") @db.Char(64)
-  requestedAt   DateTime  @default(now()) @map("requested_at") @db.Timestamp(0)
-  processedAt   DateTime? @map("processed_at") @db.Timestamp(0)
-  revokedAt     DateTime? @map("revoked_at") @db.Timestamp(0)
-  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
-  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
-  isDelete      Boolean   @default(false) @map("is_delete")
+  id                 BigInt    @id @default(autoincrement())
+  bundleId           BigInt    @map("bundle_id")
+  userId             BigInt    @map("user_id")
+  issuerCode         String    @map("issuer_code") @db.VarChar(20)
+  category           String    @db.VarChar(20)
+  status             String    @default("PENDING") @db.VarChar(20)
+  failureReason      String?   @map("failure_reason") @db.Text
+  xrplTxHash         String?   @map("xrpl_tx_hash") @db.Char(64)
+  xrplLedgerIndex    BigInt?   @map("xrpl_ledger_index")
+  payloadHash        String?   @map("payload_hash") @db.Char(64)
+  requestedTtlMonths Int?      @map("requested_ttl_months")
+  requestedAt        DateTime  @default(now()) @map("requested_at") @db.Timestamp(0)
+  processedAt        DateTime? @map("processed_at") @db.Timestamp(0)
+  revokedAt          DateTime? @map("revoked_at") @db.Timestamp(0)
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+  isDelete           Boolean   @default(false) @map("is_delete")
 
   bundle CredentialBundle @relation(fields: [bundleId], references: [id])
   user   User             @relation(fields: [userId], references: [id])
