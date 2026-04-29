@@ -49,6 +49,7 @@ export class UserRepositoryImpl extends UserRepository {
             row.encryptedSeed,
             row.kmsKeyId,
             row.status as UserStatus,
+            row.alias,
             row.createdAt,
             row.updatedAt,
         );

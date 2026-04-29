@@ -9,6 +9,7 @@ export class User {
     public readonly encryptedSeed: string,
     public readonly kmsKeyId: string,
     public readonly status: UserStatus,
+    public readonly alias: string | null,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
   ) {}
