@@ -18,6 +18,7 @@ async function bootstrap(): Promise<void> {
     .setTitle('CredBundleBE API')
     .setDescription('Credential Bundle Loan Backend (NestJS + Prisma, Clean Layered Architecture)')
     .setVersion('0.0.1')
+    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' })
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('docs', app, document);

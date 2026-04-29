@@ -86,6 +86,21 @@ export const ExceptionCode = {
             HttpStatus.BAD_REQUEST,
             'KYC(TOSS_ARC) 발급은 필수입니다. 발급 출처에 TOSS_ARC 를 포함해주세요.',
         ),
+        CREDENTIAL_REQUEST_NOT_FOUND: define(
+            'CREDENTIAL_REQUEST_NOT_FOUND',
+            HttpStatus.NOT_FOUND,
+            '해당 발급 요청을 찾을 수 없습니다.',
+        ),
+        INVALID_REQUEST_CODE: define(
+            'INVALID_REQUEST_CODE',
+            HttpStatus.BAD_REQUEST,
+            '발급 요청 ID 형식이 올바르지 않습니다 (양의 정수).',
+        ),
+        UNAUTHORIZED: define(
+            'ISSUER_UNAUTHORIZED',
+            HttpStatus.UNAUTHORIZED,
+            '발급자 콘솔 인증이 필요합니다.',
+        ),
     },
     Compliance: {
         FREEZE_FAILED: define(

@@ -2,8 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { ApiException } from '../interfaces/exception/api-exception';
 import { ExceptionCode } from '../interfaces/exception/exception-code';
 import { CredentialQueueResult } from '../domain/issuer/dto/credential-queue.result';
+import { CredentialRequestDetailResult } from '../domain/issuer/dto/credential-request-detail.result';
 import { GetCredentialQueueCommand } from '../domain/issuer/dto/get-credential-queue.command';
 import { IssuerAuthResult } from '../domain/issuer/dto/issuer-auth.result';
+import { CredentialRequest } from '../domain/issuer/entity/credential-request.entity';
+import { Issuer } from '../domain/issuer/entity/issuer.entity';
 import { IssuerCode } from '../domain/issuer/enum/issuer-code.enum';
 import {
   IssuerAuthError,
@@ -23,6 +26,29 @@ export class IssuerFacade {
     command: GetCredentialQueueCommand,
   ): Promise<CredentialQueueResult> {
     return this.credentialQueueService.getQueue(command);
+  }
+
+  async getQueueDetail(
+    requestCode: string,
+    issuer: Issuer,
+  ): Promise<CredentialRequestDetailResult> {
+    const id = CredentialRequest.parseRequestCode(requestCode);
+    if (id === null) {
+      throw new ApiException(ExceptionCode.Issuer.INVALID_REQUEST_CODE, {
+        requestCode,
+      });
+    }
+    const detail = await this.credentialQueueService.findDetailByIdAndIssuer(
+      id,
+      issuer,
+    );
+    if (detail === null) {
+      throw new ApiException(
+        ExceptionCode.Issuer.CREDENTIAL_REQUEST_NOT_FOUND,
+        { requestCode },
+      );
+    }
+    return detail;
   }
 
   signup(

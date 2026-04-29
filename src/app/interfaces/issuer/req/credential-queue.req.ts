@@ -1,19 +1,9 @@
-import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
 import { CredentialRequestStatus } from '../../../domain/issuer/enum/credential-request-status.enum';
-import { IssuerCode } from '../../../domain/issuer/enum/issuer-code.enum';
 
 export class CredentialQueueReq {
-  @ApiProperty({
-    enum: IssuerCode,
-    enumName: 'IssuerCode',
-    example: IssuerCode.MOJ,
-    description: '발급 출처 (필수)',
-  })
-  @IsEnum(IssuerCode)
-  issuer!: IssuerCode;
-
   @ApiPropertyOptional({
     enum: CredentialRequestStatus,
     enumName: 'CredentialRequestStatus',

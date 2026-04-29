@@ -30,4 +30,16 @@ export abstract class CredentialRequestRepository {
   }>;
 
   abstract collectStats(issuerCode: IssuerCode): Promise<CredentialQueueStats>;
+
+  abstract findDetailByIdAndIssuer(
+    id: bigint,
+    issuerCode: IssuerCode,
+  ): Promise<CredentialRequestDetailRow | null>;
+}
+
+export interface CredentialRequestDetailRow {
+  request: CredentialRequest;
+  holderUserId: bigint;
+  holderXrplAddress: string;
+  holderAlias: string | null;
 }

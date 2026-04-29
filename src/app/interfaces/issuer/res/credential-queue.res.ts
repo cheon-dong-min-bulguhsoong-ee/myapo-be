@@ -20,7 +20,7 @@ export class CredentialQueueStatsRes {
 }
 
 export class CredentialQueueItemRes {
-  @ApiProperty({ example: 'Q-6102' })
+  @ApiProperty({ example: '1', description: 'credential_requests.id (string).' })
   requestCode!: string;
 
   @ApiProperty({ example: 'rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh' })

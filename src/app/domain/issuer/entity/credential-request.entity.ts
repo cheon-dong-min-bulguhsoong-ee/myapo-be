@@ -23,6 +23,17 @@ export class CredentialRequest {
   ) {}
 
   get requestCode(): string {
-    return `Q-${this.id.toString()}`;
+    return this.id.toString();
+  }
+
+  static parseRequestCode(code: string): bigint | null {
+    if (!/^\d+$/.test(code)) {
+      return null;
+    }
+    try {
+      return BigInt(code);
+    } catch {
+      return null;
+    }
   }
 }

@@ -11,6 +11,7 @@ import {
   CredentialQueueFilter,
   CredentialQueueRow,
   CredentialQueueStats,
+  CredentialRequestDetailRow,
   CredentialRequestRepository,
 } from '../../../../domain/issuer/repository/credential-request.repository';
 import { PrismaService } from '../../../prisma/prisma.service';
@@ -89,6 +90,33 @@ export class CredentialRequestRepositoryImpl extends CredentialRequestRepository
         }),
       ]);
     return { pending, completed, failed24h, revoked };
+  }
+
+  async findDetailByIdAndIssuer(
+    id: bigint,
+    issuerCode: IssuerCode,
+  ): Promise<CredentialRequestDetailRow | null> {
+    const row = await this.prisma.credentialRequest.findFirst({
+      where: { id, issuerCode, isDelete: false },
+      include: {
+        user: {
+          select: {
+            id: true,
+            xrplAddress: true,
+            alias: true,
+          },
+        },
+      },
+    });
+    if (row === null) {
+      return null;
+    }
+    return {
+      request: this.toEntity(row),
+      holderUserId: row.user.id,
+      holderXrplAddress: row.user.xrplAddress,
+      holderAlias: row.user.alias,
+    };
   }
 
   private toEntity(row: CredentialRequestRow): CredentialRequest {
