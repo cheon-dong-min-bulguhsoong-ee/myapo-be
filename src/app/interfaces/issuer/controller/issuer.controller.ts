@@ -35,6 +35,8 @@ export class IssuerController {
   ): Promise<CommonRes<IssuerAuthRes>> {
     const result = await this.issuerFacade.signup(
       request.issuerCode,
+      request.issuerName,
+      request.walletAddress,
       request.adminId,
       request.password,
     );
@@ -48,7 +50,6 @@ export class IssuerController {
     @Body() request: IssuerLoginReq,
   ): Promise<CommonRes<IssuerAuthRes>> {
     const result = await this.issuerFacade.login(
-      request.issuerCode,
       request.adminId,
       request.password,
     );

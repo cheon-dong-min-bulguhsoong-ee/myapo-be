@@ -1,9 +1,10 @@
 import { IssuerCode } from '../enum/issuer-code.enum';
 
-export class IssuerAdmin {
+export class Issuer {
   constructor(
-    public readonly id: bigint,
-    public readonly issuerCode: IssuerCode,
+    public readonly code: IssuerCode,
+    public readonly name: string,
+    public readonly walletAddress: string,
     public readonly adminId: string,
     public readonly passwordHash: string,
     public readonly status: string,

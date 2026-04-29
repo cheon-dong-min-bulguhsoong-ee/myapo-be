@@ -1,68 +1,64 @@
-import {Injectable} from '@nestjs/common';
-import {PasswordEncoder} from '../../common/contract/password-encoder';
-import {TokenProvider} from '../../common/contract/token-provider';
-import {IssuerAuthError} from '../error/issuer-auth.error';
-import {IssuerAdmin} from '../entity/issuer-admin.entity';
-import {IssuerAdminRepository} from '../repository/issuer-admin.repository';
-import {IssuerCode} from '../enum/issuer-code.enum';
-import {IssuerAuthResult} from '../dto/issuer-auth.result';
+import { Injectable } from '@nestjs/common';
+import { PasswordEncoder } from '../../common/contract/password-encoder';
+import { TokenProvider } from '../../common/contract/token-provider';
+import { IssuerAuthResult } from '../dto/issuer-auth.result';
+import { Issuer } from '../entity/issuer.entity';
+import { IssuerCode } from '../enum/issuer-code.enum';
+import { IssuerAuthError } from '../error/issuer-auth.error';
+import { IssuerRepository } from '../repository/issuer.repository';
 
 @Injectable()
 export class IssuerAuthService {
-    constructor(
-        private readonly issuerAdminRepository: IssuerAdminRepository,
-        private readonly passwordEncoder: PasswordEncoder,
-        private readonly tokenProvider: TokenProvider,
-    ) {
+  constructor(
+    private readonly issuerRepository: IssuerRepository,
+    private readonly passwordEncoder: PasswordEncoder,
+    private readonly tokenProvider: TokenProvider,
+  ) {}
+
+  async signup(
+    code: IssuerCode,
+    name: string,
+    walletAddress: string,
+    adminId: string,
+    password: string,
+  ): Promise<IssuerAuthResult> {
+    const existingByCode = await this.issuerRepository.findByCode(code);
+    if (existingByCode !== null) {
+      throw IssuerAuthError.issuerAlreadyRegistered(code);
+    }
+    const existingByAdminId = await this.issuerRepository.findByAdminId(adminId);
+    if (existingByAdminId !== null) {
+      throw IssuerAuthError.adminIdTaken(adminId);
     }
 
-    async signup(
-        issuerCode: IssuerCode,
-        adminId: string,
-        password: string,
-    ): Promise<IssuerAuthResult> {
-        const existing = await this.issuerAdminRepository.findByIssuerAndAdminId(
-            issuerCode,
-            adminId,
-        );
-        if (existing !== null) {
-            throw IssuerAuthError.adminAlreadyExists(issuerCode, adminId);
-        }
-        const passwordHash = this.passwordEncoder.encode(password);
-        const admin = await this.issuerAdminRepository.create({
-            issuerCode,
-            adminId,
-            passwordHash,
-        });
-        return this.issueToken(admin);
-    }
+    const issuer = await this.issuerRepository.create({
+      code,
+      name,
+      walletAddress,
+      adminId,
+      passwordHash: this.passwordEncoder.encode(password),
+    });
+    return this.issueToken(issuer);
+  }
 
-    async login(
-        issuerCode: IssuerCode,
-        adminId: string,
-        password: string,
-    ): Promise<IssuerAuthResult> {
-        const admin = await this.issuerAdminRepository.findByIssuerAndAdminId(
-            issuerCode,
-            adminId,
-        );
-        if (admin === null) {
-            throw IssuerAuthError.invalidCredentials();
-        }
-        if (!this.passwordEncoder.matches(password, admin.passwordHash)) {
-            throw IssuerAuthError.invalidCredentials();
-        }
-        if (!admin.isActive()) {
-            throw IssuerAuthError.adminInactive(admin.status);
-        }
-        return this.issueToken(admin);
+  async login(adminId: string, password: string): Promise<IssuerAuthResult> {
+    const issuer = await this.issuerRepository.findByAdminId(adminId);
+    if (issuer === null) {
+      throw IssuerAuthError.invalidCredentials();
     }
+    if (!this.passwordEncoder.matches(password, issuer.passwordHash)) {
+      throw IssuerAuthError.invalidCredentials();
+    }
+    if (!issuer.isActive()) {
+      throw IssuerAuthError.issuerInactive(issuer.status);
+    }
+    return this.issueToken(issuer);
+  }
 
-    private issueToken(admin: IssuerAdmin): IssuerAuthResult {
-        const issued = this.tokenProvider.sign(admin.adminId, {
-            issuerCode: admin.issuerCode,
-            adminPk: admin.id.toString(),
-        });
-        return new IssuerAuthResult(admin, issued.token, issued.expiresAt);
-    }
+  private issueToken(issuer: Issuer): IssuerAuthResult {
+    const issued = this.tokenProvider.sign(issuer.adminId, {
+      issuerCode: issuer.code,
+    });
+    return new IssuerAuthResult(issuer, issued.token, issued.expiresAt);
+  }
 }

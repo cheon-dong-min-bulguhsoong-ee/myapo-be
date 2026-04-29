@@ -3,14 +3,14 @@ import { PasswordEncoder } from '../domain/common/contract/password-encoder';
 import { TokenProvider } from '../domain/common/contract/token-provider';
 import { CredentialBundleRepository } from '../domain/issuer/repository/credential-bundle.repository';
 import { CredentialRequestRepository } from '../domain/issuer/repository/credential-request.repository';
-import { IssuerAdminRepository } from '../domain/issuer/repository/issuer-admin.repository';
+import { IssuerRepository } from '../domain/issuer/repository/issuer.repository';
 import { UserRepository } from '../domain/user/repository/user.repository';
 import { ScryptPasswordEncoder } from './auth/scrypt-password-encoder';
 import { HmacTokenProvider } from './auth/hmac-token-provider';
 import { PrismaModule } from './prisma/prisma.module';
 import { CredentialBundleRepositoryImpl } from './repository/issuer/persistence/credential-bundle.repository.impl';
 import { CredentialRequestRepositoryImpl } from './repository/issuer/persistence/credential-request.repository.impl';
-import { IssuerAdminRepositoryImpl } from './repository/issuer/persistence/issuer-admin.repository.impl';
+import { IssuerRepositoryImpl } from './repository/issuer/persistence/issuer.repository.impl';
 import { UserRepositoryImpl } from './repository/user/persistence/user.repository.impl';
 
 @Global()
@@ -18,7 +18,7 @@ import { UserRepositoryImpl } from './repository/user/persistence/user.repositor
   imports: [PrismaModule],
   providers: [
     { provide: UserRepository, useClass: UserRepositoryImpl },
-    { provide: IssuerAdminRepository, useClass: IssuerAdminRepositoryImpl },
+    { provide: IssuerRepository, useClass: IssuerRepositoryImpl },
     {
       provide: CredentialBundleRepository,
       useClass: CredentialBundleRepositoryImpl,
@@ -33,7 +33,7 @@ import { UserRepositoryImpl } from './repository/user/persistence/user.repositor
   exports: [
     PrismaModule,
     UserRepository,
-    IssuerAdminRepository,
+    IssuerRepository,
     CredentialBundleRepository,
     CredentialRequestRepository,
     PasswordEncoder,

@@ -61,15 +61,20 @@ export const ExceptionCode = {
             HttpStatus.UNAUTHORIZED,
             '아이디 또는 비밀번호가 올바르지 않습니다.',
         ),
-        ADMIN_ALREADY_EXISTS: define(
-            'ISSUER_ADMIN_ALREADY_EXISTS',
+        ALREADY_REGISTERED: define(
+            'ISSUER_ALREADY_REGISTERED',
             HttpStatus.CONFLICT,
-            '이미 등록된 담당자 ID 입니다.',
+            '이미 등록된 발급 기관입니다.',
         ),
-        ADMIN_INACTIVE: define(
-            'ISSUER_ADMIN_INACTIVE',
+        ADMIN_ID_TAKEN: define(
+            'ISSUER_ADMIN_ID_TAKEN',
+            HttpStatus.CONFLICT,
+            '이미 사용 중인 담당자 ID 입니다.',
+        ),
+        INACTIVE: define(
+            'ISSUER_INACTIVE',
             HttpStatus.FORBIDDEN,
-            '비활성 발급자 계정입니다.',
+            '비활성 발급 기관 계정입니다.',
         ),
         CREDENTIAL_ISSUANCE_FAILED: define(
             'CREDENTIAL_ISSUANCE_FAILED',

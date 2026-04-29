@@ -1,12 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsString, MaxLength, MinLength } from 'class-validator';
-import { IssuerCode } from '../../../domain/issuer/enum/issuer-code.enum';
+import { IsString, MaxLength, MinLength } from 'class-validator';
 
 export class IssuerLoginReq {
-  @ApiProperty({ enum: IssuerCode, enumName: 'IssuerCode', example: IssuerCode.MOJ })
-  @IsEnum(IssuerCode)
-  issuerCode!: IssuerCode;
-
   @ApiProperty({ example: 'MOJ-ADMIN-01' })
   @IsString()
   @MinLength(1)

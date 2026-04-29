@@ -1,8 +1,8 @@
-import { IssuerAdmin } from '../entity/issuer-admin.entity';
+import { Issuer } from '../entity/issuer.entity';
 
 export class IssuerAuthResult {
   constructor(
-    public readonly admin: IssuerAdmin,
+    public readonly issuer: Issuer,
     public readonly token: string,
     public readonly expiresAt: Date,
   ) {}

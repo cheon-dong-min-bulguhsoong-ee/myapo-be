@@ -1,9 +1,10 @@
 import { IssuerCode } from '../enum/issuer-code.enum';
 
 export enum IssuerAuthErrorReason {
-  ADMIN_ALREADY_EXISTS = 'ADMIN_ALREADY_EXISTS',
+  ISSUER_ALREADY_REGISTERED = 'ISSUER_ALREADY_REGISTERED',
+  ADMIN_ID_TAKEN = 'ADMIN_ID_TAKEN',
   INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',
-  ADMIN_INACTIVE = 'ADMIN_INACTIVE',
+  ISSUER_INACTIVE = 'ISSUER_INACTIVE',
 }
 
 export class IssuerAuthError extends Error {
@@ -15,12 +16,14 @@ export class IssuerAuthError extends Error {
     this.name = 'IssuerAuthError';
   }
 
-  static adminAlreadyExists(
-    issuerCode: IssuerCode,
-    adminId: string,
-  ): IssuerAuthError {
-    return new IssuerAuthError(IssuerAuthErrorReason.ADMIN_ALREADY_EXISTS, {
+  static issuerAlreadyRegistered(issuerCode: IssuerCode): IssuerAuthError {
+    return new IssuerAuthError(IssuerAuthErrorReason.ISSUER_ALREADY_REGISTERED, {
       issuerCode,
+    });
+  }
+
+  static adminIdTaken(adminId: string): IssuerAuthError {
+    return new IssuerAuthError(IssuerAuthErrorReason.ADMIN_ID_TAKEN, {
       adminId,
     });
   }
@@ -29,8 +32,8 @@ export class IssuerAuthError extends Error {
     return new IssuerAuthError(IssuerAuthErrorReason.INVALID_CREDENTIALS);
   }
 
-  static adminInactive(status: string): IssuerAuthError {
-    return new IssuerAuthError(IssuerAuthErrorReason.ADMIN_INACTIVE, {
+  static issuerInactive(status: string): IssuerAuthError {
+    return new IssuerAuthError(IssuerAuthErrorReason.ISSUER_INACTIVE, {
       status,
     });
   }
