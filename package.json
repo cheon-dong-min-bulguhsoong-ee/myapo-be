@@ -1,7 +1,7 @@
 {
-  "name": "credbundle-be",
+  "name": "myapo-be",
   "version": "0.0.1",
-  "description": "Credential Bundle Loan Backend (NestJS + Prisma, Clean Layered Architecture)",
+  "description": "MyApo Backend (NestJS + Prisma, Clean Layered Architecture)",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {

@@ -1,4 +1,4 @@
-// Prisma schema for CredBundleBE
+// Prisma schema for MyApoBE
 // Schema is owned externally — do NOT run `prisma migrate` against the shared DB.
 // Use `prisma generate` to refresh the client only.
 
