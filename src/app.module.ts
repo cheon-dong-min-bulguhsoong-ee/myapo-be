@@ -2,16 +2,14 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { InfrastructureModule } from './app/infrastructure/infrastructure.module';
 import { CommonModule } from './app/interfaces/common/common.module';
-import { CredentialsModule } from './app/interfaces/credentials/credentials.module';
-import { IssuerModule } from './app/interfaces/issuer/issuer.module';
+import { DocumentModule } from './app/interfaces/document/document.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     InfrastructureModule,
     CommonModule,
-    IssuerModule,
-    CredentialsModule,
+    DocumentModule,
   ],
 })
 export class AppModule {}

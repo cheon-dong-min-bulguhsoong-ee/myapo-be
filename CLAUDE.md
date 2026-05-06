@@ -17,7 +17,7 @@ src/
 └── app/
     ├── interfaces/                                  ← HTTP 진입점 (얇음)
     │   ├── common/                                  ← CommonRes, ApiCommonRes, CommonModule
-    │   ├── exception/                               ← ApiException, ExceptionCode, ApiExceptionHandler
+    │   ├── exception/                               ← ApiExceptionHandler (글로벌 필터 — DomainError → HTTP 응답)
     │   └── <ctx>/
     │       ├── controller/<name>.controller.ts      ← 검증·매핑만, 비즈니스 로직 X
     │       ├── req/<name>.req.ts                    ← class-validator 데코레이터로 입력 검증
@@ -30,7 +30,8 @@ src/
     ├── domain/                                      ← 외부 라이브러리 모름 (Nest 데코레이터만 OK)
     │   ├── common/
     │   │   ├── contract/<port>.ts                   ← 도메인-횡단 포트 (PasswordEncoder 등)
-    │   │   └── enum/*.enum.ts
+    │   │   ├── enum/*.enum.ts
+    │   │   └── error/                                ← DomainError · ErrorCode (전 도메인 공통)
     │   └── <ctx>/
     │       ├── entity/<name>.entity.ts              ← 순수 클래스. readonly 필드 + 도메인 메서드
     │       ├── enum/*.enum.ts
@@ -53,7 +54,7 @@ interfaces ──► application ──► domain ◄── infrastructure
 
 - `domain/**` 은 `infrastructure/**`, `interfaces/**`, `application/**`, `@prisma/client`, `xrpl` 같은 외부 라이브러리를 **import 하지 않는다**. (`@nestjs/common` 의 데코레이터는 허용)
 - `interfaces/**` 는 `infrastructure/**` 의 어떤 파일도 직접 import 하지 않는다. 모든 wiring 은 `InfrastructureModule` 이 담당한다.
-- `application/**` 은 `interfaces/exception/*` 의 `ApiException` / `ExceptionCode` 를 사용해도 된다 (의도적 예외 — facade 가 도메인 에러를 HTTP 에러로 변환하는 책임).
+- 모든 레이어가 `domain/common/error/{DomainError,ErrorCode}` 를 참조해 에러를 던진다 (도메인 횡단 공통 모듈). interfaces 의 `ApiException` 같은 별도 클래스는 없다.
 - 같은 레이어 안에서도 **다른 bounded context (`<ctx>`) 의 내부 파일을 직접 import 하지 않는다**. 컨텍스트 간 호출은 facade 또는 `domain/<ctx>/service` 를 통해서만.
 
 ### 1-3. 호출 흐름 (한 줄 요약)
@@ -79,7 +80,7 @@ controller → facade → service → repository (port) → repository.impl (ada
 | Res DTO + 매퍼 | `src/app/interfaces/<ctx>/res/<name>.res.ts` |
 | Swagger 데코레이터 | `src/app/interfaces/<ctx>/swagger/<ctx>.swagger.api.ts` |
 | (선택) 가드 / current-user | `src/app/interfaces/<ctx>/auth/*.ts` |
-| Facade | `src/app/application/<name>.facade.ts` |
+| Facade | `src/app/application/<ctx>.facade.ts` |
 | Domain Service | `src/app/domain/<ctx>/service/<name>.service.ts` |
 | Repository (port) | `src/app/domain/<ctx>/repository/<name>.repository.ts` |
 | Repository (impl) | `src/app/infrastructure/repository/<ctx>/persistence/<name>.repository.impl.ts` |
@@ -109,8 +110,8 @@ controller → facade → service → repository (port) → repository.impl (ada
 5. **Repository impl** `infrastructure/repository/<ctx>/persistence/<name>.repository.impl.ts`
    - `@Injectable()`. `extends XRepository`. PrismaService 주입. Prisma row → 엔티티 변환은 private 매퍼로.
 6. **InfrastructureModule** 에 `{ provide: XRepository, useClass: XRepositoryImpl }` 추가하고 `exports` 에도 추가.
-7. **Facade** `application/<name>.facade.ts`
-   - `@Injectable()`. 도메인 서비스 여러 개를 묶는 유스케이스. 도메인 에러 → `ApiException` 변환 책임.
+7. **Facade** `application/<ctx>.facade.ts`
+   - `@Injectable()`. **컨텍스트 단위 클래스** — 한 ctx 의 모든 유스케이스 메서드 (create · list · revoke …) 를 모은다. 도메인 서비스 여러 개를 오케스트레이션. **에러를 직접 throw 하지 않는다** — 검증은 도메인 서비스에 위임하고, 도메인 서비스가 던지는 `DomainError` 는 catch 없이 그대로 흘려보냄.
 8. **Req DTO** `interfaces/<ctx>/req/<name>.req.ts`
    - `class-validator` 데코레이터로 검증. `@ApiProperty` 로 Swagger 예시.
 9. **Res DTO** `interfaces/<ctx>/res/<name>.res.ts`
@@ -130,12 +131,16 @@ controller → facade → service → repository (port) → repository.impl (ada
 ### 4-1. 응답 포맷
 - **모든 컨트롤러**는 `CommonRes<T>` 로 감싼 응답을 반환한다.
 - 성공: `CommonRes.success(data)` — `{ success: true, code: null, message: null, data }`
-- 실패: `ApiException` 을 던지면 `ApiExceptionHandler` 가 `CommonRes.fail(...)` 로 변환.
+- 실패: 어디서든 `DomainError` 를 던지면 `ApiExceptionHandler` 가 `CommonRes.fail(...)` 로 변환.
 
-### 4-2. 에러 처리
-- 컨트롤러/페사드는 `ApiException(ExceptionCode.<Group>.<NAME>, data?)` 를 던진다.
-- 새 에러는 `interfaces/exception/exception-code.ts` 의 `ExceptionCode` 에 추가. 코드 prefix 는 `ERR_` 자동 부착.
-- 도메인은 자체 에러 클래스 (`<name>.error.ts`) 를 던지고, **facade 가 try/catch 로 `ApiException` 으로 매핑**한다. 도메인은 `ApiException` 을 알지 못한다 — facade 안에 private 매퍼 (`mapXError(e): ApiException`) 를 두는 패턴.
+### 4-2. 에러 처리 (공통 에러 모델)
+- **단일 에러 클래스**: `domain/common/error/domain.error.ts` 의 `DomainError`. 도메인·application·interfaces 어디서든 이 클래스 하나만 throw.
+- **단일 카탈로그**: `domain/common/error/error-code.ts` 의 `ErrorCode`. 그룹 (Common · Auth · User · Document …) 별로 정의된 값 객체. 새 에러는 여기에 한 줄 추가.
+  ```ts
+  throw new DomainError(ErrorCode.User.USER_NOT_FOUND, { userId: id.toString() });
+  ```
+- **글로벌 필터 한 분기**: `ApiExceptionHandler` 가 `instanceof DomainError` 한 번만 체크. `errorCode.httpStatus` · `errorCode.code` · `errorCode.message` + `data` 를 그대로 응답에 매핑. **새 에러 추가 시 핸들러 손댈 필요 없음.**
+- 컨텍스트별 에러 클래스(`<name>.error.ts`) · `ApiException` · `mapXError` 같은 패턴 사용 안 함.
 
 ### 4-3. Swagger
 - 컨트롤러 핸들러에는 비즈니스 데코레이터를 직접 달지 않고 `swagger/*.swagger.api.ts` 의 합성 데코레이터를 단다.
@@ -169,7 +174,8 @@ controller → facade → service → repository (port) → repository.impl (ada
 - ❌ `interfaces/**` 에서 `infrastructure/**` import
 - ❌ `domain/**` 에서 `@prisma/client`, `xrpl`, `@nestjs/swagger`, `class-validator` 등 import
 - ❌ 응답을 `CommonRes` 로 감싸지 않고 raw 반환
-- ❌ 도메인 서비스가 `ApiException` 을 직접 던짐 (도메인 에러 → facade 에서 매핑)
+- ❌ 컨텍스트별 에러 클래스 (`<ctx>.error.ts`) 따로 만들기 — 모든 에러는 `DomainError + ErrorCode.<Group>.<NAME>` 조합으로 표현
+- ❌ facade 에 try/catch + private 매퍼 — 도메인 에러는 그대로 흘려보내야 함
 - ❌ repository 구현체에서 도메인 엔티티 대신 Prisma row 를 그대로 반환
 - ❌ 같은 레이어 안에서 다른 bounded context 의 내부 파일 직접 import (`domain/<ctx-a>/...` 에서 `domain/<ctx-b>/repository/...` 같은 직접 의존 X — `domain/<ctx-b>/service/*` 단위로만 호출)
 - ❌ 새 슬래시 명령·hooks 사용 없이 위 트리를 임의 변형
