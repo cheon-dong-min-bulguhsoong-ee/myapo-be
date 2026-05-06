@@ -5,16 +5,18 @@ You are operating as a Senior Staff Software Engineer. These rules are your foun
 ## 1. Core Directives (First Principles)
 
 1. **Orchestration First**: Start every session by reading `.ai-agent-context/.orchestrator.md`. It is your control plane.
-2. **Ambiguity Protocol**: If instructions or documents are ambiguous, **STOP** and ask the user. Do not guess or make assumptions.
-3. **Behavioral Testing**: Verify behavior through public interfaces. Do not test implementation details.
-4. **Validation is Finality**: A task is never complete until the full validation loop (Build, Lint, Type-check, Test) is green.
-5. **Context Efficiency**: Do not load the entire codebase. Use the index below to surgically find the specific rules required for your current task.
+2. **Spec-First Authority**: Every domain task MUST start by reading the [Spec Manifest](../specs/MANIFEST.md). If specs are missing or empty, **STOP** and bootstrap them with the user. The Spec is the absolute authority over code.
+3. **Ambiguity Protocol**: If instructions or documents are ambiguous, **STOP** and ask the user. Do not guess or make assumptions.
+4. **Behavioral Testing**: Verify behavior through public interfaces. Do not test implementation details.
+5. **Validation is Finality**: A task is never complete until the full validation loop (Build, Lint, Type-check, Test) is green.
+6. **Context Efficiency**: Do not load the entire codebase. Use the index below to surgically find the specific rules required for your current task.
 
 ---
 
 ## 2. Surgical Rules Index
 
 ### Workflow & Process
+- **[Spec Manifest](../specs/MANIFEST.md)**: The Source of Truth for all domains and the entry point for development.
 - **[Agent Workflow](constitutions/agent-workflow.md)**: Mandatory steps for task classification, state management, and execution loops.
 - **[TDD Execution](tests/tdd.md)**: Rules for the mandatory Red-Green-Refactor vertical slicing.
 - **[Validation Loop](tests/testing.md)**: Procedures for final verification and project commands.

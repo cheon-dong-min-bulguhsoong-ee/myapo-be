@@ -22,6 +22,7 @@ Classify the task first to determine document selection:
 
 ### 2.2 Mandatory Baseline Documents
 The following MUST be used for all tasks:
+- `.ai-agent-context/specs/MANIFEST.md`
 - `.ai-agent-context/rules/constitutions/agent-workflow.md` (this document)
 - `.ai-agent-context/rules/conventions/software-architecture.md`
 - `.ai-agent-context/rules/conventions/coding-convention.md`
@@ -31,20 +32,20 @@ The following MUST be used for all tasks:
 - `.ai-agent-context/adrs/README.md`
 
 ### 2.3 Context-Specific Selection
-- **Domain-Specific**: For any impacted domain `X`, load `domains/X/*.md` and `api/X/*.md`.
-- **Cross-Domain**: If 2+ domains are touched, load `shared/events.md` and all impacted domains' docs.
-- **API Changes**: If contracts/DTOs change, load relevant `api-spec.md` and `shared/events.md`.
-- **Infra/Platform**: Load architecture rules and ADRs related to runtime, persistence, or messaging.
+- **Domain-Specific**: For any impacted domain `X`, load `specs/X/*.md` (Glossary, Requirements, APIs, Modules, Test Cases).
+- **Cross-Domain**: If 2+ domains are touched, load `specs/shared/*.md` and all impacted domains' specs.
+- **Spec Verification**: If a domain spec is missing or empty, **STOP** and follow the bootstrapping protocol in [agent-workflow.md](../specs/agent-workflow.md).
 
 ## 3. Execution Workflow
 
 ### 3.1 Mandatory Steps
 1. **Analyze & Classify**: Identify task class and impacted domains.
-2. **Select & Load**: Select required documents and load them into context.
-3. **Constraint Check**: Explicitly apply ADR, domain, and architecture constraints.
-4. **Incremental Implementation**: Implement the solution in small, verifiable steps.
-5. **Validation**: Run the full validation loop (Build, Lint, Test).
-6. **Completion**: Persist final state and report status.
+2. **Spec Verification**: Read `MANIFEST.md` and check target domain specs. If missing or empty, **STOP** and query the user.
+3. **Select & Load**: Select required documents (rules + specs) and load them into context.
+4. **Constraint Check**: Explicitly apply ADR, domain spec, and architecture constraints.
+5. **Incremental Implementation**: Implement the solution in small, verifiable steps.
+6. **Validation**: Run the full validation loop (Build, Lint, Test).
+7. **Completion**: Persist final state and report status.
 
 ### 3.2 Document Loading Rule
 - MUST explicitly load and reference document content.
