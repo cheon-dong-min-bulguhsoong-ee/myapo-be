@@ -1,0 +1,7 @@
+export enum DocumentStage {
+  RECEIVED = 'RECEIVED',
+  PRE_REVIEW = 'PRE_REVIEW',
+  TRANSLATING = 'TRANSLATING',
+  NOTARIZING = 'NOTARIZING',
+  ISSUED = 'ISSUED',
+}

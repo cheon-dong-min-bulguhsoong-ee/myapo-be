@@ -1,16 +1,12 @@
 import { Global, Module } from '@nestjs/common';
-import { PasswordEncoder } from '../domain/common/contract/password-encoder';
-import { TokenProvider } from '../domain/common/contract/token-provider';
-import { CredentialBundleRepository } from '../domain/issuer/repository/credential-bundle.repository';
-import { CredentialRequestRepository } from '../domain/issuer/repository/credential-request.repository';
-import { IssuerRepository } from '../domain/issuer/repository/issuer.repository';
+import { DocumentStageRepository } from '../domain/document/repository/document-stage.repository';
+import { DocumentTypeRepository } from '../domain/document/repository/document-type.repository';
+import { DocumentRepository } from '../domain/document/repository/document.repository';
 import { UserRepository } from '../domain/user/repository/user.repository';
-import { ScryptPasswordEncoder } from './auth/scrypt-password-encoder';
-import { HmacTokenProvider } from './auth/hmac-token-provider';
 import { PrismaModule } from './prisma/prisma.module';
-import { CredentialBundleRepositoryImpl } from './repository/issuer/persistence/credential-bundle.repository.impl';
-import { CredentialRequestRepositoryImpl } from './repository/issuer/persistence/credential-request.repository.impl';
-import { IssuerRepositoryImpl } from './repository/issuer/persistence/issuer.repository.impl';
+import { DocumentStageRepositoryImpl } from './repository/document/persistence/document-stage.repository.impl';
+import { DocumentTypeRepositoryImpl } from './repository/document/persistence/document-type.repository.impl';
+import { DocumentRepositoryImpl } from './repository/document/persistence/document.repository.impl';
 import { UserRepositoryImpl } from './repository/user/persistence/user.repository.impl';
 
 @Global()
@@ -18,26 +14,16 @@ import { UserRepositoryImpl } from './repository/user/persistence/user.repositor
   imports: [PrismaModule],
   providers: [
     { provide: UserRepository, useClass: UserRepositoryImpl },
-    { provide: IssuerRepository, useClass: IssuerRepositoryImpl },
-    {
-      provide: CredentialBundleRepository,
-      useClass: CredentialBundleRepositoryImpl,
-    },
-    {
-      provide: CredentialRequestRepository,
-      useClass: CredentialRequestRepositoryImpl,
-    },
-    { provide: PasswordEncoder, useClass: ScryptPasswordEncoder },
-    { provide: TokenProvider, useClass: HmacTokenProvider },
+    { provide: DocumentRepository, useClass: DocumentRepositoryImpl },
+    { provide: DocumentStageRepository, useClass: DocumentStageRepositoryImpl },
+    { provide: DocumentTypeRepository, useClass: DocumentTypeRepositoryImpl },
   ],
   exports: [
     PrismaModule,
     UserRepository,
-    IssuerRepository,
-    CredentialBundleRepository,
-    CredentialRequestRepository,
-    PasswordEncoder,
-    TokenProvider,
+    DocumentRepository,
+    DocumentStageRepository,
+    DocumentTypeRepository,
   ],
 })
 export class InfrastructureModule {}
