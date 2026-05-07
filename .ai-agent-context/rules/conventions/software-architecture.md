@@ -19,8 +19,9 @@ src/
     │       ├── swagger/<ctx>.swagger.api.ts         <-- Collection of @ApiOperation/@ApiResponse
     │       ├── auth/                                <-- (Optional) Guards & current-user decorators
     │       └── <ctx>.module.ts                      <-- Controllers + Facade + Domain Services + Guards
-    ├── application/
-    │   └── <name>.facade.ts                         <-- Usecase orchestration. Orchestrates domain services. Does not catch DomainError.
+    ├── application/                                 <-- Usecase orchestration layer (organized by bounded context)
+    │   └── <ctx>/
+    │       └── <name>.facade.ts                     <-- Usecase orchestration. Orchestrates domain services. Does not catch DomainError.
     ├── domain/                                      <-- No external library dependencies (Nest decorators allowed)
     │   ├── common/
     │   │   ├── contract/<port>.ts                   <-- Cross-domain ports (e.g., PasswordEncoder)
@@ -52,6 +53,22 @@ interfaces --> application --> domain <-- infrastructure
 - **Error Handling**: All layers refer to `domain/common/error/{DomainError, ErrorCode}` to throw errors. There is no separate `ApiException` class in the interfaces layer.
 - **Context Isolation**: Do not import internal files from other bounded contexts (`<ctx>`) even within the same layer. Inter-context calls must go through the Facade or `domain/<ctx>/service`.
 
+### 2-3. Domain-Centric Folder Organization (Mandatory)
+
+Every layer MUST organize files by bounded context (`<ctx>/`) — never flat at the layer root for domain-specific files.
+
+- `interfaces/<ctx>/...` — controller, req, res, swagger, auth, module per ctx.
+- `application/<ctx>/<name>.facade.ts` — facades grouped by ctx (NOT flat under `application/`).
+- `domain/<ctx>/...` — entity, dto, enum, repository (port), service, error per ctx.
+- `infrastructure/repository/<ctx>/persistence/<name>.repository.impl.ts` — adapters grouped by ctx.
+
+Allowed flat (cross-cutting only, not domain-specific):
+- `interfaces/common/`, `interfaces/exception/`
+- `domain/common/` (cross-domain ports, shared enums, project-wide `DomainError`/`ErrorCode`)
+- `infrastructure/infrastructure.module.ts`, `infrastructure/prisma/`, `infrastructure/auth/`
+
+Rationale: this enforces bounded-context locality across all layers and minimizes shared-file edit footprint when a single context is modified.
+
 ### 2-2. Execution Flow
 ```
 controller -> facade -> service -> repository (port) -> repository.impl (adapter)
@@ -71,7 +88,7 @@ When adding a new API, replicate the following file set. Refer to existing modul
 | Res DTO + Mapper | `src/app/interfaces/<ctx>/res/<name>.res.ts` |
 | Swagger Decorator | `src/app/interfaces/<ctx>/swagger/<ctx>.swagger.api.ts` |
 | (Optional) Guard / Current User | `src/app/interfaces/<ctx>/auth/*.ts` |
-| Facade | `src/app/application/<name>.facade.ts` |
+| Facade | `src/app/application/<ctx>/<name>.facade.ts` |
 | Domain Service | `src/app/domain/<ctx>/service/<name>.service.ts` |
 | Repository (port) | `src/app/domain/<ctx>/repository/<name>.repository.ts` |
 | Repository (impl) | `src/app/infrastructure/repository/<ctx>/persistence/<name>.repository.impl.ts` |
@@ -110,3 +127,4 @@ Follow this order (Domain first, Interfaces last):
 - Do not return Prisma rows directly from repositories; map them to domain entities.
 - Do not import internal files from other bounded contexts directly.
 - Do not create context-specific error classes if they can be represented by `DomainError + ErrorCode`.
+- Do not place domain-specific files directly under a layer root (e.g., `application/foo.facade.ts`). They MUST live under a `<ctx>/` subdirectory (e.g., `application/foo/foo.facade.ts`). Only cross-cutting modules (`common`, `exception`, `prisma`, root module files) are allowed flat.
