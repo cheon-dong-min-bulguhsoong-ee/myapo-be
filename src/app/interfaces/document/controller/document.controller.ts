@@ -2,9 +2,12 @@ import {Body, Controller, Post} from '@nestjs/common';
 import {DocumentFacade} from '../../../application/document/document.facade';
 import {CommonRes} from '../../common/common-res';
 import {CurrentUserId} from '../auth/current-user-id.decorator';
+import {ApproveDocumentReq} from '../req/approve-document.req';
 import {CreateDocumentReq} from '../req/create-document.req';
+import {ApproveDocumentRes} from '../res/approve-document.res';
 import {CreateDocumentRes} from '../res/create-document.res';
 import {
+    ApproveDocumentSwaggerApi,
     CreateDocumentSwaggerApi,
     DocumentApiTags,
 } from '../swagger/document.swagger.api';
@@ -21,10 +24,17 @@ export class DocumentController {
         @CurrentUserId() userId: bigint,
         @Body() request: CreateDocumentReq,
     ): Promise<CommonRes<CreateDocumentRes>> {
-        const result = await this.documentFacade.create(
-            userId,
-            request.documentTypeCode,
-        );
-        return CommonRes.success(CreateDocumentRes.from(result));
+        const response = await this.documentFacade.create(request, userId);
+        return CommonRes.success(response);
+    }
+
+    @Post('approvals')
+    @ApproveDocumentSwaggerApi()
+    async approve(
+        @CurrentUserId() userId: bigint,
+        @Body() request: ApproveDocumentReq,
+    ): Promise<CommonRes<ApproveDocumentRes>> {
+        const response = await this.documentFacade.approve(request, userId);
+        return CommonRes.success(response);
     }
 }
