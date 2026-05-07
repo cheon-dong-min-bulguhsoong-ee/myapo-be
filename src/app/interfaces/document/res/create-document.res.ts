@@ -33,8 +33,8 @@ export class CreateDocumentRes {
 
   @ApiProperty({
     enum: DocumentStage,
-    description: '신규 생성 직후이므로 항상 RECEIVED',
-    example: DocumentStage.RECEIVED,
+    description: '신규 생성 직후이므로 항상 AUTHORITY_ISSUED',
+    example: DocumentStage.AUTHORITY_ISSUED,
   })
   readonly currentStage: DocumentStage;
 

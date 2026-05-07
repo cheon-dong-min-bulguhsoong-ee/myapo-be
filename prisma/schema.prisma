@@ -92,13 +92,18 @@ model DocumentType {
 // ─────────────────────────────────────────────────────────────────────
 // Document · 발급된 문서 (6상태 통합: PROGRESS · AWAITING_APPROVAL · VALID · EXPIRED · REVOKED · FAILED)
 //
-// 발급 흐름:
-//   - Stage RECEIVED      = 기관 자동 발급 (사용자 서명 X)
-//   - Stage PRE_REVIEW    = 서류도착 → user 승인 필요  (#1)
-//   - Stage TRANSLATING   = 번역/공증 → user 승인 필요  (#2)
-//   - Stage NOTARIZING    = 아포스티유 발급 → user 승인 필요  (#3)
-//   - Stage ISSUED        = 사용자 지갑 저장 → user CredentialAccept (#4)
-//   총 4번의 user 서명 → 모두 끝나면 status=VALID.
+// 발급 흐름 (5 stage · 4 transition):
+//   Stage 1) AUTHORITY_ISSUED      = 기관 발급
+//        ↓ 크리덴셜 생성 → user 승인  (#1)
+//   Stage 2) DOCUMENT_ARRIVED      = 서류 도착
+//        ↓ 크리덴셜 생성 → user 승인  (#2)
+//   Stage 3) TRANSLATED_NOTARIZED  = 번역/공증
+//        ↓ 크리덴셜 생성 → user 승인  (#3)
+//   Stage 4) APOSTILLE_ISSUED      = 아포스티유 발급
+//        ↓ 크리덴셜 생성 → user 승인  (#4 · CredentialAccept)
+//   Stage 5) WALLET_STORED         = 사용자 지갑 저장 (종착지, status=VALID)
+//
+//   총 4번의 user 서명(stage 전이마다 1번) → 모두 끝나면 status=VALID.
 //   각 서명 이벤트는 document_approvals 1:N 으로 누적.
 // ─────────────────────────────────────────────────────────────────────
 
@@ -108,7 +113,7 @@ model Document {
   userId            BigInt    @map("user_id")
   documentTypeCode  String    @map("document_type_code") @db.VarChar(40)
   status            String    @default("PROGRESS") @db.VarChar(20)
-  currentStage      String    @default("RECEIVED") @map("current_stage") @db.VarChar(20)
+  currentStage      String    @default("AUTHORITY_ISSUED") @map("current_stage") @db.VarChar(20)
   failureReason     String?   @map("failure_reason") @db.Text
   xrplCreateTxHash  String?   @map("xrpl_create_tx_hash") @db.Char(64)
   xrplLedgerIndex   BigInt?   @map("xrpl_ledger_index")
@@ -136,8 +141,13 @@ model Document {
 
 // ─────────────────────────────────────────────────────────────────────
 // DocumentApproval · 사용자 승인 이벤트 (한 문서당 4건 누적)
-//   각 승인 단계마다 user 가 자기 seed 로 서명한 XRPL TX 를 보관.
-//   COUNT(*) = 4 (또는 status=VALID 도달 조건) 이면 모든 단계 승인 완료.
+//   각 stage 전이(이전 stage → 다음 stage) 직전에 user 가 자기 seed 로 서명한 XRPL TX 를 보관.
+//   stage 컬럼에는 "승인이 통과시킨 다음 stage" 를 기록한다:
+//     #1 → DOCUMENT_ARRIVED      (AUTHORITY_ISSUED 진입 후 사용자 승인)
+//     #2 → TRANSLATED_NOTARIZED  (DOCUMENT_ARRIVED 진입 후 사용자 승인)
+//     #3 → APOSTILLE_ISSUED      (TRANSLATED_NOTARIZED 진입 후 사용자 승인)
+//     #4 → WALLET_STORED         (APOSTILLE_ISSUED 진입 후 CredentialAccept)
+//   COUNT(*) = 4 이면 status=VALID 도달.
 // ─────────────────────────────────────────────────────────────────────
 
 model DocumentApproval {
@@ -160,8 +170,9 @@ model DocumentApproval {
 
 // ─────────────────────────────────────────────────────────────────────
 // DocumentStage · 5단계 파이프라인 이벤트 로그 (TX#1~6 사슬)
-//   RECEIVED → PRE_REVIEW → TRANSLATING → NOTARIZING → ISSUED
-//   행 단위 = "이 단계가 시작/완료/실패했다" 이벤트. 한 문서당 N행 누적.
+//   AUTHORITY_ISSUED → DOCUMENT_ARRIVED → TRANSLATED_NOTARIZED → APOSTILLE_ISSUED → WALLET_STORED
+//   행 단위 = "이 단계가 시작/완료/실패했다" 이벤트. status = PENDING | IN_PROGRESS | DONE | FAILED.
+//   한 문서당 N행 누적되며, 최신 행이 documents.current_stage 와 동기화된다.
 // ─────────────────────────────────────────────────────────────────────
 
 model DocumentStage {
