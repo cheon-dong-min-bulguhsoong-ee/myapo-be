@@ -1,6 +1,7 @@
 import {applyDecorators} from '@nestjs/common';
 import {ApiHeader, ApiOperation, ApiTags} from '@nestjs/swagger';
 import {ApiCommonRes} from '../../common/api-common-res.decorator';
+import {AdvanceDocumentStageRes} from '../res/advance-document-stage.res';
 import {ApproveDocumentRes} from '../res/approve-document.res';
 import {CreateDocumentRes} from '../res/create-document.res';
 
@@ -56,4 +57,34 @@ export const ApproveDocumentSwaggerApi = (): MethodDecorator =>
             example: '1',
         }),
         ApiCommonRes(ApproveDocumentRes),
+    );
+
+export const AdvanceDocumentStageSwaggerApi = (): MethodDecorator =>
+    applyDecorators(
+        ApiOperation({
+            summary: '문서 단계 전이 (누적된 사용자 승인 기반 currentStage 진행)',
+            description:
+                '`POST /documents/approvals` 로 누적된 사용자 승인을 바탕으로 ' +
+                'documents.current_stage 를 다음 stage 로 1단계 전진시킨다.\n\n' +
+                '서버 처리:\n' +
+                '1) documents.current_stage 의 미완료 DocumentStage 이벤트를 DONE 으로 마감\n' +
+                '2) documents.current_stage 를 다음 stage 로 갱신 ' +
+                '(WALLET_STORED 도달 시 status=VALID, issuedAt=now)\n' +
+                '3) 다음 stage 의 DocumentStage 이벤트 신규 INSERT ' +
+                '(WALLET_STORED 는 종착지이므로 즉시 DONE)\n\n' +
+                '*제약*: ' +
+                '(1) 본인이 신청한 문서만 전이 가능. ' +
+                '(2) 이미 마지막 단계(WALLET_STORED) 에 도달한 문서는 거부. ' +
+                '(3) 다음 stage 에 대한 DocumentApproval 행이 없으면 거부 ' +
+                '(승인 없이 전이 불가).\n\n' +
+                '*임시 인증*: 현재는 `X-User-Id` 헤더로 사용자를 식별. JWT 가드 도입 시 제거 예정.',
+        }),
+        ApiHeader({
+            name: 'X-User-Id',
+            description:
+                '사용자 ID (임시 인증). JWT 가드 도입 시 제거 예정.',
+            required: true,
+            example: '1',
+        }),
+        ApiCommonRes(AdvanceDocumentStageRes),
     );
