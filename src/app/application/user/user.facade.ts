@@ -1,21 +1,25 @@
 import { Injectable } from '@nestjs/common';
+import { AuthService } from '../../domain/auth/service/auth.service';
 import { UserService } from '../../domain/user/service/user.service';
 import { RegisterUserReq } from '../../interfaces/user/req/register-user.req';
 import { UserRes } from '../../interfaces/user/res/user.res';
 
 @Injectable()
 export class UserFacade {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly authService: AuthService,
+  ) {}
 
   /**
-   * 사용자 가입/복구 처리.
+   * 사용자 가입/복구 처리 후 자체 JWT를 발행한다.
    */
   async register(
     req: RegisterUserReq,
-    auth: { verifier: string; verifierId: string },
-  ): Promise<UserRes> {
+    auth: { email: string; verifier: string; verifierId: string },
+  ): Promise<UserRes & { accessToken: string }> {
     const result = await this.userService.register({
-      email: req.email,
+      email: auth.email,
       name: req.name,
       nationality: req.nationality,
       xrplAddress: req.xrplAddress,
@@ -23,7 +27,16 @@ export class UserFacade {
       verifier: auth.verifier,
       verifierId: auth.verifierId,
     });
-    return UserRes.from(result);
+
+    const accessToken = await this.authService.issueAccessToken(
+      BigInt(result.id),
+      result.email,
+    );
+
+    return {
+      ...UserRes.from(result),
+      accessToken,
+    };
   }
 
   /**

@@ -53,6 +53,9 @@ export const ErrorCode = {
             400,
             'X-User-Id 헤더 형식이 올바르지 않습니다 (양의 정수).',
         ),
+        TOKEN_EXPIRED: define('AUTH_TOKEN_EXPIRED', 401, '토큰이 만료되었습니다.'),
+        TOKEN_INVALID: define('AUTH_TOKEN_INVALID', 401, '유효하지 않은 토큰입니다.'),
+        UNAUTHORIZED: define('AUTH_UNAUTHORIZED', 401, '인증되지 않은 요청입니다.'),
     },
     User: {
         USER_NOT_FOUND: define('USER_NOT_FOUND', 404, '사용자를 찾을 수 없습니다.'),
