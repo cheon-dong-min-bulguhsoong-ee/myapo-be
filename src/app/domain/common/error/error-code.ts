@@ -55,15 +55,23 @@ export const ErrorCode = {
         ),
     },
     User: {
-        USER_NOT_FOUND: define(
-            'USER_NOT_FOUND',
-            404,
-            '사용자를 찾을 수 없습니다.',
+        USER_NOT_FOUND: define('USER_NOT_FOUND', 404, '사용자를 찾을 수 없습니다.'),
+        EMAIL_DUPLICATED: define('USER_EMAIL_DUPLICATED', 409, '이미 사용 중인 이메일입니다.'),
+        WALLET_DUPLICATED: define('USER_WALLET_DUPLICATED', 409, '이미 등록된 지갑 주소입니다.'),
+        VERIFIER_DUPLICATED: define(
+            'USER_VERIFIER_DUPLICATED',
+            409,
+            '이미 해당 소셜 계정으로 연결된 사용자가 존재합니다.',
         ),
-        USER_NOT_ACTIVE: define(
-            'USER_NOT_ACTIVE',
+        REACTIVATION_BLOCKED: define(
+            'USER_REACTIVATION_BLOCKED',
             403,
-            '사용자가 활성 상태가 아닙니다.',
+            '계정 복구 중 지갑 주소가 일치하지 않아 차단되었습니다.',
+        ),
+        INVALID_NATIONALITY: define(
+            'USER_INVALID_NATIONALITY',
+            400,
+            '올바르지 않은 국적 코드입니다.',
         ),
     },
     Document: {

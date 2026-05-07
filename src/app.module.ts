@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { InfrastructureModule } from './app/infrastructure/infrastructure.module';
 import { CommonModule } from './app/interfaces/common/common.module';
 import { DocumentModule } from './app/interfaces/document/document.module';
+import { UserModule } from './app/interfaces/user/user.module';
 
 @Module({
   imports: [
@@ -10,6 +11,7 @@ import { DocumentModule } from './app/interfaces/document/document.module';
     InfrastructureModule,
     CommonModule,
     DocumentModule,
+    UserModule,
   ],
 })
 export class AppModule {}
