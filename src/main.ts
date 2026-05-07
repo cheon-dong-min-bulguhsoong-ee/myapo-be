@@ -16,7 +16,7 @@ async function bootstrap(): Promise<void> {
 
     const swaggerConfig = new DocumentBuilder()
         .setTitle('MyApoBE API')
-        .setDescription('MyApo Backend (NestJS + Prisma, Clean Layered Architecture)')
+        .setDescription(`Provides an API for domains managed by the 'MyApo' backend.`)
         .setVersion('0.0.1')
         .addBearerAuth({type: 'http', scheme: 'bearer', bearerFormat: 'JWT'})
         .build();
@@ -29,4 +29,4 @@ async function bootstrap(): Promise<void> {
     console.log(`  Swagger UI: http://localhost:${port}/docs`);
 }
 
-bootstrap();
+void bootstrap();
