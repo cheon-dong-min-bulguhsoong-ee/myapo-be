@@ -3,6 +3,7 @@ import {randomUUID} from 'crypto';
 import {PersonaType} from '../../common/enum/persona-type.enum';
 import {DomainError} from '../../common/error/domain.error';
 import {ErrorCode} from '../../common/error/error-code';
+import {AdvanceDocumentStageResult} from '../dto/advance-document-stage.result';
 import {ApproveDocumentResult} from '../dto/approve-document.result';
 import {CreateDocumentResult} from '../dto/create-document.result';
 import {DocumentStage, nextDocumentStage} from '../enum/document-stage.enum';
@@ -76,8 +77,7 @@ export class DocumentService {
             requestedAt,
         });
 
-        // 첫 단계 이벤트. status=PENDING 인 이유:
-        // 워커가 큐에서 집어 올려 IN_PROGRESS 로 전이시키기 전이므로 "대기" 상태.
+        // 첫번째 단계 : PENDING -> 이후 유저가 승인 할 경우나 로직 진행할때 IN_PROGRESS 처리 진행 (DB 상태 추적용)
         await this.documentStageRepository.create({
             documentId: document.id,
             stage: DocumentStage.AUTHORITY_ISSUED,
@@ -139,6 +139,90 @@ export class DocumentService {
             approval.stage,
             approval.xrplTxHash,
             approval.approvedAt,
+        );
+    }
+
+    /**
+     * 사용자 승인이 누적된 문서를 다음 stage 로 전이시킨다.
+     *
+     * 1) documentCode 로 Document 조회 + 소유자 검증
+     * 2) 다음 stage 계산 — 종착지(WALLET_STORED 다음) 면 거부
+     * 3) 다음 stage 에 대한 DocumentApproval 존재 검증 — 없으면 STAGE_NOT_APPROVED
+     * 4) 현 stage 의 미완료 DocumentStage 이벤트를 DONE 으로 마감
+     * 5) documents.current_stage 를 다음 stage 로 갱신.
+     *    WALLET_STORED 도달 시 status=VALID + issuedAt=now, 그 외엔 status=AWAITING_APPROVAL 유지
+     * 6) 다음 stage 의 DocumentStage 이벤트 신규 INSERT
+     *    (WALLET_STORED 는 종착지이므로 startedAt+completedAt 모두 채워 DONE 으로 기록)
+     *
+     * 트랜잭션 래핑은 일단 안 함 — 기존 create 흐름과 일관 (PrismaService 트랜잭션 추상화 도입 시 일괄 묶을 것).
+     */
+    async advanceStage(
+        userId: bigint,
+        documentCode: string,
+    ): Promise<AdvanceDocumentStageResult> {
+        const document = await this.documentRepository.findByCode(documentCode);
+        if (document === null) {
+            throw new DomainError(ErrorCode.Document.NOT_FOUND, {documentCode});
+        }
+        if (document.userId !== userId) {
+            throw new DomainError(ErrorCode.Document.NOT_OWNED, {documentCode});
+        }
+
+        const nextStage = nextDocumentStage(document.currentStage);
+        if (nextStage === null) {
+            throw new DomainError(ErrorCode.Document.ALREADY_FINAL_STAGE, {
+                documentCode,
+                currentStage: document.currentStage,
+            });
+        }
+
+        const approval =
+            await this.documentApprovalRepository.findByDocumentIdAndStage(
+                document.id,
+                nextStage,
+            );
+        if (approval === null) {
+            throw new DomainError(ErrorCode.Document.STAGE_NOT_APPROVED, {
+                documentCode,
+                nextStage,
+            });
+        }
+
+        const now = new Date();
+        const isFinal = nextStage === DocumentStage.WALLET_STORED;
+        const nextStatus = isFinal
+            ? DocumentStatus.VALID
+            : DocumentStatus.AWAITING_APPROVAL;
+        const issuedAt = isFinal ? now : null;
+
+        await this.documentStageRepository.completeActive(
+            document.id,
+            document.currentStage,
+            now,
+        );
+
+        const updated = await this.documentRepository.updateStage(document.id, {
+            currentStage: nextStage,
+            status: nextStatus,
+            issuedAt,
+        });
+
+        await this.documentStageRepository.create({
+            documentId: document.id,
+            stage: nextStage,
+            // WALLET_STORED 는 종착지 — 별도 마감 트리거 없으므로 즉시 DONE.
+            status: isFinal
+                ? DocumentStageStatus.DONE
+                : DocumentStageStatus.PENDING,
+            startedAt: now,
+            completedAt: isFinal ? now : null,
+        });
+
+        return new AdvanceDocumentStageResult(
+            updated.documentCode,
+            updated.currentStage,
+            updated.status,
+            updated.issuedAt,
         );
     }
 }

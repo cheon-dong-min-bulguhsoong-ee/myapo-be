@@ -11,8 +11,19 @@ export interface CreateDocumentInput {
     requestedAt: Date;
 }
 
+export interface UpdateDocumentStageInput {
+    currentStage: DocumentStage;
+    status: DocumentStatus;
+    issuedAt: Date | null;
+}
+
 export abstract class DocumentRepository {
     abstract create(input: CreateDocumentInput): Promise<Document>;
 
     abstract findByCode(documentCode: string): Promise<Document | null>;
+
+    abstract updateStage(
+        documentId: bigint,
+        input: UpdateDocumentStageInput,
+    ): Promise<Document>;
 }

@@ -10,4 +10,9 @@ export interface CreateDocumentApprovalInput {
 
 export abstract class DocumentApprovalRepository {
     abstract create(input: CreateDocumentApprovalInput): Promise<DocumentApproval>;
+
+    abstract findByDocumentIdAndStage(
+        documentId: bigint,
+        stage: DocumentStage,
+    ): Promise<DocumentApproval | null>;
 }
