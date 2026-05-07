@@ -1,18 +1,21 @@
 import {Injectable} from '@nestjs/common';
-import {CreateDocumentCommand} from '../../domain/document/dto/create-document.command';
-import {CreateDocumentResult} from '../../domain/document/dto/create-document.result';
 import {DocumentService} from '../../domain/document/service/document.service';
 import {UserService} from '../../domain/user/service/user.service';
+import {ApproveDocumentReq} from '../../interfaces/document/req/approve-document.req';
+import {CreateDocumentReq} from '../../interfaces/document/req/create-document.req';
+import {ApproveDocumentRes} from '../../interfaces/document/res/approve-document.res';
+import {CreateDocumentRes} from '../../interfaces/document/res/create-document.res';
 
 /**
  * 문서 도메인 Facade — 컨텍스트의 모든 유스케이스 메서드를 모은다.
  *
- * 도메인 서비스 여러 개를 묶어서 유스케이스 한 번을 구성:
- *   - UserService.getActive  — 활성 사용자 검증 + 조회
- *   - DocumentService.create — 문서 발급 + 첫 단계 이벤트 INSERT
+ * 책임:
+ *   - 인터페이스 레이어의 Request 를 받아 도메인 입력으로 풀어 service 호출
+ *   - 도메인 Result 를 Response 로 매핑(`Res.from(domainResult)`)해서 반환
+ *   - 도메인 service 여러 개 조합해 한 유스케이스 구성
  *
- * 에러는 catch 하지 않고 그대로 흘려보낸다.
- * 글로벌 ApiExceptionHandler 가 DomainError 를 일괄 처리.
+ * Command/Query 같은 별도 DTO 를 도입하지 않는다 — Request 가 인풋 carrier 역할.
+ * DomainError 는 catch 하지 않는다(글로벌 핸들러로 흐름).
  */
 @Injectable()
 export class DocumentFacade {
@@ -23,13 +26,28 @@ export class DocumentFacade {
     }
 
     async create(
+        request: CreateDocumentReq,
         userId: bigint,
-        documentTypeCode: string,
-    ): Promise<CreateDocumentResult> {
+    ): Promise<CreateDocumentRes> {
         const user = await this.userService.getActive(userId);
-        return await this.documentService.create(
-            new CreateDocumentCommand(userId, documentTypeCode),
+        const result = await this.documentService.create(
+            userId,
+            request.documentTypeCode,
             user.personaType,
         );
+        return CreateDocumentRes.from(result);
+    }
+
+    async approve(
+        request: ApproveDocumentReq,
+        userId: bigint,
+    ): Promise<ApproveDocumentRes> {
+        await this.userService.getActive(userId);
+        const result = await this.documentService.approve(
+            userId,
+            request.documentCode,
+            request.xrplTxHash,
+        );
+        return ApproveDocumentRes.from(result);
     }
 }
