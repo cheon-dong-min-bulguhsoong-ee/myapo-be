@@ -1,14 +1,39 @@
 {
-  "currentTask": "Documentation Refactoring & Context Optimization",
-  "taskClass": "refactor",
-  "impactedDomains": ["system"],
+  "currentTask": "User Domain Implementation",
+  "taskClass": "feature",
+  "impactedDomains": ["user", "document"],
   "step": "complete",
-  "completedSteps": ["analyze-task", "classify-task", "select-documents", "load-documents", "Phase 1: Workflow Extraction", "Phase 2: Rules Consolidation", "Phase 3: Orchestrator Rewrite"],
-  "selectedDocuments": [".orchestrator.md", "testing.md", "coding-convention.md"],
+  "completedSteps": [
+    "analyze-task",
+    "load-documents",
+    "bootstrapping-specs",
+    "adr-interview",
+    "domain-entity-implementation",
+    "domain-service-implementation",
+    "infrastructure-repository-implementation",
+    "interfaces-layer-implementation",
+    "integration-and-build-fix"
+  ],
+  "selectedDocuments": [
+    "software-architecture.md",
+    "coding-convention.md",
+    "naming-convention.md",
+    "adr-001-user-registration-web3auth.md"
+  ],
   "artifacts": [
-    ".ai-agent-context/rules/agent-workflow.md",
-    ".ai-agent-context/rules/testing.md",
-    ".ai-agent-context/rules/coding-convention.md",
-    ".orchestrator.md"
+    "src/app/domain/user/entity/user.entity.ts",
+    "src/app/domain/user/entity/user-wallet.entity.ts",
+    "src/app/domain/user/enum/verifier-type.enum.ts",
+    "src/app/domain/user/repository/user.repository.ts",
+    "src/app/domain/user/service/user.service.ts",
+    "src/app/infrastructure/repository/user/persistence/user.repository.impl.ts",
+    "src/app/application/user/user.facade.ts",
+    "src/app/interfaces/user/controller/user.controller.ts",
+    "src/app/interfaces/user/req/register-user.req.ts",
+    "src/app/interfaces/user/res/user.res.ts",
+    "src/app/interfaces/user/swagger/user.swagger.api.ts",
+    "src/app/interfaces/user/auth/current-user-id.decorator.ts",
+    "src/app/interfaces/user/auth/web3auth-info.decorator.ts",
+    "src/app/interfaces/user/user.module.ts"
   ]
 }
