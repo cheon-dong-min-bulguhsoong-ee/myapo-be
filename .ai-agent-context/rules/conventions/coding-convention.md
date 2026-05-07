@@ -23,17 +23,23 @@ General coding standards and patterns for the project.
 ## 3. Response Format
 - All controllers must return responses wrapped in `CommonRes<T>`.
 - Success: `CommonRes.success(data)` -> `{ success: true, code: null, message: null, data }`
-- Failure: Throwing `ApiException` will be automatically converted to `CommonRes.fail(...)` by the `ApiExceptionHandler`.
+- Failure: Any `DomainError` thrown will be automatically converted to `CommonRes.fail(...)` by the `ApiExceptionHandler`.
 
-## 4. Error Handling
-- Controllers and Facades throw `ApiException(ExceptionCode.<Group>.<NAME>, data?)`.
-- New error codes should be added to `interfaces/exception/exception-code.ts` in the `ExceptionCode` object. The `ERR_` prefix is automatically attached.
-- The Domain layer throws its own error classes (`<name>.error.ts`).
-- The Facade is responsible for catching domain errors and mapping them to `ApiException` using a private mapper.
+## 4. Error Handling (Common Error Model)
+- **Single Error Class**: Use `DomainError` from `domain/common/error/domain.error.ts`. This single class is used across all layers (Domain, Application, Interfaces).
+- **Single Catalog**: Use `ErrorCode` from `domain/common/error/error-code.ts`. Errors are categorized by groups (Common, Auth, User, Document, etc.).
+- **Global Handler**: The `ApiExceptionHandler` checks for `instanceof DomainError` and maps the `ErrorCode` (HTTP status, code, message) and optional data directly to the response.
+- **Prohibited**: Do NOT create context-specific error classes (e.g., `<name>.error.ts`) or use `ApiException`. Do NOT use try/catch in Facades to map errors; let `DomainError` flow to the global handler.
+
+Example:
+```ts
+throw new DomainError(ErrorCode.User.USER_NOT_FOUND, { userId: id.toString() });
+```
 
 ## 5. Swagger
-- Use composite decorators from `swagger/*.swagger.api.ts` instead of direct handlers.
-- Use `ApiCommonRes(XRes)` for the response schema.
+- Use composite decorators from `swagger/*.swagger.api.ts` instead of direct handlers in controllers.
+- Use `ApiCommonRes(XRes)` for the response schema to correctly represent the `data` field in `CommonRes<T>`.
+
 
 ## 6. Persistence & Prisma
 - Importing `@prisma/client` is ONLY allowed in `infrastructure/repository/**/persistence/*.impl.ts`.

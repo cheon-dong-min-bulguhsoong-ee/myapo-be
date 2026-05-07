@@ -100,7 +100,17 @@ If ambiguity occurs:
 - **MUST discuss with the user before proceeding (as stated in Core Principles).**
 - Final consensus and detailed plans MUST be recorded as a new ADR.
 
-## 6. Output & Reporting
+## 6. AI Behavior Principles
+
+When operating in this repository, follow these specialized principles:
+
+1. **Pattern Verification**: Before modifying code, select an existing module and read its entire file set (Controller, Facade, Service, Repository, etc.). If a pattern in the documentation seems to conflict with the "living code," the living code is the correct reference.
+2. **Bottom-Up Implementation**: Follow the API Addition Checklist in `software-architecture.md` (Domain first, Interfaces last).
+3. **Directory Integrity**: Always place new files in the exact directory structure defined in `software-architecture.md`. If the location is ambiguous, STOP and ask.
+4. **No Direct Migration**: Never run `prisma migrate`. If DB schema changes are needed, notify the user.
+5. **Context Confirmation**: When creating a new bounded context (`<ctx>`), confirm the name with the user first.
+
+## 7. Output & Reporting
 After completion, report the following:
 - Task class and impacted domains.
 - Selected documents used.
