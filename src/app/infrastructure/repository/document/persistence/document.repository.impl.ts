@@ -6,6 +6,7 @@ import {DocumentStatus} from '../../../../domain/document/enum/document-status.e
 import {
     CreateDocumentInput,
     DocumentRepository,
+    UpdateDocumentStageInput,
 } from '../../../../domain/document/repository/document.repository';
 import {PrismaService} from '../../../prisma/prisma.service';
 
@@ -34,6 +35,21 @@ export class DocumentRepositoryImpl extends DocumentRepository {
             where: {documentCode, isDelete: false},
         });
         return row === null ? null : this.toEntity(row);
+    }
+
+    async updateStage(
+        documentId: bigint,
+        input: UpdateDocumentStageInput,
+    ): Promise<Document> {
+        const row = await this.prisma.document.update({
+            where: {id: documentId},
+            data: {
+                currentStage: input.currentStage,
+                status: input.status,
+                issuedAt: input.issuedAt,
+            },
+        });
+        return this.toEntity(row);
     }
 
     private toEntity(row: DocumentRow): Document {

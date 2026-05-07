@@ -105,5 +105,10 @@ export const ErrorCode = {
             409,
             '해당 단계는 이미 승인되었습니다.',
         ),
+        STAGE_NOT_APPROVED: define(
+            'DOCUMENT_STAGE_NOT_APPROVED',
+            409,
+            '다음 단계에 대한 사용자 승인이 아직 없습니다.',
+        ),
     },
 } as const;
