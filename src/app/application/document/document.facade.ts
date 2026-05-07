@@ -1,10 +1,10 @@
 import {Injectable} from '@nestjs/common';
 import {DocumentService} from '../../domain/document/service/document.service';
-import {UserService} from '../../domain/user/service/user.service';
 import {ApproveDocumentReq} from '../../interfaces/document/req/approve-document.req';
 import {CreateDocumentReq} from '../../interfaces/document/req/create-document.req';
 import {ApproveDocumentRes} from '../../interfaces/document/res/approve-document.res';
 import {CreateDocumentRes} from '../../interfaces/document/res/create-document.res';
+import {PersonaType} from "../../domain/common/enum/persona-type.enum";
 
 /**
  * 문서 도메인 Facade — 컨텍스트의 모든 유스케이스 메서드를 모은다.
@@ -20,7 +20,6 @@ import {CreateDocumentRes} from '../../interfaces/document/res/create-document.r
 @Injectable()
 export class DocumentFacade {
     constructor(
-        private readonly userService: UserService,
         private readonly documentService: DocumentService,
     ) {
     }
@@ -29,11 +28,10 @@ export class DocumentFacade {
         request: CreateDocumentReq,
         userId: bigint,
     ): Promise<CreateDocumentRes> {
-        const user = await this.userService.getActive(userId);
         const result = await this.documentService.create(
             userId,
             request.documentTypeCode,
-            user.personaType,
+            PersonaType.FOREIGNER // 임시 에러 처리
         );
         return CreateDocumentRes.from(result);
     }
@@ -42,7 +40,6 @@ export class DocumentFacade {
         request: ApproveDocumentReq,
         userId: bigint,
     ): Promise<ApproveDocumentRes> {
-        await this.userService.getActive(userId);
         const result = await this.documentService.approve(
             userId,
             request.documentCode,
