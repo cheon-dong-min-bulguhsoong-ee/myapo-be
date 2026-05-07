@@ -72,12 +72,17 @@ temp/
 *.bak
 
 # --- Prisma ---
-# 본 프로젝트는 prisma migrate를 사용하지 않습니다 (외부 관리 스키마).
-# generate 산출물(node_modules/.prisma)은 자동 무시됩니다.
 prisma/migrations/dev/
 prisma/*.db
 prisma/*.db-journal
 
-## AI 관련
+## --- AI metadatas ---
 .omc
 .claude
+.gemini
+.codex
+
+## --- AI init contexts by environment (example: claude.local.md) ---
+CLAUDE.**.md
+CODEX.**.md
+GEMINI.**.md 
