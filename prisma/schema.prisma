@@ -14,30 +14,55 @@ datasource db {
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// User · 앱 로그인 (이메일 + 비밀번호)
-//   지갑은 non-custodial — 사용자 디바이스에서 seed 생성/보관, 서버는 주소만 안다
+// User · 웹/앱 로그인 (Web3Auth Login Provider = GOOGLE | KAKAO | LINE | NAVER)
+//   지갑은 self-custodial — 사용자 디바이스에서 seed 생성/보관, 서버는 주소와 검증을 위한 정보만 저장
 // ─────────────────────────────────────────────────────────────────────
-
 model User {
-  id           BigInt    @id @default(autoincrement())
-  email        String    @unique @db.VarChar(255)
-  passwordHash String    @map("password_hash") @db.VarChar(255)
-  name         String    @db.VarChar(50)
-  nationality  String    @db.VarChar(2)
-  personaType  String    @default("KOREAN") @map("persona_type") @db.VarChar(20)
-  xrplAddress  String    @unique @map("xrpl_address") @db.VarChar(35)
-  status       String    @default("ACTIVE") @db.VarChar(20)
-  alias        String?   @db.VarChar(40)
-  lastLoginAt  DateTime? @map("last_login_at") @db.Timestamp(0)
-  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
-  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
-  isDelete     Boolean   @default(false) @map("is_delete")
+  id          BigInt @id @default(autoincrement())
+  email       String @unique @db.VarChar(255)
+  name        String @db.VarChar(50)
+  nationality String @db.VarChar(2)
+  status      String @default("ACTIVE") @db.VarChar(20)
 
-  documents Document[]
+  lastLoginAt DateTime? @map("last_login_at") @db.Timestamptz(0)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(0)
+  isDelete    Boolean   @default(false) @map("is_delete")
+
+  documents  Document[]
+  userWallet UserWallet? // 1:1 관계 정의
 
   @@index([status], map: "idx_users_status")
-  @@index([xrplAddress], map: "idx_users_xrpl_address")
   @@map("users")
+  @@schema("tosalpee")
+}
+
+model UserWallet {
+  id     BigInt @id @default(autoincrement())
+  userId BigInt @unique @map("user_id") // 여기서 1:1 관계가 강제됨
+
+  // Web3Auth 인증 핵심 식별자
+  // verifier: "google", "kakao" 등 / verifierId: Web3Auth에서 제공하는 고유 식별값 (sub)
+  verifier   String @db.VarChar(20)
+  verifierId String @map("verifier_id") @db.VarChar(255)
+
+  // XRPL 정보 및 검증 필드
+  xrplAddress String @unique @map("xrpl_address") @db.VarChar(35)
+  publicKey   String @map("public_key") @db.VarChar(66) // 서버사이드 서명 검증을 위한 필수 데이터
+
+  status      String   @default("ACTIVE") @db.VarChar(20)
+  requestedAt DateTime @default(now()) @map("requested_at") @db.Timestamptz(0)
+  activatedAt DateTime @default(now()) @map("activated_at") @db.Timestamptz(0)
+
+  // updatedAt은 상태 변경 추적 및 보안 감사를 위해 반드시 필요함
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 특정 소셜 계정이 다른 User와 연결되는 것을 방지
+  @@unique([verifier, verifierId], map: "idx_user_wallets_verifier_composite")
+  @@index([xrplAddress], map: "idx_user_wallets_xrpl_address")
+  @@map("user_wallets")
   @@schema("tosalpee")
 }
 
@@ -103,26 +128,26 @@ model DocumentType {
 // ─────────────────────────────────────────────────────────────────────
 
 model Document {
-  id                BigInt    @id @default(autoincrement())
-  documentCode      String    @unique @map("document_code") @db.Uuid
-  userId            BigInt    @map("user_id")
-  documentTypeCode  String    @map("document_type_code") @db.VarChar(40)
-  status            String    @default("PROGRESS") @db.VarChar(20)
-  currentStage      String    @default("RECEIVED") @map("current_stage") @db.VarChar(20)
-  failureReason     String?   @map("failure_reason") @db.Text
-  xrplCreateTxHash  String?   @map("xrpl_create_tx_hash") @db.Char(64)
-  xrplLedgerIndex   BigInt?   @map("xrpl_ledger_index")
-  payloadHash       String?   @map("payload_hash") @db.Char(64)
-  requestedAt       DateTime  @default(now()) @map("requested_at") @db.Timestamp(0)
-  issuedAt          DateTime? @map("issued_at") @db.Timestamp(0)
-  expiresAt         DateTime? @map("expires_at") @db.Timestamp(0)
-  revokedAt         DateTime? @map("revoked_at") @db.Timestamp(0)
-  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
-  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
-  isDelete          Boolean   @default(false) @map("is_delete")
+  id               BigInt    @id @default(autoincrement())
+  documentCode     String    @unique @map("document_code") @db.Uuid
+  userId           BigInt    @map("user_id")
+  documentTypeCode String    @map("document_type_code") @db.VarChar(40)
+  status           String    @default("PROGRESS") @db.VarChar(20)
+  currentStage     String    @default("RECEIVED") @map("current_stage") @db.VarChar(20)
+  failureReason    String?   @map("failure_reason") @db.Text
+  xrplCreateTxHash String?   @map("xrpl_create_tx_hash") @db.Char(64)
+  xrplLedgerIndex  BigInt?   @map("xrpl_ledger_index")
+  payloadHash      String?   @map("payload_hash") @db.Char(64)
+  requestedAt      DateTime  @default(now()) @map("requested_at") @db.Timestamp(0)
+  issuedAt         DateTime? @map("issued_at") @db.Timestamp(0)
+  expiresAt        DateTime? @map("expires_at") @db.Timestamp(0)
+  revokedAt        DateTime? @map("revoked_at") @db.Timestamp(0)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+  isDelete         Boolean   @default(false) @map("is_delete")
 
-  user         User                @relation(fields: [userId], references: [id])
-  documentType DocumentType        @relation(fields: [documentTypeCode], references: [code])
+  user         User               @relation(fields: [userId], references: [id])
+  documentType DocumentType       @relation(fields: [documentTypeCode], references: [code])
   stages       DocumentStage[]
   approvals    DocumentApproval[]
 
@@ -141,14 +166,14 @@ model Document {
 // ─────────────────────────────────────────────────────────────────────
 
 model DocumentApproval {
-  id          BigInt   @id @default(autoincrement())
-  documentId  BigInt   @map("document_id")
-  stage       String   @db.VarChar(20)
-  xrplTxHash  String   @map("xrpl_tx_hash") @db.Char(64)
-  approvedAt  DateTime @map("approved_at") @db.Timestamp(0)
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(0)
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
-  isDelete    Boolean  @default(false) @map("is_delete")
+  id         BigInt   @id @default(autoincrement())
+  documentId BigInt   @map("document_id")
+  stage      String   @db.VarChar(20)
+  xrplTxHash String   @map("xrpl_tx_hash") @db.Char(64)
+  approvedAt DateTime @map("approved_at") @db.Timestamp(0)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+  isDelete   Boolean  @default(false) @map("is_delete")
 
   document Document @relation(fields: [documentId], references: [id])
 
