@@ -1,8 +1,8 @@
-import { Module } from '@nestjs/common';
-import { DocumentFacade } from '../../application/document.facade';
-import { DocumentService } from '../../domain/document/service/document.service';
-import { UserService } from '../../domain/user/service/user.service';
-import { DocumentController } from './controller/document.controller';
+import {Module} from '@nestjs/common';
+import {DocumentFacade} from '../../application/document/document.facade';
+import {DocumentService} from '../../domain/document/service/document.service';
+import {UserService} from '../../domain/user/service/user.service';
+import {DocumentController} from './controller/document.controller';
 
 /**
  * 문서 도메인 wiring.
@@ -15,7 +15,8 @@ import { DocumentController } from './controller/document.controller';
  * Repository 포트 → impl binding 은 InfrastructureModule (Global) 에서 일괄 처리.
  */
 @Module({
-  controllers: [DocumentController],
-  providers: [DocumentService, UserService, DocumentFacade],
+    controllers: [DocumentController],
+    providers: [DocumentService, UserService, DocumentFacade],
 })
-export class DocumentModule {}
+export class DocumentModule {
+}
