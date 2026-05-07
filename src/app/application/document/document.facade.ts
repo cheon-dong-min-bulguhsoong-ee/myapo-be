@@ -1,13 +1,12 @@
 import {Injectable} from '@nestjs/common';
 import {DocumentService} from '../../domain/document/service/document.service';
+import {UserService} from '../../domain/user/service/user.service';
 import {AdvanceDocumentStageReq} from '../../interfaces/document/req/advance-document-stage.req';
 import {ApproveDocumentReq} from '../../interfaces/document/req/approve-document.req';
 import {CreateDocumentReq} from '../../interfaces/document/req/create-document.req';
 import {AdvanceDocumentStageRes} from '../../interfaces/document/res/advance-document-stage.res';
 import {ApproveDocumentRes} from '../../interfaces/document/res/approve-document.res';
 import {CreateDocumentRes} from '../../interfaces/document/res/create-document.res';
-import {PersonaType} from "../../domain/common/enum/persona-type.enum";
-import {UserService} from "../../domain/user/service/user.service";
 
 /**
  * 문서 도메인 Facade — 컨텍스트의 모든 유스케이스 메서드를 모은다.
@@ -32,10 +31,11 @@ export class DocumentFacade {
         request: CreateDocumentReq,
         userId: bigint,
     ): Promise<CreateDocumentRes> {
+        const user = await this.userService.getActive(userId);
         const result = await this.documentService.create(
             userId,
             request.documentTypeCode,
-            PersonaType.FOREIGNER // 임시 에러 처리
+            user.personaType,
         );
         return CreateDocumentRes.from(result);
     }
@@ -44,6 +44,7 @@ export class DocumentFacade {
         request: ApproveDocumentReq,
         userId: bigint,
     ): Promise<ApproveDocumentRes> {
+        await this.userService.getActive(userId);
         const result = await this.documentService.approve(
             userId,
             request.documentCode,
@@ -56,6 +57,7 @@ export class DocumentFacade {
         request: AdvanceDocumentStageReq,
         userId: bigint,
     ): Promise<AdvanceDocumentStageRes> {
+        await this.userService.getActive(userId);
         const result = await this.documentService.advanceStage(
             userId,
             request.documentCode,
