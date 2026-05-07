@@ -42,3 +42,8 @@ export class UserRes {
     };
   }
 }
+
+export class RegisterUserRes extends UserRes {
+  @ApiProperty()
+  readonly accessToken!: string;
+}

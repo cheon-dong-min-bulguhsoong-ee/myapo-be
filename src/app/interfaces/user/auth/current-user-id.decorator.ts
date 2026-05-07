@@ -10,6 +10,14 @@ import { ErrorCode } from '../../../domain/common/error/error-code';
 export const CurrentUserId = createParamDecorator(
   (_data: unknown, ctx: ExecutionContext): bigint => {
     const request = ctx.switchToHttp().getRequest<Request>();
+    
+    // 1. JwtAuthGuard가 주입한 유저 정보 확인
+    const user = (request as any).user;
+    if (user && user.id) {
+      return BigInt(user.id);
+    }
+
+    // 2. Legacy/Test를 위한 X-User-Id 헤더 확인
     const raw = request.header('x-user-id');
     if (raw === undefined || raw === '') {
       throw new DomainError(ErrorCode.Auth.USER_HEADER_MISSING);
