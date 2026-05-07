@@ -4,9 +4,10 @@ import { DocumentStatus } from '../enum/document-status.enum';
 /**
  * 발급된 문서.
  *
- * 사용자 서명은 단계별 4번 (PRE_REVIEW · TRANSLATING · NOTARIZING · ISSUED) 누적.
- * 각 서명은 document_approvals 테이블에 1행씩 — 이 entity 에는 단일 컬럼 없음.
- * "모든 승인 완료 여부" = approvals 4개 모두 존재 = status=VALID.
+ * 5개 stage(AUTHORITY_ISSUED · DOCUMENT_ARRIVED · TRANSLATED_NOTARIZED · APOSTILLE_ISSUED · WALLET_STORED)를
+ * 순차로 거치며, 각 stage 사이마다 "크리덴셜 생성 → 사용자 승인" 사이클이 1번씩 발생한다.
+ * 사용자 서명은 stage 전이 4번 누적되어 document_approvals 에 4행으로 쌓이고,
+ * 모든 승인 완료(approvals 4건) 시 status=VALID 로 도달한다.
  */
 export class Document {
   constructor(

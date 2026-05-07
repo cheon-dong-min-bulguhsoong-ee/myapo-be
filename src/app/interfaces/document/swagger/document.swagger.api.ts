@@ -16,8 +16,8 @@ export const CreateDocumentSwaggerApi = (): MethodDecorator =>
       summary: '문서 발급 신청 (Document 생성 + 5단계 파이프라인 시작)',
       description:
         '사용자가 문서 카탈로그에서 한 종류를 선택해 발급을 신청한다. ' +
-        '한 트랜잭션으로 Document(status=PROGRESS, currentStage=RECEIVED) 행과 ' +
-        '첫 DocumentStage 이벤트(stage=RECEIVED, status=PENDING) 가 함께 INSERT 된다. ' +
+        '한 트랜잭션으로 Document(status=PROGRESS, currentStage=AUTHORITY_ISSUED) 행과 ' +
+        '첫 DocumentStage 이벤트(stage=AUTHORITY_ISSUED, status=PENDING) 가 함께 INSERT 된다. ' +
         '이후 단계는 별도 워커가 순차적으로 처리한다.\n\n' +
         '*임시 인증*: 현재는 `X-User-Id` 헤더로 사용자를 식별한다. ' +
         '로그인/JWT 가드 도입 시 헤더 대신 인증 토큰에서 추출되도록 교체될 예정.',
