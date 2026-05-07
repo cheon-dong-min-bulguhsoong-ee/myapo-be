@@ -22,7 +22,6 @@ model User {
   email       String @unique @db.VarChar(255)
   name        String @db.VarChar(50)
   nationality String @db.VarChar(2)
-  status      String @default("ACTIVE") @db.VarChar(20)
 
   lastLoginAt DateTime? @map("last_login_at") @db.Timestamptz(0)
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
@@ -32,7 +31,6 @@ model User {
   documents  Document[]
   userWallet UserWallet? // 1:1 관계 정의
 
-  @@index([status], map: "idx_users_status")
   @@map("users")
   @@schema("tosalpee")
 }
@@ -50,7 +48,6 @@ model UserWallet {
   xrplAddress String @unique @map("xrpl_address") @db.VarChar(35)
   publicKey   String @map("public_key") @db.VarChar(66) // 서버사이드 서명 검증을 위한 필수 데이터
 
-  status      String   @default("ACTIVE") @db.VarChar(20)
   requestedAt DateTime @default(now()) @map("requested_at") @db.Timestamptz(0)
   activatedAt DateTime @default(now()) @map("activated_at") @db.Timestamptz(0)
 
