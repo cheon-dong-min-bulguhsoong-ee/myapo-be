@@ -345,6 +345,22 @@ CREATE INDEX IF NOT EXISTS idx_credential_issue_requests_status_stage
     ON tosalpee.credential_issue_requests (status, current_stage);
 
 COMMENT ON TABLE tosalpee.credential_issue_requests IS 'Credential 발급 요청. 최신 MVP 5-stage pipeline 상태와 Auth event id 참조를 저장.';
+COMMENT ON COLUMN tosalpee.credential_issue_requests.id                 IS '내부 PK. 외부 API 응답에는 노출하지 않는다.';
+COMMENT ON COLUMN tosalpee.credential_issue_requests.issue_request_code IS '외부 노출용 발급 요청 UUID. API path/response에서 issueRequestId로 사용한다.';
+COMMENT ON COLUMN tosalpee.credential_issue_requests.user_id            IS '발급 요청 사용자 FK — users(id). Internal JWT에서 식별된 사용자와 매칭된다.';
+COMMENT ON COLUMN tosalpee.credential_issue_requests.document_type_code IS '요청한 문서/credential 종류 코드 — document_types(code).';
+COMMENT ON COLUMN tosalpee.credential_issue_requests.document_id        IS '원본 Document 또는 외부 문서 참조 id. Document 연동 확정 전까지 nullable reference로 보관한다.';
+COMMENT ON COLUMN tosalpee.credential_issue_requests.status             IS '발급 요청 상태. 예: ISSUING | USER_APPROVAL_REQUIRED | ISSUED | FAILED | REVOKED.';
+COMMENT ON COLUMN tosalpee.credential_issue_requests.current_stage      IS '5-stage 발급 파이프라인 현재 단계. 예: RECEIVED | PRE_REVIEW | TRANSLATION_REVIEW | NOTARY_SIGNATURE | ISSUED.';
+COMMENT ON COLUMN tosalpee.credential_issue_requests.current_substep    IS '현재 단계의 선택적 하위 작업. 예: CREDENTIAL_CREATION | USER_APPROVAL.';
+COMMENT ON COLUMN tosalpee.credential_issue_requests.auth_event_id      IS 'Auth bounded context가 소유한 heavy-action 인증 이벤트 id 참조. raw CI/JWT는 저장하지 않는다.';
+COMMENT ON COLUMN tosalpee.credential_issue_requests.requested_at       IS '사용자가 발급 요청을 생성한 시각.';
+COMMENT ON COLUMN tosalpee.credential_issue_requests.issued_at          IS '발급 완료 시각. 발급 전 또는 실패 시 NULL일 수 있다.';
+COMMENT ON COLUMN tosalpee.credential_issue_requests.failed_at          IS '발급 실패 시각. 실패 전에는 NULL.';
+COMMENT ON COLUMN tosalpee.credential_issue_requests.failure_reason     IS '발급 실패 사유. status=FAILED일 때 주로 사용한다.';
+COMMENT ON COLUMN tosalpee.credential_issue_requests.created_at         IS '레코드 생성 시각.';
+COMMENT ON COLUMN tosalpee.credential_issue_requests.updated_at         IS '레코드 마지막 갱신 시각.';
+COMMENT ON COLUMN tosalpee.credential_issue_requests.is_delete          IS 'Soft-delete 플래그. true면 일반 조회에서 제외한다.';
 
 
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -399,8 +415,36 @@ CREATE INDEX IF NOT EXISTS idx_credentials_status_expires
     ON tosalpee.credentials (status, expires_at);
 
 COMMENT ON TABLE tosalpee.credentials IS '사용자 재사용 Credential. XRP Testnet evidence와 local mock fallback을 구분한다.';
-COMMENT ON COLUMN tosalpee.credentials.is_mock IS 'true면 local mock fallback, false면 validated XRP Testnet evidence 기반.';
-COMMENT ON COLUMN tosalpee.credentials.xrpl_tx_hash IS '최신 관련 XRP Testnet transaction hash. Mainnet finality를 의미하지 않음.';
+COMMENT ON COLUMN tosalpee.credentials.id                   IS '내부 PK. 외부 API 응답에는 노출하지 않는다.';
+COMMENT ON COLUMN tosalpee.credentials.credential_code      IS '외부 노출용 Credential UUID. API path/response에서 credentialId로 사용한다.';
+COMMENT ON COLUMN tosalpee.credentials.issue_request_id     IS 'Credential을 생성한 발급 요청 FK — credential_issue_requests(id). 한 발급 요청은 하나의 Credential만 생성한다.';
+COMMENT ON COLUMN tosalpee.credentials.issue_request_code   IS '발급 요청 외부 UUID의 denormalized copy. 목록/응답 매핑 최적화를 위한 값이다.';
+COMMENT ON COLUMN tosalpee.credentials.user_id              IS 'Credential 소유 사용자 FK — users(id). 사용자별 조회/권한 검증 기준이다.';
+COMMENT ON COLUMN tosalpee.credentials.document_type_code   IS 'Credential의 문서 종류 코드 — document_types(code).';
+COMMENT ON COLUMN tosalpee.credentials.document_type_name   IS '발급 시점의 문서 종류 표시명 snapshot. 카탈로그 명칭 변경 후에도 이력을 보존한다.';
+COMMENT ON COLUMN tosalpee.credentials.issuer_code          IS '발급 기관 코드 snapshot. 예: KR-NTS.';
+COMMENT ON COLUMN tosalpee.credentials.status               IS 'Credential lifecycle 상태. 예: ISSUED | EXPIRED | REVOKED | FAILED.';
+COMMENT ON COLUMN tosalpee.credentials.wallet_address       IS 'Credential subject로 사용되는 사용자 XRPL 지갑 주소 snapshot.';
+COMMENT ON COLUMN tosalpee.credentials.is_mock              IS 'true면 local mock fallback, false면 validated XRP Testnet evidence 기반.';
+COMMENT ON COLUMN tosalpee.credentials.xrpl_credential_id   IS 'XRP Testnet Credential object 식별용 derived reference. 일반적으로 issuer:subject:credentialType 조합이다.';
+COMMENT ON COLUMN tosalpee.credentials.xrpl_network         IS 'XRPL 네트워크 식별자. MVP는 XRP Testnet endpoint/name만 저장하며 mainnet finality가 아니다.';
+COMMENT ON COLUMN tosalpee.credentials.xrpl_issuer_address  IS 'XLS-70 Credential issuer account address. CredentialCreate의 Account/Issuer 역할.';
+COMMENT ON COLUMN tosalpee.credentials.xrpl_subject_address IS 'XLS-70 Credential subject account address. CredentialCreate의 Subject 및 CredentialAccept의 Account 역할.';
+COMMENT ON COLUMN tosalpee.credentials.xrpl_credential_type IS 'XLS-70 CredentialType hex 값. issuer가 정의한 credential type 식별자이며 최대 64 bytes hex.';
+COMMENT ON COLUMN tosalpee.credentials.xrpl_tx_hash         IS '최신 관련 XRP Testnet transaction hash. Mainnet finality를 의미하지 않음.';
+COMMENT ON COLUMN tosalpee.credentials.xrpl_ledger_index    IS '최신 관련 XRP Testnet transaction이 포함된 validated ledger index.';
+COMMENT ON COLUMN tosalpee.credentials.xrpl_engine_result   IS '최신 관련 XRPL transaction result code. 예: tesSUCCESS.';
+COMMENT ON COLUMN tosalpee.credentials.xrpl_validated       IS '최신 관련 XRPL transaction이 validated ledger에 포함되었는지 여부.';
+COMMENT ON COLUMN tosalpee.credentials.payload_hash         IS '오프체인 credential/document payload 무결성 검증용 hash. 원문 데이터는 저장하지 않는다.';
+COMMENT ON COLUMN tosalpee.credentials.source_document_ref  IS '원본/암호화 문서 artifact 참조. raw file body가 아니다.';
+COMMENT ON COLUMN tosalpee.credentials.auth_event_id        IS 'Credential 발급 시 연결된 Auth event id 참조. Auth가 CI 검증 원본을 소유한다.';
+COMMENT ON COLUMN tosalpee.credentials.issued_at            IS 'Credential 발급 완료 시각.';
+COMMENT ON COLUMN tosalpee.credentials.expires_at           IS 'Credential 유효기간 종료 시각. 제출 가능 여부 검증에 사용한다.';
+COMMENT ON COLUMN tosalpee.credentials.revoked_at           IS 'Credential 폐기 시각. status=REVOKED일 때 주로 사용한다.';
+COMMENT ON COLUMN tosalpee.credentials.failure_reason       IS 'Credential 생성/발급 실패 사유. status=FAILED일 때 주로 사용한다.';
+COMMENT ON COLUMN tosalpee.credentials.created_at           IS '레코드 생성 시각.';
+COMMENT ON COLUMN tosalpee.credentials.updated_at           IS '레코드 마지막 갱신 시각.';
+COMMENT ON COLUMN tosalpee.credentials.is_delete            IS 'Soft-delete 플래그. true면 일반 조회에서 제외한다.';
 
 
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -438,6 +482,24 @@ CREATE INDEX IF NOT EXISTS idx_credential_xrpl_transactions_network_ledger
     ON tosalpee.credential_xrpl_transactions (network, ledger_index);
 
 COMMENT ON TABLE tosalpee.credential_xrpl_transactions IS '해커톤 심사용 XRP Testnet XLS-70 transaction evidence. Production/mainnet finality 아님.';
+COMMENT ON COLUMN tosalpee.credential_xrpl_transactions.id               IS '내부 PK. 외부 API 응답에는 노출하지 않는다.';
+COMMENT ON COLUMN tosalpee.credential_xrpl_transactions.credential_id    IS '대상 Credential FK — credentials(id). 한 Credential에 여러 XRPL transaction evidence가 누적될 수 있다.';
+COMMENT ON COLUMN tosalpee.credential_xrpl_transactions.transaction_kind IS 'XLS-70 transaction 종류. CREATE | ACCEPT | DELETE 중 하나.';
+COMMENT ON COLUMN tosalpee.credential_xrpl_transactions.network          IS 'XRPL 네트워크 식별자. MVP는 XRP Testnet evidence만 저장한다.';
+COMMENT ON COLUMN tosalpee.credential_xrpl_transactions.tx_hash          IS 'XRPL transaction hash. transaction evidence의 idempotency 및 explorer 조회 키로 사용한다.';
+COMMENT ON COLUMN tosalpee.credential_xrpl_transactions.engine_result    IS 'XRPL transaction result code. 예: tesSUCCESS, tec*, tem*.';
+COMMENT ON COLUMN tosalpee.credential_xrpl_transactions.ledger_index     IS 'transaction이 포함된 validated ledger index. 제출 실패/미검증 시 NULL일 수 있다.';
+COMMENT ON COLUMN tosalpee.credential_xrpl_transactions.validated        IS 'transaction이 validated ledger에 포함되었는지 여부.';
+COMMENT ON COLUMN tosalpee.credential_xrpl_transactions.fee_drops        IS 'transaction 수수료 drops 문자열. XRP 단위 변환 전 원시 값이다.';
+COMMENT ON COLUMN tosalpee.credential_xrpl_transactions.account_address  IS 'transaction submitter Account 주소. CREATE는 issuer, ACCEPT는 subject, DELETE는 submitter.';
+COMMENT ON COLUMN tosalpee.credential_xrpl_transactions.issuer_address   IS 'XLS-70 Credential issuer 주소. transaction 종류에 따라 nullable일 수 있다.';
+COMMENT ON COLUMN tosalpee.credential_xrpl_transactions.subject_address  IS 'XLS-70 Credential subject 주소. transaction 종류에 따라 nullable일 수 있다.';
+COMMENT ON COLUMN tosalpee.credential_xrpl_transactions.credential_type  IS 'XLS-70 CredentialType hex 값. issuer+subject와 함께 Credential object를 식별한다.';
+COMMENT ON COLUMN tosalpee.credential_xrpl_transactions.flags            IS '조회된 Credential ledger object의 Flags 값. accepted 상태는 lsfAccepted(65536)로 확인한다.';
+COMMENT ON COLUMN tosalpee.credential_xrpl_transactions.object_snapshot  IS 'transaction 후 account_objects로 조회한 Credential ledger object snapshot JSON. 심사/디버깅 증거용.';
+COMMENT ON COLUMN tosalpee.credential_xrpl_transactions.created_at       IS '레코드 생성 시각.';
+COMMENT ON COLUMN tosalpee.credential_xrpl_transactions.updated_at       IS '레코드 마지막 갱신 시각.';
+COMMENT ON COLUMN tosalpee.credential_xrpl_transactions.is_delete        IS 'Soft-delete 플래그. true면 일반 조회에서 제외한다.';
 
 
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -473,6 +535,21 @@ CREATE INDEX IF NOT EXISTS idx_credential_submissions_user_time
     ON tosalpee.credential_submissions (user_id, submitted_at DESC);
 
 COMMENT ON TABLE tosalpee.credential_submissions IS 'Credential 기관 제출 이력. Row unit은 credential x institution submission request 1건.';
+COMMENT ON COLUMN tosalpee.credential_submissions.id                         IS '내부 PK. 외부 API 응답에는 노출하지 않는다.';
+COMMENT ON COLUMN tosalpee.credential_submissions.submission_code            IS '외부 노출용 제출 UUID. API 응답에서 submissionId로 사용한다.';
+COMMENT ON COLUMN tosalpee.credential_submissions.credential_id              IS '제출 대상 Credential FK — credentials(id).';
+COMMENT ON COLUMN tosalpee.credential_submissions.credential_code            IS '제출 대상 Credential 외부 UUID snapshot. 응답 매핑 및 추적용 denormalized copy.';
+COMMENT ON COLUMN tosalpee.credential_submissions.user_id                    IS '제출 사용자 FK — users(id). 소유자 조회/권한 검증 기준이다.';
+COMMENT ON COLUMN tosalpee.credential_submissions.submission_request_id      IS '기관이 만든 제출 요청 id 또는 외부 요청 참조. Institution/Admin 도메인 확정 전 문자열로 보관한다.';
+COMMENT ON COLUMN tosalpee.credential_submissions.recipient_institution_id   IS 'Credential을 제출받는 기관 id 또는 기관 요청 참조.';
+COMMENT ON COLUMN tosalpee.credential_submissions.recipient_institution_name IS '제출받는 기관 표시명 snapshot. 기관명 변경 후에도 제출 이력을 보존한다.';
+COMMENT ON COLUMN tosalpee.credential_submissions.status                     IS '기관 제출 처리 상태. RECEIVED | VERIFYING | REJECTED.';
+COMMENT ON COLUMN tosalpee.credential_submissions.rejection_reason           IS '기관 반려 사유. status=REJECTED일 때 dispute 전환 context로 사용한다.';
+COMMENT ON COLUMN tosalpee.credential_submissions.auth_event_id              IS '기관 제출 heavy-action 인증 이벤트 id 참조. raw CI/JWT는 저장하지 않는다.';
+COMMENT ON COLUMN tosalpee.credential_submissions.submitted_at               IS '사용자가 Credential을 기관 요청에 제출한 시각.';
+COMMENT ON COLUMN tosalpee.credential_submissions.created_at                 IS '레코드 생성 시각.';
+COMMENT ON COLUMN tosalpee.credential_submissions.updated_at                 IS '레코드 마지막 갱신 시각.';
+COMMENT ON COLUMN tosalpee.credential_submissions.is_delete                  IS 'Soft-delete 플래그. true면 일반 조회에서 제외한다.';
 
 
 -- ───────────────────────────────────────────────────────────────────────────
