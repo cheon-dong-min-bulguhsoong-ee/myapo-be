@@ -310,6 +310,171 @@ COMMENT ON COLUMN tosalpee.document_stages.updated_at     IS '레코드 갱신 �
 COMMENT ON COLUMN tosalpee.document_stages.is_delete      IS 'Soft-delete 플래그.';
 
 
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 8) credential_issue_requests — Credential bounded context issue request
+--    MVP: 5-stage pipeline + Internal JWT auth_event_id reference.
+-- ═══════════════════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS tosalpee.credential_issue_requests (
+    id                  BIGSERIAL PRIMARY KEY,
+    issue_request_code  UUID          NOT NULL,
+    user_id             BIGINT        NOT NULL,
+    document_type_code  VARCHAR(40)   NOT NULL,
+    document_id         VARCHAR(80),
+    status              VARCHAR(30)   NOT NULL,
+    current_stage       VARCHAR(30)   NOT NULL,
+    current_substep     VARCHAR(100),
+    auth_event_id       VARCHAR(80),
+    requested_at        TIMESTAMP(0)  NOT NULL,
+    issued_at           TIMESTAMP(0),
+    failed_at           TIMESTAMP(0),
+    failure_reason      TEXT,
+    created_at          TIMESTAMP(0)  NOT NULL DEFAULT now(),
+    updated_at          TIMESTAMP(0)  NOT NULL DEFAULT now(),
+    is_delete           BOOLEAN       NOT NULL DEFAULT false,
+
+    CONSTRAINT credential_issue_requests_code_unique UNIQUE (issue_request_code),
+    CONSTRAINT credential_issue_requests_user_fk FOREIGN KEY (user_id)
+        REFERENCES tosalpee.users (id),
+    CONSTRAINT credential_issue_requests_doctype_fk FOREIGN KEY (document_type_code)
+        REFERENCES tosalpee.document_types (code)
+);
+
+CREATE INDEX IF NOT EXISTS idx_credential_issue_requests_user_time
+    ON tosalpee.credential_issue_requests (user_id, requested_at DESC);
+CREATE INDEX IF NOT EXISTS idx_credential_issue_requests_status_stage
+    ON tosalpee.credential_issue_requests (status, current_stage);
+
+COMMENT ON TABLE tosalpee.credential_issue_requests IS 'Credential 발급 요청. 최신 MVP 5-stage pipeline 상태와 Auth event id 참조를 저장.';
+
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 9) credentials — reusable credential result
+--    XRP Testnet evidence is allowed for hackathon review. Mainnet finality is not claimed.
+-- ═══════════════════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS tosalpee.credentials (
+    id                    BIGSERIAL PRIMARY KEY,
+    credential_code       UUID          NOT NULL,
+    issue_request_id      BIGINT        NOT NULL,
+    issue_request_code    UUID          NOT NULL,
+    user_id               BIGINT        NOT NULL,
+    document_type_code    VARCHAR(40)   NOT NULL,
+    document_type_name    VARCHAR(100)  NOT NULL,
+    issuer_code           VARCHAR(20)   NOT NULL,
+    status                VARCHAR(20)   NOT NULL,
+    wallet_address        VARCHAR(35)   NOT NULL,
+    is_mock               BOOLEAN       NOT NULL DEFAULT true,
+    xrpl_credential_id    VARCHAR(120),
+    xrpl_network          VARCHAR(40),
+    xrpl_issuer_address   VARCHAR(35),
+    xrpl_subject_address  VARCHAR(35),
+    xrpl_credential_type  VARCHAR(128),
+    xrpl_tx_hash          CHAR(64),
+    xrpl_ledger_index     BIGINT,
+    xrpl_engine_result    VARCHAR(40),
+    xrpl_validated        BOOLEAN,
+    payload_hash          CHAR(64),
+    source_document_ref   VARCHAR(80),
+    auth_event_id         VARCHAR(80),
+    issued_at             TIMESTAMP(0)  NOT NULL,
+    expires_at            TIMESTAMP(0)  NOT NULL,
+    revoked_at            TIMESTAMP(0),
+    failure_reason        TEXT,
+    created_at            TIMESTAMP(0)  NOT NULL DEFAULT now(),
+    updated_at            TIMESTAMP(0)  NOT NULL DEFAULT now(),
+    is_delete             BOOLEAN       NOT NULL DEFAULT false,
+
+    CONSTRAINT credentials_code_unique UNIQUE (credential_code),
+    CONSTRAINT credentials_issue_request_unique UNIQUE (issue_request_id),
+    CONSTRAINT credentials_issue_request_fk FOREIGN KEY (issue_request_id)
+        REFERENCES tosalpee.credential_issue_requests (id),
+    CONSTRAINT credentials_user_fk FOREIGN KEY (user_id)
+        REFERENCES tosalpee.users (id),
+    CONSTRAINT credentials_doctype_fk FOREIGN KEY (document_type_code)
+        REFERENCES tosalpee.document_types (code)
+);
+
+CREATE INDEX IF NOT EXISTS idx_credentials_user_issued
+    ON tosalpee.credentials (user_id, issued_at DESC);
+CREATE INDEX IF NOT EXISTS idx_credentials_status_expires
+    ON tosalpee.credentials (status, expires_at);
+
+COMMENT ON TABLE tosalpee.credentials IS '사용자 재사용 Credential. XRP Testnet evidence와 local mock fallback을 구분한다.';
+COMMENT ON COLUMN tosalpee.credentials.is_mock IS 'true면 local mock fallback, false면 validated XRP Testnet evidence 기반.';
+COMMENT ON COLUMN tosalpee.credentials.xrpl_tx_hash IS '최신 관련 XRP Testnet transaction hash. Mainnet finality를 의미하지 않음.';
+
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 10) credential_xrpl_transactions — XRP Testnet XLS-70 transaction evidence
+-- ═══════════════════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS tosalpee.credential_xrpl_transactions (
+    id                BIGSERIAL PRIMARY KEY,
+    credential_id     BIGINT        NOT NULL,
+    transaction_kind  VARCHAR(20)   NOT NULL,
+    network           VARCHAR(40)   NOT NULL,
+    tx_hash           CHAR(64)      NOT NULL,
+    engine_result     VARCHAR(40)   NOT NULL,
+    ledger_index      BIGINT,
+    validated         BOOLEAN       NOT NULL DEFAULT false,
+    fee_drops         VARCHAR(40),
+    account_address   VARCHAR(35)   NOT NULL,
+    issuer_address    VARCHAR(35),
+    subject_address   VARCHAR(35),
+    credential_type   VARCHAR(128)  NOT NULL,
+    flags             INT,
+    object_snapshot   JSONB,
+    created_at        TIMESTAMP(0)  NOT NULL DEFAULT now(),
+    updated_at        TIMESTAMP(0)  NOT NULL DEFAULT now(),
+    is_delete         BOOLEAN       NOT NULL DEFAULT false,
+
+    CONSTRAINT credential_xrpl_transactions_credential_fk FOREIGN KEY (credential_id)
+        REFERENCES tosalpee.credentials (id)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uniq_credential_xrpl_transactions_tx_hash
+    ON tosalpee.credential_xrpl_transactions (tx_hash);
+CREATE INDEX IF NOT EXISTS idx_credential_xrpl_transactions_credential_kind
+    ON tosalpee.credential_xrpl_transactions (credential_id, transaction_kind);
+CREATE INDEX IF NOT EXISTS idx_credential_xrpl_transactions_network_ledger
+    ON tosalpee.credential_xrpl_transactions (network, ledger_index);
+
+COMMENT ON TABLE tosalpee.credential_xrpl_transactions IS '해커톤 심사용 XRP Testnet XLS-70 transaction evidence. Production/mainnet finality 아님.';
+
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 11) credential_submissions — institution submission rows
+-- ═══════════════════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS tosalpee.credential_submissions (
+    id                         BIGSERIAL PRIMARY KEY,
+    submission_code            UUID          NOT NULL,
+    credential_id              BIGINT        NOT NULL,
+    credential_code            UUID          NOT NULL,
+    user_id                    BIGINT        NOT NULL,
+    submission_request_id      VARCHAR(80)   NOT NULL,
+    recipient_institution_id   VARCHAR(80)   NOT NULL,
+    recipient_institution_name VARCHAR(120)  NOT NULL,
+    status                     VARCHAR(20)   NOT NULL,
+    rejection_reason           TEXT,
+    auth_event_id              VARCHAR(80),
+    submitted_at               TIMESTAMP(0)  NOT NULL,
+    created_at                 TIMESTAMP(0)  NOT NULL DEFAULT now(),
+    updated_at                 TIMESTAMP(0)  NOT NULL DEFAULT now(),
+    is_delete                  BOOLEAN       NOT NULL DEFAULT false,
+
+    CONSTRAINT credential_submissions_code_unique UNIQUE (submission_code),
+    CONSTRAINT credential_submissions_credential_fk FOREIGN KEY (credential_id)
+        REFERENCES tosalpee.credentials (id),
+    CONSTRAINT credential_submissions_user_fk FOREIGN KEY (user_id)
+        REFERENCES tosalpee.users (id)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uniq_credential_submissions_credential_request
+    ON tosalpee.credential_submissions (credential_id, submission_request_id);
+CREATE INDEX IF NOT EXISTS idx_credential_submissions_user_time
+    ON tosalpee.credential_submissions (user_id, submitted_at DESC);
+
+COMMENT ON TABLE tosalpee.credential_submissions IS 'Credential 기관 제출 이력. Row unit은 credential x institution submission request 1건.';
+
+
 -- ───────────────────────────────────────────────────────────────────────────
 -- 적용 결과 확인
 -- ───────────────────────────────────────────────────────────────────────────
