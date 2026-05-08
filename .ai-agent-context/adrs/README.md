@@ -1,49 +1,61 @@
 # Decisions (ADR) Guide
 
-This directory contains Architecture Decision Records (ADR), organized by domain subdirectories to maintain clarity and scalability.
+This directory contains Architectural Decision Records (ADR), organized by domain subdirectories to maintain clarity and scalability.
 
-## Directory Structure
+---
+
+## GLOBAL CONTEXT (READ FIRST)
+
+The ADR directory structure is strictly enforced:
 
 - **`template.md`**: The required format for all new ADRs.
-- **`shared/`**: Contains common ADRs that MUST be followed by all domains (cross-cutting concerns).
-- **`<domain>/`**: Subdirectories representing different bounded contexts (e.g., `auth/`, `user/`, `credential/`).
-    - **`adr-XXX-name.md`**: Individual decision records located within their respective domain folders.
+- **`shared/`**: Contains cross-cutting ADRs that MUST be followed by all domains.
+- **`<domain>/`**: Subdirectories for specific bounded contexts (e.g., `auth/`, `user/`).
+    - **`adr-XXX-name.md`**: Individual records within their respective folders.
 
-## Discovery & Reading Order (IMPORTANT)
+---
 
-When working with decisions, follow these steps:
+## DISCOVERY & READING ORDER (IMPORTANT)
 
-1. **Identify Domain**: Determine which domain(s) your task impacts.
-2. **Scan Shared ADRs**: ALWAYS check the `shared/` folder first, as these decisions apply universally.
-3. **Scan Domain Subdirectories**: Look into the relevant domain folder for domain-specific decisions.
-4. **Read Format**: Reference `template.md` if creating a new record.
+When analyzing decisions, AI agents MUST follow this sequence:
 
-## Rules (MANDATORY)
+1. **Identify Domain**: Determine the target domain(s) of the task.
+2. **Scan Shared ADRs**: ALWAYS check the `shared/` folder first for universal rules.
+3. **Scan Domain Subdirectories**: Read relevant domain folders for specific decisions.
+4. **Read Format**: Consult `template.md` if the task requires a new record.
+
+---
+
+## ADR RULES (MANDATORY)
 
 - **MUST**:
     - Place new ADRs in the appropriate domain subdirectory.
     - Use the filename format `adr-XXX-name.md`.
     - Follow `template.md` exactly when creating a new ADR.
-    - Keep sections and headings unchanged.
-    - Write in structured bullet format.
-    - Engage in a minimum of 7 distinct turns of Q&A (7-depth interview) with the user to thoroughly explore and confirm all design and implementation details.
+    - Keep all sections and headings from the template unchanged.
+    - Write in structured bullet format for readability.
+    - **Engage in a 7-depth interview**: Perform a minimum of 7 distinct turns of Q&A with the user to thoroughly explore all design details before finalizing an ADR.
 
 - **MUST NOT**:
-    - Place ADR files directly in the root of the `adrs/` directory (except for `README.md` and `template.md`).
-    - Skip sections from `template.md`.
-    - Change section names.
+    - Place ADR files directly in the root of the `adrs/` directory (except `README.md` and `template.md`).
+    - Skip or rename sections from the template.
 
-- **SHOULD**:
-    - Keep each ADR focused on a single decision.
-    - Link related ADRs in the "Related" section.
+---
 
-## When Creating a New ADR
+## CREATION PROTOCOL
 
-1. Search relevant domain subdirectories for similar existing decisions.
-2. Identify the correct target domain subdirectory.
-3. Copy `template.md` into that subdirectory as `adr-XXX-name.md`.
-4. Fill all sections thoroughly.
-5. If the decision impacts multiple domains, place it in `shared/`. 
+1. Search all subdirectories to ensure no duplicate decision exists.
+2. Copy `template.md` to the target domain folder (or `shared/`).
+3. Fill all sections with the rationale gathered from the user interview.
+4. Link related ADRs in the "Related" section to maintain the decision graph.
 
+---
 
+## EXECUTION MODE
 
+This document MUST be treated as:
+- source of truth for decision discovery
+- mandatory rule set for ADR management
+- implementation controller for technical rationale
+
+ALL actions involving architectural decisions MUST comply with this document.
