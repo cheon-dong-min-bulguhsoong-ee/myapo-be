@@ -91,6 +91,6 @@ CODEX.**.md
 GEMINI.**.md 
 
 ## --- Human LLM Interaction State ---
-.ai-agent-context/.human-llm-interaction/state.json  
+.human-llm-interaction
 
 
