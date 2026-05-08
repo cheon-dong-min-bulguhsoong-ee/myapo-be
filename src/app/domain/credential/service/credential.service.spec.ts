@@ -17,6 +17,7 @@ import {
   CreateCredentialSubmissionInput,
   CreateCredentialXrplTransactionInput,
   CredentialRepository,
+  MarkCredentialIssueRequestFailedInput,
 } from '../repository/credential.repository';
 import { CredentialService } from './credential.service';
 
@@ -87,6 +88,12 @@ class FakeXrplCredentialAdapter extends XrplCredentialAdapter {
   }
 }
 
+class FailingXrplCredentialAdapter extends FakeXrplCredentialAdapter {
+  async submitCredentialCreate(): Promise<XrplCredentialTransactionEvidenceResult> {
+    throw new DomainError(ErrorCode.Credential.XRPL_TESTNET_PUBLISH_FAILED);
+  }
+}
+
 class FakeCredentialRepository extends CredentialRepository {
   issueRequests: CredentialIssueRequest[] = [];
   credentials: Credential[] = [];
@@ -113,6 +120,33 @@ class FakeCredentialRepository extends CredentialRepository {
     );
     this.issueRequests.push(request);
     return request;
+  }
+
+  async markIssueRequestFailed(input: MarkCredentialIssueRequestFailedInput): Promise<CredentialIssueRequest> {
+    const requestIndex = this.issueRequests.findIndex((request) => request.id === input.issueRequestId);
+    const request = this.issueRequests[requestIndex];
+    if (request === undefined) {
+      throw new DomainError(ErrorCode.Credential.ISSUE_REQUEST_NOT_FOUND);
+    }
+    const failedRequest = new CredentialIssueRequest(
+      request.id,
+      request.issueRequestCode,
+      request.userId,
+      request.documentTypeCode,
+      request.documentId,
+      CredentialIssueRequestStatus.FAILED,
+      request.currentStage,
+      request.currentSubstep,
+      request.authEventId,
+      request.requestedAt,
+      request.issuedAt,
+      input.failedAt,
+      input.failureReason,
+      request.createdAt,
+      input.failedAt,
+    );
+    this.issueRequests[requestIndex] = failedRequest;
+    return failedRequest;
   }
 
   async findIssueRequestByCode(issueRequestCode: string): Promise<CredentialIssueRequest | null> {
@@ -265,6 +299,26 @@ describe('CredentialService', () => {
     expect(repo.credentials[0].xrplLedgerIndex).toBe(BigInt(123));
     expect(repo.credentials[0].xrplValidated).toBe(true);
     expect(repo.xrplTransactions).toHaveLength(1);
+  });
+
+  it('marks the issue request failed when Testnet CredentialCreate fails', async () => {
+    const repo = new FakeCredentialRepository();
+    const service = new CredentialService(
+      repo,
+      new FakeDocumentTypeRepository(documentType),
+      new FailingXrplCredentialAdapter(),
+    );
+
+    await expect(
+      service.createIssueRequest(BigInt(1), documentType.code, null, null, 'rSUBJECT'),
+    ).rejects.toMatchObject({ errorCode: ErrorCode.Credential.XRPL_TESTNET_PUBLISH_FAILED });
+
+    expect(repo.issueRequests).toHaveLength(1);
+    expect(repo.issueRequests[0].status).toBe(CredentialIssueRequestStatus.FAILED);
+    expect(repo.issueRequests[0].failedAt).not.toBeNull();
+    expect(repo.issueRequests[0].failureReason).toBe(ErrorCode.Credential.XRPL_TESTNET_PUBLISH_FAILED.code);
+    expect(repo.credentials).toHaveLength(0);
+    expect(repo.xrplTransactions).toHaveLength(0);
   });
 
 });

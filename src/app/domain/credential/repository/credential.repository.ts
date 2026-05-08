@@ -45,6 +45,11 @@ export interface CreateCredentialInput {
   expiresAt: Date;
 }
 
+export interface MarkCredentialIssueRequestFailedInput {
+  issueRequestId: bigint;
+  failedAt: Date;
+  failureReason: string;
+}
 
 export interface CreateCredentialXrplTransactionInput {
   credentialId: bigint;
@@ -66,6 +71,7 @@ export interface CreateCredentialSubmissionInput {
 
 export abstract class CredentialRepository {
   abstract createIssueRequest(input: CreateCredentialIssueRequestInput): Promise<CredentialIssueRequest>;
+  abstract markIssueRequestFailed(input: MarkCredentialIssueRequestFailedInput): Promise<CredentialIssueRequest>;
   abstract findIssueRequestByCode(issueRequestCode: string): Promise<CredentialIssueRequest | null>;
   abstract findCredentialByIssueRequestId(issueRequestId: bigint): Promise<Credential | null>;
   abstract createCredential(input: CreateCredentialInput): Promise<Credential>;

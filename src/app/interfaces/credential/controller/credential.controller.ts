@@ -25,7 +25,7 @@ import {
 export class CredentialController {
   constructor(private readonly credentialFacade: CredentialFacade) {}
 
-  @Post('credential-issue-requests')
+  @Post('credentials/issue-requests')
   @CreateCredentialIssueRequestSwaggerApi()
   async createIssueRequest(
     @CurrentUserId() userId: bigint,
@@ -35,7 +35,7 @@ export class CredentialController {
     return CommonRes.success(response);
   }
 
-  @Get('credential-issue-requests/:issueRequestId')
+  @Get('credentials/issue-requests/:issueRequestId')
   @GetCredentialIssueRequestSwaggerApi()
   async getIssueRequest(
     @CurrentUserId() userId: bigint,
@@ -55,10 +55,13 @@ export class CredentialController {
     return CommonRes.success(response);
   }
 
-  @Get('credentials/submissions')
+  @Get('credentials/:credentialId/submissions')
   @ListCredentialSubmissionsSwaggerApi()
-  async listSubmissions(@CurrentUserId() userId: bigint): Promise<CommonRes<ListCredentialSubmissionsRes>> {
-    const response = await this.credentialFacade.listSubmissions(userId);
+  async listSubmissions(
+    @CurrentUserId() userId: bigint,
+    @Param('credentialId') credentialId: string,
+  ): Promise<CommonRes<ListCredentialSubmissionsRes>> {
+    const response = await this.credentialFacade.listSubmissions(userId, credentialId);
     return CommonRes.success(response);
   }
 

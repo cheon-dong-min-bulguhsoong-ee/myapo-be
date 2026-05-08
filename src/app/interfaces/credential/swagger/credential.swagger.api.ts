@@ -13,7 +13,7 @@ const withBearer = <T extends MethodDecorator>(decorator: T): MethodDecorator =>
 export const CreateCredentialIssueRequestSwaggerApi = (): MethodDecorator =>
   withBearer(
     applyDecorators(
-      ApiOperation({ summary: '크리덴셜 발급 요청 생성', description: 'Internal JWT 기반 사용자 발급 요청을 생성하고 MVP mock Credential을 발급합니다.' }),
+      ApiOperation({ summary: '크리덴셜 발급 요청 생성', description: 'Internal JWT 기반 사용자 발급 요청을 생성하고 XRP Testnet evidence 또는 MVP fallback Credential을 발급합니다.' }),
       ApiCommonRes(CreateCredentialIssueRequestRes),
     ),
   );

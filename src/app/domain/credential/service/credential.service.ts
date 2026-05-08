@@ -64,12 +64,22 @@ export class CredentialService {
     });
 
     const expiresAt = addMonths(now, documentType.defaultTtlMonths);
-    const xrplEvidence = await this.publishTestnetCredentialEvidence(
-      walletAddress,
-      documentType.code,
-      request.issueRequestCode,
-      expiresAt,
-    );
+    let xrplEvidence: XrplCredentialTransactionEvidenceResult | null;
+    try {
+      xrplEvidence = await this.publishTestnetCredentialEvidence(
+        walletAddress,
+        documentType.code,
+        request.issueRequestCode,
+        expiresAt,
+      );
+    } catch (error) {
+      await this.credentialRepository.markIssueRequestFailed({
+        issueRequestId: request.id,
+        failedAt: new Date(),
+        failureReason: this.toFailureReason(error),
+      });
+      throw error;
+    }
 
     const credential = await this.credentialRepository.createCredential({
       credentialCode: randomUUID(),
@@ -228,6 +238,16 @@ export class CredentialService {
 
   private buildXrplCredentialIdentity(evidence: XrplCredentialTransactionEvidenceResult): string {
     return `${evidence.issuer}:${evidence.subject}:${evidence.credentialType}`;
+  }
+
+  private toFailureReason(error: unknown): string {
+    if (error instanceof DomainError) {
+      return error.errorCode.code;
+    }
+    if (error instanceof Error && error.message.length > 0) {
+      return error.message;
+    }
+    return 'UNKNOWN_CREDENTIAL_ISSUE_FAILURE';
   }
 
   private async loadOwnedIssueRequest(userId: bigint, issueRequestCode: string): Promise<CredentialIssueRequest> {
