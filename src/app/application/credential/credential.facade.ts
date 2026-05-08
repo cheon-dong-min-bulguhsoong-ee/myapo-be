@@ -1,0 +1,67 @@
+import { Injectable } from '@nestjs/common';
+import { CredentialService } from '../../domain/credential/service/credential.service';
+import { CredentialStatus } from '../../domain/credential/enum/credential-status.enum';
+import { UserService } from '../../domain/user/service/user.service';
+import { CreateCredentialIssueRequestReq } from '../../interfaces/credential/req/create-credential-issue-request.req';
+import { SubmitCredentialReq } from '../../interfaces/credential/req/submit-credential.req';
+import { CreateCredentialIssueRequestRes, CredentialIssueRequestRes } from '../../interfaces/credential/res/credential-issue-request.res';
+import { CredentialDetailRes, ListCredentialsRes } from '../../interfaces/credential/res/credential.res';
+import { ListCredentialSubmissionsRes, SubmitCredentialRes } from '../../interfaces/credential/res/credential-submission.res';
+
+@Injectable()
+export class CredentialFacade {
+  constructor(
+    private readonly credentialService: CredentialService,
+    private readonly userService: UserService,
+  ) {}
+
+  async createIssueRequest(
+    req: CreateCredentialIssueRequestReq,
+    userId: bigint,
+  ): Promise<CreateCredentialIssueRequestRes> {
+    const user = await this.userService.getProfile(userId);
+    const result = await this.credentialService.createIssueRequest(
+      userId,
+      req.documentTypeId,
+      req.documentId ?? null,
+      req.authEventId ?? null,
+      user.wallet.xrplAddress,
+    );
+    return CreateCredentialIssueRequestRes.from(result);
+  }
+
+  async getIssueRequest(userId: bigint, issueRequestId: string): Promise<CredentialIssueRequestRes> {
+    const result = await this.credentialService.getIssueRequest(userId, issueRequestId);
+    return CredentialIssueRequestRes.from(result);
+  }
+
+  async listCredentials(userId: bigint, status?: CredentialStatus): Promise<ListCredentialsRes> {
+    const result = await this.credentialService.listCredentials(userId, status);
+    return ListCredentialsRes.from(result);
+  }
+
+  async getCredentialDetail(userId: bigint, credentialId: string): Promise<CredentialDetailRes> {
+    const result = await this.credentialService.getCredentialDetail(userId, credentialId);
+    return CredentialDetailRes.from(result);
+  }
+
+  async submitCredential(
+    userId: bigint,
+    credentialId: string,
+    req: SubmitCredentialReq,
+  ): Promise<SubmitCredentialRes> {
+    const result = await this.credentialService.submitCredential(
+      userId,
+      credentialId,
+      req.submissionRequestId,
+      req.consentConfirmed,
+      req.authEventId ?? null,
+    );
+    return SubmitCredentialRes.from(result);
+  }
+
+  async listSubmissions(userId: bigint, credentialId?: string): Promise<ListCredentialSubmissionsRes> {
+    const result = await this.credentialService.listSubmissions(userId, credentialId);
+    return ListCredentialSubmissionsRes.from(result);
+  }
+}
