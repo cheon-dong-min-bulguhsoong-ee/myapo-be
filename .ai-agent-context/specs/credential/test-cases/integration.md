@@ -1,63 +1,59 @@
 # Credential Integration Test Cases
 
 ## 0. Draft Status
-- **Status**: Draft from wireframe evidence. User approval is required before implementation.
-- **Testing Boundary**: Prefer repository ports and public facades/services. Use real persistence only if the project has a test database strategy; otherwise mock external boundaries only.
+- **Status**: Draft updated from latest main references. User approval is required before implementation.
+- **Testing Boundary**: Prefer repository ports and public facades/services. Use real persistence only if a test DB strategy exists.
 
 ## 1. Persistence Flows
 
-### Scenario: Save and retrieve credential issue request with handovers
-- **Step 1**: Create an issue request with four handover steps.
-- **Step 2**: Retrieve the request by id.
-- **Expectation**: Request fields and handover order match the saved data.
+### Scenario: Save and retrieve issue request with 5-stage pipeline
+- **Step 1**: Create issue request.
+- **Step 2**: Retrieve by id.
+- **Expectation**: Five pipeline stages are present in canonical order and current stage is preserved.
 
-### Scenario: Sign handover persists immutable signature reference
-- **Step 1**: Create an issue request waiting for step 1 signature.
-- **Step 2**: Sign step 1.
-- **Step 3**: Retrieve the request.
-- **Expectation**: Step 1 contains signature hash/reference and signed timestamp; completed signature count is updated.
+### Scenario: Advance issue pipeline and create credential at completion
+- **Step 1**: Create issue request.
+- **Step 2**: Advance through allowed stages to `ISSUED`.
+- **Expectation**: Credential is created or returned according to approved policy.
 
-### Scenario: Final signature persists issued credential
-- **Step 1**: Create request with all previous handovers signed.
-- **Step 2**: Sign final handover.
-- **Step 3**: Retrieve credential by returned id.
-- **Expectation**: Credential is `ISSUED`, owner user id is correct, wallet address is populated, and mock XRPL metadata is marked as mock.
-
-### Scenario: Credential list scopes by owner
-- **Step 1**: Save credentials for two different users.
-- **Step 2**: List credentials for user A.
+### Scenario: Credential list scopes by JWT user
+- **Step 1**: Save credentials for two users.
+- **Step 2**: Query using user A context.
 - **Expectation**: Only user A credentials are returned.
 
-### Scenario: Submission history accumulates for one credential
+### Scenario: Submission rows accumulate for one credential
 - **Step 1**: Save one issued credential.
-- **Step 2**: Save two different institution submission requests.
-- **Step 3**: Submit the credential to both requests.
-- **Expectation**: Credential detail returns two submission history rows.
+- **Step 2**: Save two distinct institution requests.
+- **Step 3**: Submit credential to both.
+- **Expectation**: Credential detail returns two submission rows.
 
-### Scenario: Revocation persists audit record
-- **Step 1**: Save issued credential.
-- **Step 2**: Revoke credential with reason and actor.
-- **Step 3**: Retrieve credential and revocation record.
-- **Expectation**: Credential is not submittable and revocation metadata is retained.
+### Scenario: Submission stores auth event reference only
+- **Step 1**: Submit credential with `authEventId`.
+- **Step 2**: Retrieve submission.
+- **Expectation**: `authEventId` is present; raw CI/JWT/auth payload is absent.
+
+### Scenario: Rejected submission can provide dispute context
+- **Step 1**: Mark submission rejected with reason.
+- **Step 2**: Load dispute conversion context through approved boundary.
+- **Expectation**: Context includes submission id, credential id, institution id, and reason; Dispute entity is not created by Credential automatically.
 
 ## 2. Cross-Module/Service Communication
 
-### Scenario: Issue request validates related user and wallet
-- **Action**: Create issue request for a current user.
-- **Verification**: User/wallet lookup is performed through approved port/facade boundary.
-- **Expectation**: Missing user or wallet blocks issuance.
+### Scenario: Credential issue uses User/Wallet through approved boundary
+- **Action**: Create issue request for authenticated user.
+- **Verification**: User/wallet lookup uses approved port/facade/service boundary.
+- **Expectation**: Missing user/wallet blocks issuance.
 
-### Scenario: Issue request validates document type or document eligibility
-- **Action**: Create issue request for a document type or document id.
-- **Verification**: Document/domain lookup is performed through approved boundary.
-- **Expectation**: Ineligible document type or document state blocks issuance.
+### Scenario: Credential issue aligns with Document pipeline without importing internals
+- **Action**: Create or advance issue request associated with a document.
+- **Verification**: Document relationship is by id/approved boundary.
+- **Expectation**: Credential does not import Document internals directly.
 
-### Scenario: Submission validates institution request
-- **Action**: Submit credential to an institution request id.
-- **Verification**: Institution request is validated through approved boundary or repository port.
-- **Expectation**: Missing or mismatched request blocks submission.
+### Scenario: Credential submission links Auth-owned event
+- **Action**: Submit credential with auth event id.
+- **Verification**: Auth event is referenced/validated through approved boundary.
+- **Expectation**: Credential stores id reference only.
 
-### Scenario: Dispute-linked revocation updates credential state
-- **Action**: Execute operator/dispute revocation through approved service boundary.
-- **Verification**: Credential state changes to revoked and dispute link is auditable.
-- **Expectation**: Future submission attempts are blocked.
+### Scenario: Revocation blocks future submission
+- **Action**: Revoke credential, then try to submit.
+- **Expectation**: Submission is rejected.

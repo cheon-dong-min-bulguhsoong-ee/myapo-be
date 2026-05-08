@@ -1,112 +1,108 @@
 # Credential Domain Models
 
 ## 0. Draft Status
-- **Status**: Draft from wireframe evidence. User approval is required before implementation.
-- **Source Boundary**: Entity names and properties below are proposed backend model names derived from wireframe behavior.
+- **Status**: Draft updated from latest main references. User approval is required before implementation.
+- **Source Boundary**: Names below are proposed backend model names aligned to latest frontend-design and ADR-002.
 
 ## 1. Aggregate: Credential
-- **Core Purpose**: Represents the reusable verified credential delivered to a user's wallet after document issuance, handovers, and required user signatures.
+- **Core Purpose**: Represents the reusable credential/document result after the issue pipeline reaches completion.
 
 ### Data Elements
 | Property | Description | Role / Constraint |
 | :--- | :--- | :--- |
 | `id` | Internal credential id. | System generated. |
-| `userId` | Owner user id. | Must match the wallet owner. |
-| `walletId` | User wallet id or wallet relation. | Required for wallet delivery. |
-| `walletAddress` | Public wallet address shown in console/detail. | Derived from UserWallet. |
-| `issueRequestId` | Request that produced the credential. | Required for audit. |
-| `documentId` | Related Document domain id, if available. | Cross-domain reference only. |
+| `userId` | Owner user id extracted from Internal JWT context. | Required. |
+| `walletId` | Related UserWallet id. | Required when issued. |
+| `walletAddress` | Displayable wallet address. | Derived from UserWallet. |
+| `issueRequestId` | Issue request that produced this credential. | Required. |
+| `documentId` | Related Document id if available. | Cross-domain reference only. |
 | `documentTypeId` | Source document type. | Required. |
-| `issuerId` | Source issuer/institution. | Required after issuer selection. |
-| `status` | Current credential status. | `ISSUED`, `EXPIRED`, `REVOKED`, `FAILED`. |
-| `issuedAt` | Completion timestamp. | Required when issued. |
+| `issuerId` | Issuer/institution id. | Required after issuer resolution. |
+| `status` | Credential lifecycle status. | `ISSUED`, `EXPIRED`, `REVOKED`, `FAILED`. |
+| `issuedAt` | Issue completion timestamp. | Required when issued. |
 | `expiresAt` | Validity end timestamp. | Required when issued. |
-| `revokedAt` | Revocation/deletion timestamp. | Required when revoked. |
-| `revocationReason` | Reason for revocation. | Required for operator/dispute revocation. |
-| `xrplCredentialId` | Mock/testnet XRPL credential id. | Nullable until created. |
-| `xrplTransactionHash` | Mock/testnet transaction hash. | Nullable; must not imply production finality in MVP. |
-| `isMock` | Whether this is mock/testnet metadata. | Must be true for MVP wireframe flow. |
-| `sourceDocumentRef` | Reference to encrypted source document snapshot. | No raw file contents. |
+| `revokedAt` | Revocation timestamp. | Nullable. |
+| `revocationReason` | Reason for revocation. | Required when revoked. |
+| `xrplCredentialId` | Mock/testnet XRPL credential id. | Nullable. |
+| `xrplTransactionHash` | Mock/testnet transaction hash. | Nullable; not production finality. |
+| `isMock` | Whether this is mock/testnet metadata. | Required for MVP. |
+| `sourceDocumentRef` | Reference to source/encrypted document artifact. | No raw file body. |
 | `createdAt` | Creation timestamp. | Audit. |
 | `updatedAt` | Update timestamp. | Audit. |
 
 ### Business Invariants
-- A credential must have exactly one owner user.
-- A credential must not be submitted when `status` is `EXPIRED`, `REVOKED`, or `FAILED`.
-- A credential must not be treated as valid when `expiresAt` is earlier than the current time, even if stored status has not been updated yet.
-- A credential issued under MVP mock mode must expose `isMock = true` or equivalent metadata.
-- A credential must preserve enough metadata to trace the issuance request and handover chain.
+- A credential has exactly one owner.
+- A credential cannot be submitted if status is `EXPIRED`, `REVOKED`, or `FAILED`.
+- A credential cannot be submitted when `expiresAt <= now`, even if stored status has not been projected to `EXPIRED`.
+- Mock/testnet credentials must expose mock metadata and must not claim production XRPL finality.
 
 ## 2. Aggregate: CredentialIssueRequest
-- **Core Purpose**: Tracks the issuance process before the final credential is created.
+- **Core Purpose**: Tracks issue progress through the latest 5-stage operations pipeline.
 
 ### Data Elements
 | Property | Description | Role / Constraint |
 | :--- | :--- | :--- |
 | `id` | Internal issue request id. | System generated. |
 | `userId` | Request owner. | Required. |
-| `documentId` | Existing document id, if issuance is based on Document domain. | Optional until Document integration is finalized. |
+| `documentId` | Existing Document id if issue is document-backed. | Optional until integration finalized. |
 | `documentTypeId` | Requested document type. | Required. |
 | `issuerId` | Issuing authority. | Required after validation. |
-| `status` | Request lifecycle status. | `ISSUING`, `SIGNATURE_REQUIRED`, `ISSUED`, `FAILED`, `REVOKED`. |
-| `requiredSignatureCount` | Required user signature count. | Draft default: 4. |
-| `completedSignatureCount` | Number of recorded signatures. | Must be `0..requiredSignatureCount`. |
-| `currentHandoverStep` | Current step waiting for action. | Nullable when complete/failed. |
+| `status` | Request lifecycle status. | `ISSUING`, `USER_APPROVAL_REQUIRED`, `ISSUED`, `FAILED`, `REVOKED`. |
+| `currentStage` | Current 5-stage pipeline stage. | `RECEIVED`, `PRE_REVIEW`, `TRANSLATION_REVIEW`, `NOTARY_SIGNATURE`, `ISSUED`. |
+| `currentSubstep` | Optional substep label. | Example: `CREDENTIAL_CREATION`, `USER_APPROVAL`. |
+| `authEventId` | Auth-owned event for `issue_request` trigger. | Nullable until Auth integration finalized. |
 | `failureReason` | Machine-readable failure reason. | Required when failed. |
 | `createdAt` | Request creation timestamp. | Audit. |
 | `completedAt` | Completion timestamp. | Nullable. |
 
 ### Business Invariants
-- `completedSignatureCount` cannot exceed `requiredSignatureCount`.
-- A request cannot complete until all required handover signatures are recorded.
-- Only the owner user can sign a user-facing handover.
-- A completed request must create at most one active final credential unless reissue creates a separate request.
-- Duplicate active issue requests for the same user/document type should be blocked or explicitly allowed by product policy before implementation.
+- Pipeline stage order must be deterministic.
+- `ISSUED` request status requires a created credential or approved deferred creation policy.
+- Credential issue request stores Auth event ids by reference only; it does not own CI verification data.
+- The old four-signature model is not a hard invariant unless an approved ADR/spec maps it to this pipeline.
 
-## 3. Entity: CredentialHandover
-- **Core Purpose**: Represents one handover step in the trust chain.
+## 3. Entity: IssuePipelineStageSnapshot
+- **Core Purpose**: Provides a stable projection for console/mobile pipeline display.
 
 ### Data Elements
 | Property | Description | Role / Constraint |
 | :--- | :--- | :--- |
-| `id` | Handover id. | System generated. |
-| `issueRequestId` | Parent issuance request. | Required. |
-| `step` | Step number. | Draft range: 1 to 4. |
-| `label` | Human-readable step label. | Example: `발급 원본`, `처리위임`, `인증의뢰`, `최종 Credential`. |
-| `actorType` | Actor responsible for the step. | Issuer, processing institution, apostille authority, system, etc. |
-| `actorId` | Optional actor id. | Cross-domain reference. |
-| `status` | Handover state. | `PENDING`, `SIGNATURE_REQUIRED`, `SIGNED`, `COMPLETED`, `FAILED`. |
-| `signatureHash` | Hash/reference of user signature. | Store hash/reference, not private key. |
-| `signedAt` | Signature timestamp. | Required when signed. |
-| `documentSnapshotRef` | Document snapshot reference for this step. | Optional. |
+| `issueRequestId` | Parent request. | Required. |
+| `stage` | Pipeline stage enum. | Required. |
+| `label` | Display label. | Korean label from reference. |
+| `status` | Stage state. | `PENDING`, `ACTIVE`, `DONE`, `FAILED`. |
+| `substep` | Optional active substep. | Example: credential creation/user approval. |
+| `updatedAt` | Projection timestamp. | Audit. |
 
 ### Business Invariants
-- Each `(issueRequestId, step)` pair must be unique.
-- A handover can be signed only when it is the current signable step.
-- Signature data must be immutable after it is recorded, except through an explicit dispute/reissue process.
+- One active stage at most for a non-terminal request.
+- Valid/expired/revoked credentials display all issue stages as done unless failure audit says otherwise.
 
 ## 4. Entity: CredentialSubmission
-- **Core Purpose**: Records submission of a credential to an institution request.
+- **Core Purpose**: Records one credential submission to one institution request. Row unit is submission.
 
 ### Data Elements
 | Property | Description | Role / Constraint |
 | :--- | :--- | :--- |
 | `id` | Submission id. | System generated. |
 | `credentialId` | Submitted credential. | Required. |
-| `userId` | Credential owner. | Required for access checks. |
+| `userId` | Credential owner at submission time. | Required. |
 | `submissionRequestId` | Institution request id. | Required. |
 | `recipientInstitutionId` | Receiving institution. | Required. |
-| `status` | Submission state. | `SUBMITTED`, `ACCEPTED`, `REJECTED`, `DISPUTED`. |
+| `status` | Institution submission result. | `RECEIVED`, `VERIFYING`, `REJECTED`. |
+| `rejectionReason` | Reason when rejected. | Required when rejected if provided by institution. |
+| `authEventId` | Auth-owned event for `institution_submit`. | Nullable until Auth log integration finalized. |
 | `submittedAt` | Submission timestamp. | Required. |
-| `resultReason` | Rejection/dispute reason if any. | Optional. |
+| `updatedAt` | Update timestamp. | Audit. |
 
 ### Business Invariants
-- Submission requires a prior institution submission request.
-- Submission requires `credential.status = ISSUED` and `expiresAt > now`.
-- Duplicate submission for the same credential and institution request should be idempotent or rejected consistently.
+- Submission requires an issued, non-expired, non-revoked credential.
+- Submission requires a valid institution request.
+- Duplicate submission for the same credential and submission request must be rejected or idempotent by explicit policy.
+- Rejected submissions can provide context for Dispute conversion, but do not become Dispute entities.
 
 ## 5. Entity: CredentialRevocationRecord
-- **Core Purpose**: Audits credential invalidation by expiration, operator action, or dispute resolution.
+- **Core Purpose**: Audits credential invalidation by expiration cleanup, dispute/operator action, or system lifecycle.
 
 ### Data Elements
 | Property | Description | Role / Constraint |
@@ -117,11 +113,8 @@
 | `actorType` | `SYSTEM`, `USER`, `OPERATOR`, `DISPUTE`. | Required. |
 | `actorId` | Actor id if available. | Optional. |
 | `credentialDeleteRef` | Mock/testnet CredentialDelete reference. | Optional. |
-| `sourceDeletionRequestedAt` | Time source deletion was requested. | Optional. |
-| `keyDestructionRequestedAt` | Time key destruction was requested. | Optional. |
 | `createdAt` | Record timestamp. | Audit. |
 
 ### Business Invariants
-- Revocation must make future credential submissions impossible.
-- Revocation should be idempotent for the same credential and reason.
-- Expiration can trigger revocation/deletion asynchronously, but submission validity must be blocked synchronously by `expiresAt`.
+- Revocation blocks future submissions.
+- Expiration status and forced revocation should remain distinguishable in audit records.
