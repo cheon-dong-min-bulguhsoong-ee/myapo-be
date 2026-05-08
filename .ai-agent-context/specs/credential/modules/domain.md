@@ -1,7 +1,7 @@
 # Credential Domain Models
 
 ## 0. Draft Status
-- **Status**: Approved for MVP 1st implementation. Scope: 5-stage pipeline, Internal JWT, mock XRPL metadata, user-facing APIs, nullable authEventId references. Excluded: operator APIs, production XRPL, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
+- **Status**: Approved for MVP 1st implementation. Scope: 5-stage pipeline, Internal JWT, user-facing APIs, nullable authEventId references, and XRP Testnet XLS-70 adapter evidence for hackathon transaction-log review. Excluded: operator APIs, production/mainnet XRPL finality, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
 - **Source Boundary**: Names below are proposed backend model names aligned to latest frontend-design and ADR-002.
 
 ## 1. Aggregate: Credential
@@ -23,9 +23,9 @@
 | `expiresAt` | Validity end timestamp. | Required when issued. |
 | `revokedAt` | Revocation timestamp. | Nullable. |
 | `revocationReason` | Reason for revocation. | Required when revoked. |
-| `xrplCredentialId` | Mock/testnet XRPL credential id. | Nullable. |
-| `xrplTransactionHash` | Mock/testnet transaction hash. | Nullable; not production finality. |
-| `isMock` | Whether this is mock/testnet metadata. | Required for MVP. |
+| `xrplCredentialId` | Testnet/mock XRPL credential object identity or derived reference. | Nullable. |
+| `xrplTransactionHash` | Latest related XRP Testnet transaction hash for MVP evidence. | Nullable; not production/mainnet finality. |
+| `isMock` | Whether the credential uses local mock fallback instead of validated XRP Testnet evidence. | Required for MVP. |
 | `sourceDocumentRef` | Reference to source/encrypted document artifact. | No raw file body. |
 | `createdAt` | Creation timestamp. | Audit. |
 | `updatedAt` | Update timestamp. | Audit. |
@@ -34,7 +34,7 @@
 - A credential has exactly one owner.
 - A credential cannot be submitted if status is `EXPIRED`, `REVOKED`, or `FAILED`.
 - A credential cannot be submitted when `expiresAt <= now`, even if stored status has not been projected to `EXPIRED`.
-- Mock/testnet credentials must expose mock metadata and must not claim production XRPL finality.
+- XRP Testnet credentials must expose Testnet metadata and must not claim production/mainnet XRPL finality. Local mock fallback credentials must be clearly marked with `isMock = true`.
 
 ## 2. Aggregate: CredentialIssueRequest
 - **Core Purpose**: Tracks issue progress through the latest 5-stage operations pipeline.

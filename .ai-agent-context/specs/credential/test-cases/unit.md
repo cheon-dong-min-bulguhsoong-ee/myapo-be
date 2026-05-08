@@ -1,7 +1,7 @@
 # Credential Unit Test Cases
 
 ## 0. Draft Status
-- **Status**: Approved for MVP 1st implementation. Scope: 5-stage pipeline, Internal JWT, mock XRPL metadata, user-facing APIs, nullable authEventId references. Excluded: operator APIs, production XRPL, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
+- **Status**: Approved for MVP 1st implementation. Scope: 5-stage pipeline, Internal JWT, user-facing APIs, nullable authEventId references, and XRP Testnet XLS-70 adapter evidence for hackathon transaction-log review. Excluded: operator APIs, production/mainnet XRPL finality, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
 - **Testing Rule**: Tests verify behavior through public entity/service methods. Mock only repository ports or external boundaries.
 
 ## 1. Credential Entity Tests
@@ -24,11 +24,17 @@
 - **Expected Outcome**: Returns false or throws `CREDENTIAL_REVOKED`
 - **Logic**: Revocation blocks future submission.
 
-### Scenario: Mock credential never claims production XRPL finality
+### Scenario: Testnet credential evidence never claims production XRPL finality
+- **Target**: Credential XRPL evidence mapping / adapter result mapping
+- **Input**: Validated XRP Testnet transaction result
+- **Expected Outcome**: transaction hash, ledger index, validation result, and Testnet marker are retained; production/mainnet finality is not claimed
+- **Logic**: Hackathon review requires Testnet transaction logs while production/mainnet integration remains out of scope.
+
+### Scenario: Mock fallback credential is clearly marked
 - **Target**: `Credential.createIssued(...)`
-- **Input**: MVP mock credential data
-- **Expected Outcome**: `isMock = true`; production finality fields are absent or clearly mock/testnet
-- **Logic**: Latest references preserve mock/testnet boundary.
+- **Input**: MVP local fallback credential data
+- **Expected Outcome**: `isMock = true`; Testnet transaction fields are absent or clearly marked as unavailable
+- **Logic**: Local fallback must not be confused with validated Testnet evidence.
 
 ## 2. CredentialIssueRequest Tests
 

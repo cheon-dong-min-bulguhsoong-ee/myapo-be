@@ -1,7 +1,7 @@
 # Credential Constraints
 
 ## 0. Draft Status
-- **Status**: Approved for MVP 1st implementation. Scope: 5-stage pipeline, Internal JWT, mock XRPL metadata, user-facing APIs, nullable authEventId references. Excluded: operator APIs, production XRPL, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
+- **Status**: Approved for MVP 1st implementation. Scope: 5-stage pipeline, Internal JWT, user-facing APIs, nullable authEventId references, and XRP Testnet XLS-70 adapter evidence for hackathon transaction-log review. Excluded: operator APIs, production/mainnet XRPL finality, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
 - **Primary Sources**:
   - `.ai-agent-context/references/frontend-design/Readme.md`
   - `.ai-agent-context/adrs/auth/adr-002-authentication-and-session-management.md`
@@ -22,7 +22,7 @@
 | `BR_CRD_010` | Rejected institution submissions can be converted to dispute with prefilled rejection context, but Dispute owns the dispute case. | Reference Evidence | Cross-Domain Boundary |
 | `BR_CRD_011` | Credential-related protected APIs must use Internal JWT session strategy from ADR-002. | ADR Evidence | Strict Block |
 | `BR_CRD_012` | Server must not store JWTs for Credential session tracking. | ADR Evidence | Strict Block |
-| `BR_CRD_013` | Real production XRPL finality must not be claimed while using mock/testnet metadata. | Reference Evidence | Strict Block |
+| `BR_CRD_013` | MVP may use XRP Testnet transaction logs as hackathon evidence, but must not claim production/mainnet XRPL finality. | Hackathon Decision | Strict Block |
 | `BR_CRD_014` | Raw source document files, CI originals, JWTs, and private keys must not be exposed through Credential APIs. | Reference + ADR Evidence | Strict Block |
 
 ## 2. Technical Constraints
@@ -46,7 +46,7 @@
 | `OD_CRD_002` | How should the old 4-handover/signature concept relate to the latest 5-stage pipeline? | Treat 5-stage pipeline as the canonical MVP operations model. Defer fixed 4-signature invariant unless a separate ADR/spec maps signatures to stages. | Latest main reference supersedes the old wireframe interpretation. |
 | `OD_CRD_003` | What is the credential validity period per document type? | Keep per-document-type validity with MVP default only after product approval. | Required for expiration and reissue rules. |
 | `OD_CRD_004` | Which actor creates institution submission requests? | Institution/Admin creates requests; user responds through auth-gated submission. | Latest reference treats submission as heavy action and console row. |
-| `OD_CRD_005` | What exact VC/XLS-70 payload fields are required in MVP? | Store mock/testnet metadata and local references only; production XLS-70 payload requires separate approval. | Prevents false XRPL finality claims. |
+| `OD_CRD_005` | What exact VC/XLS-70 payload fields are required in MVP? | Include XRP Testnet adapter evidence fields needed for `CredentialCreate`, `CredentialAccept`, and `CredentialDelete`: issuer, subject, credentialType, expiration, URI, tx hash, ledger index, validation result, flags/object snapshot when available. Production/mainnet payload requires separate approval. | Supports hackathon transaction-log review while preventing false mainnet finality claims. |
 | `OD_CRD_006` | Should expiration mark `EXPIRED`, `REVOKED`, or both? | Use `EXPIRED` for time-based status; use revocation/deletion audit record for cleanup/forced invalidation. | Keeps natural expiry distinct from operator/dispute revocation. |
 | `OD_CRD_007` | Which operator APIs belong to Credential versus Dispute or Document domains? | Keep operator actions draft-only until Admin/Auth/Dispute permissions are approved. | Prevents authorization and bounded-context leakage. |
 | `OD_CRD_008` | Does Credential own auth events for issue/submission, or only link to Auth-owned logs? | Credential should link to Auth-owned `authEventId`; Auth owns CI verification and log retention. | Latest reference adds Auth log single truth and ADR-002 session rules. |

@@ -1,7 +1,7 @@
 # Credential Non-Functional Requirements
 
 ## 0. Draft Status
-- **Status**: Approved for MVP 1st implementation. Scope: 5-stage pipeline, Internal JWT, mock XRPL metadata, user-facing APIs, nullable authEventId references. Excluded: operator APIs, production XRPL, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
+- **Status**: Approved for MVP 1st implementation. Scope: 5-stage pipeline, Internal JWT, user-facing APIs, nullable authEventId references, and XRP Testnet XLS-70 adapter evidence for hackathon transaction-log review. Excluded: operator APIs, production/mainnet XRPL finality, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
 
 ## 1. Performance & Reliability
 
@@ -21,7 +21,7 @@
 | Stateless Session | Server does not store JWTs for Credential sessions. | Follow ADR-002 stateless strategy. | ADR Evidence |
 | Owner Isolation | Users must not access another user's credentials/submissions. | Scope user-facing reads/mutations by verified user id from JWT. | Spec Inference |
 | Auth Event Boundary | Credential must not own CI verification or raw CI values. | Store/link `authEventId` only. | Reference Evidence |
-| Mock Honesty | MVP credential metadata must identify mock/testnet behavior. | Do not claim production XRPL finality. | Reference Evidence |
+| Testnet Honesty | MVP credential metadata must distinguish validated XRP Testnet evidence from local mock fallback. | Do not claim production/mainnet XRPL finality. | Hackathon Decision |
 | Raw Data Protection | Raw source documents, CI originals, private keys, and JWTs must not appear in Credential responses. | Return metadata/references only. | Reference + ADR Evidence |
 
 ## 3. Observability

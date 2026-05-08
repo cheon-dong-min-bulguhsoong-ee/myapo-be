@@ -1,7 +1,7 @@
 # Credential Glossary
 
 ## 0. Draft Status
-- **Status**: Approved for MVP 1st implementation. Scope: 5-stage pipeline, Internal JWT, mock XRPL metadata, user-facing APIs, nullable authEventId references. Excluded: operator APIs, production XRPL, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
+- **Status**: Approved for MVP 1st implementation. Scope: 5-stage pipeline, Internal JWT, user-facing APIs, nullable authEventId references, and XRP Testnet XLS-70 adapter evidence for hackathon transaction-log review. Excluded: operator APIs, production/mainnet XRPL finality, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
 - **Primary Sources**:
   - `.ai-agent-context/references/frontend-design/Readme.md` (single truth for latest wireframe behavior)
   - `.ai-agent-context/references/frontend-design/*.html`
@@ -15,7 +15,8 @@
 | Business Term | System Key (Code) | Source Level | Shared Definition | Concrete Example |
 | :--- | :--- | :--- | :--- | :--- |
 | **Credential** | `Credential` | Reference Evidence | Reusable credential/document result shown in the console and user app. It can be valid, submitted, expired, revoked, or failed. | `크리덴셜 ID`, valid document tab row. |
-| **XRPL Credential Mock** | `XrplCredentialMock` | Reference Evidence | MVP/testnet credential representation. Production XRPL finality is not claimed by the current reference. | `Testnet / Mock` badge. |
+| **XRPL Credential Testnet Evidence** | `XrplCredentialTestnetEvidence` | Hackathon Decision | XRP Testnet XLS-70 transaction evidence used for hackathon review. It may include transaction hash, ledger index, validation result, and on-ledger Credential object snapshot. It must not claim production/mainnet finality. | Testnet `CredentialCreate` / `CredentialAccept` / `CredentialDelete` tx log. |
+| **XRPL Credential Mock** | `XrplCredentialMock` | Reference Evidence | Local fallback credential representation when Testnet publishing is unavailable. Production/mainnet XRPL finality is not claimed by the current reference. | `Testnet / Mock` badge. |
 | **발급 요청** | `CredentialIssueRequest` | Reference Evidence | A request that moves through the document/credential issuance pipeline until a credential exists or fails. | `REQ-...` in document management and request detail. |
 | **5단계 발급 파이프라인** | `IssuePipelineStage` | Reference Evidence | Operations pipeline used by latest console: 접수, 사전 검토, 번역/검수, 공증 서명, 발급 완료. | Document management accordion and request detail pipeline. |
 | **크리덴셜 생성** | `CredentialCreationSubstep` | Reference Evidence | A progress substep shown inside the 5-stage pipeline when credential creation is the current work. | `substep(크리덴셜 생성 / 사용자 승인)`. |
@@ -53,7 +54,7 @@
 
 | Industry/External Term | Our Internal Name | Source Level | Mapping Role |
 | :--- | :--- | :--- | :--- |
-| **XLS-70 Credential** | `XrplCredential` | Reference Evidence | External XRPL credential standard reference. MVP may store mock metadata only until explicit integration approval. |
+| **XLS-70 Credential** | `XrplCredential` | Reference Evidence | External XRPL credential standard reference. MVP may publish to XRP Testnet for hackathon evidence, but production/mainnet integration remains out of scope until explicit approval. |
 | **Web3Auth ID Token** | `ExternalIdentityToken` | ADR Evidence | Used only at login/registration to obtain Internal JWT. Credential APIs should use Internal JWT, not raw Web3Auth token. |
 | **Internal JWT** | `InternalJwtBearer` | ADR Evidence | Stateless application session token for protected Credential APIs. |
 | **CI / identity verification event** | `AuthEvent` | Reference Evidence | Heavy-action verification evidence linked by id; Auth owns verification policy/log storage. |

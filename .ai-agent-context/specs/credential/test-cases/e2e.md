@@ -1,7 +1,7 @@
 # Credential E2E Test Cases
 
 ## 0. Draft Status
-- **Status**: Approved for MVP 1st implementation. Scope: 5-stage pipeline, Internal JWT, mock XRPL metadata, user-facing APIs, nullable authEventId references. Excluded: operator APIs, production XRPL, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
+- **Status**: Approved for MVP 1st implementation. Scope: 5-stage pipeline, Internal JWT, user-facing APIs, nullable authEventId references, and XRP Testnet XLS-70 adapter evidence for hackathon transaction-log review. Excluded: operator APIs, production/mainnet XRPL finality, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
 - **API Boundary**: All responses must use `CommonRes<T>`.
 - **Auth Boundary**: Protected Credential APIs use `Authorization: Bearer <Internal JWT>` from ADR-002.
 
@@ -65,10 +65,10 @@
 
 ## 5. Privacy and Safety Cases
 
-### Case: Mock XRPL metadata is clearly marked
+### Case: Testnet XRPL metadata is clearly marked
 1. **Request**: `GET /api/v1/credentials/{credentialId}` for MVP credential.
 2. **Response**: Expect `isMock = true` or approved equivalent.
-3. **Assert**: Response does not claim production XRPL finality.
+3. **Assert**: Response distinguishes XRP Testnet evidence from local mock fallback and does not claim production/mainnet XRPL finality.
 
 ### Case: Credential APIs do not expose auth secrets
 1. **Request**: Any Credential API.

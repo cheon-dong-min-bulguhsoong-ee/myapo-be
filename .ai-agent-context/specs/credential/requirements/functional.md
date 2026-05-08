@@ -1,7 +1,7 @@
 # Credential Functional Requirements
 
 ## 0. Draft Status
-- **Status**: Approved for MVP 1st implementation. Scope: 5-stage pipeline, Internal JWT, mock XRPL metadata, user-facing APIs, nullable authEventId references. Excluded: operator APIs, production XRPL, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
+- **Status**: Approved for MVP 1st implementation. Scope: 5-stage pipeline, Internal JWT, user-facing APIs, nullable authEventId references, and XRP Testnet XLS-70 adapter evidence for hackathon transaction-log review. Excluded: operator APIs, production/mainnet XRPL finality, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
 - **Primary Sources**: `.ai-agent-context/references/frontend-design/Readme.md`, ADR-002.
 
 ## 1. Core Scenarios
@@ -83,9 +83,11 @@
 - **And** future submissions are blocked
 - **And** action reason/audit metadata is retained
 
-### Scenario: External XRPL publishing remains mock-only unless approved
-- **Source Level**: Reference Evidence
-- **Given** MVP uses mock/testnet credential metadata
-- **When** a credential is issued, submitted, expired, or revoked
-- **Then** the system must not claim production XRPL finality
-- **And** production XLS-70 integration requires an explicit approved decision/spec
+### Scenario: Publish XRP Testnet XLS-70 evidence for hackathon review
+- **Source Level**: Hackathon Decision + XLS-70 Reference
+- **Given** hackathon review checks transaction logs
+- **When** a credential is issued through the MVP Testnet flow
+- **Then** the system should submit or prepare auditable XRP Testnet `CredentialCreate`, `CredentialAccept`, and `CredentialDelete` evidence as applicable
+- **And** the result should retain transaction hash, ledger index, validation result, and relevant Credential object snapshot when available
+- **And** the system must not claim production/mainnet XRPL finality
+- **And** production/mainnet XLS-70 integration requires a separate approved decision/spec
