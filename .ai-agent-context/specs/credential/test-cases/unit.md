@@ -1,103 +1,103 @@
 # Credential Unit Test Cases
 
 ## 0. Draft Status
-- **Status**: Draft from wireframe evidence. User approval is required before implementation.
-- **Testing Rule**: Tests must verify behavior through public entity/service methods. Mock only repository ports or external boundaries.
+- **Status**: Approved for MVP 1st implementation. Scope: 5-stage pipeline, Internal JWT, mock XRPL metadata, user-facing APIs, nullable authEventId references. Excluded: operator APIs, production XRPL, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
+- **Testing Rule**: Tests verify behavior through public entity/service methods. Mock only repository ports or external boundaries.
 
 ## 1. Credential Entity Tests
 
 ### Scenario: Issued credential is usable before expiration
-- **Target**: `Credential.canBeSubmitted(now)` or equivalent public method
+- **Target**: `Credential.canBeSubmitted(now)`
 - **Input**: `status = ISSUED`, `expiresAt > now`
 - **Expected Outcome**: Returns true
-- **Logic**: Valid credentials can be submitted during their validity period.
+- **Logic**: Valid credentials can be submitted during validity period.
 
 ### Scenario: Expired credential is not usable
 - **Target**: `Credential.canBeSubmitted(now)`
 - **Input**: `status = ISSUED`, `expiresAt <= now`
-- **Expected Outcome**: Returns false or throws `DomainError(ErrorCode.Credential.CREDENTIAL_EXPIRED)` when enforcing submission
-- **Logic**: Expiration blocks submission even before a background job updates stored status.
+- **Expected Outcome**: Returns false or submission enforcement throws `CREDENTIAL_EXPIRED`
+- **Logic**: Expiration blocks submission synchronously.
 
 ### Scenario: Revoked credential is not usable
 - **Target**: `Credential.canBeSubmitted(now)`
 - **Input**: `status = REVOKED`, `expiresAt > now`
 - **Expected Outcome**: Returns false or throws `CREDENTIAL_REVOKED`
-- **Logic**: Revocation has priority over remaining validity period.
+- **Logic**: Revocation blocks future submission.
 
-### Scenario: Revocation records audit reason
-- **Target**: `Credential.revoke(reason, actor)`
-- **Input**: Valid issued credential, revocation reason
-- **Expected Outcome**: Status becomes `REVOKED`, `revokedAt` is set, reason is retained
-- **Logic**: Dispute/operator/system revocation must be auditable.
+### Scenario: Mock credential never claims production XRPL finality
+- **Target**: `Credential.createIssued(...)`
+- **Input**: MVP mock credential data
+- **Expected Outcome**: `isMock = true`; production finality fields are absent or clearly mock/testnet
+- **Logic**: Latest references preserve mock/testnet boundary.
 
 ## 2. CredentialIssueRequest Tests
 
-### Scenario: Issue request cannot complete without all signatures
-- **Target**: `CredentialIssueRequest.completeIfReady()` or equivalent
-- **Input**: `requiredSignatureCount = 4`, `completedSignatureCount = 3`
-- **Expected Outcome**: Completion is rejected or status remains `SIGNATURE_REQUIRED`
-- **Logic**: Four-handover signature chain must be complete before final credential creation.
+### Scenario: Issue request initializes 5-stage pipeline
+- **Target**: `CredentialIssueRequest.create(...)`
+- **Input**: Valid user/document type/issuer
+- **Expected Outcome**: Pipeline includes RECEIVED, PRE_REVIEW, TRANSLATION_REVIEW, NOTARY_SIGNATURE, ISSUED
+- **Logic**: Latest console uses 5-stage pipeline as canonical display model.
 
-### Scenario: Signing current handover advances signature count
-- **Target**: `CredentialIssueRequest.signHandover(step, signature)`
-- **Input**: Current step `2`, valid signature
-- **Expected Outcome**: Handover step is signed and completed signature count increments by one
-- **Logic**: User signature advances the trust chain.
+### Scenario: Issue pipeline advances in order
+- **Target**: `CredentialIssueRequest.advanceTo(nextStage)`
+- **Input**: Current stage `RECEIVED`, next stage `PRE_REVIEW`
+- **Expected Outcome**: Stage advances and previous stage becomes done
+- **Logic**: Pipeline order must be deterministic.
 
-### Scenario: Duplicate handover signature is rejected
-- **Target**: `CredentialIssueRequest.signHandover(step, signature)`
-- **Input**: A step already signed
-- **Expected Outcome**: Throws `HANDOVER_ALREADY_SIGNED` or returns idempotent prior result if idempotency is designed
-- **Logic**: Signature chain must not double-count.
+### Scenario: Out-of-order pipeline advance is rejected
+- **Target**: `CredentialIssueRequest.advanceTo(nextStage)`
+- **Input**: Current stage `RECEIVED`, attempted `NOTARY_SIGNATURE`
+- **Expected Outcome**: Throws pipeline transition error
+- **Logic**: Prevent invalid progress projections.
 
-### Scenario: Out-of-order handover signature is rejected
-- **Target**: `CredentialIssueRequest.signHandover(step, signature)`
-- **Input**: Request current step `2`, attempted signature for step `3`
-- **Expected Outcome**: Throws `HANDOVER_STEP_INVALID`
-- **Logic**: Trust chain order must be deterministic.
+### Scenario: User approval substep is represented without changing stage count
+- **Target**: `CredentialIssueRequest.requireUserApproval(substep)`
+- **Input**: Current pipeline stage and `USER_APPROVAL`
+- **Expected Outcome**: Request status becomes `USER_APPROVAL_REQUIRED` and stage count remains five
+- **Logic**: Latest reference treats credential creation/user approval as substeps.
 
 ## 3. CredentialSubmission Tests
 
-### Scenario: Submission requires institution request
+### Scenario: Submission requires valid credential and institution request
 - **Target**: `CredentialService.submitCredential(...)`
-- **Input**: Issued credential, no matching institution submission request
-- **Expected Outcome**: Throws `INSTITUTION_REQUEST_REQUIRED`
-- **Logic**: Wireframe says the institution must request first.
+- **Input**: Issued credential, valid institution request, consent confirmed
+- **Expected Outcome**: One `CredentialSubmission` is created
+- **Logic**: Row unit is one institution submission.
 
-### Scenario: Submission creates history row for valid request
+### Scenario: Multiple submissions for one credential create multiple rows
 - **Target**: `CredentialService.submitCredential(...)`
-- **Input**: Issued credential, matching institution submission request, consent confirmed
-- **Expected Outcome**: Returns submission result and repository saves a submission record
-- **Logic**: Submission history must accumulate per credential.
+- **Input**: One credential, two distinct institution submission requests
+- **Expected Outcome**: Two submission records exist for the same credential
+- **Logic**: Latest reference says one credential submitted to N institutions creates N rows.
 
-### Scenario: Submission rejects missing consent confirmation
+### Scenario: Submission links auth event id
 - **Target**: `CredentialService.submitCredential(...)`
-- **Input**: Valid credential and request, `consentConfirmed = false`
-- **Expected Outcome**: Throws validation/domain error
-- **Logic**: User action is required for provision to institution.
+- **Input**: Valid submission with `authEventId`
+- **Expected Outcome**: Submission stores the auth event id by reference
+- **Logic**: Credential links to Auth-owned log without owning CI data.
 
-## 4. CredentialService Tests
+### Scenario: Submission rejects expired credential
+- **Target**: `CredentialService.submitCredential(...)`
+- **Input**: Credential with `expiresAt <= now`
+- **Expected Outcome**: Throws `CREDENTIAL_EXPIRED`
+- **Logic**: Expired credential cannot be submitted.
 
-### Scenario: Create issue request initializes handovers
-- **Target**: `CredentialService.createIssueRequest(...)`
-- **Input**: Eligible user/document type/issuer
-- **Expected Outcome**: Issue request is saved with draft default four handover steps
-- **Logic**: Mobile progress UI requires handover/signature state.
+### Scenario: Submission result can become rejected with reason
+- **Target**: `CredentialSubmission.markRejected(reason)`
+- **Input**: Existing submission, rejection reason
+- **Expected Outcome**: Status becomes `REJECTED`, reason is retained
+- **Logic**: Rejection context feeds dispute conversion.
 
-### Scenario: Issuer unavailable returns retryable failure
-- **Target**: `CredentialService.createIssueRequest(...)`
-- **Input**: Issuer resolution or issuer precheck fails
-- **Expected Outcome**: Throws `ISSUER_UNAVAILABLE` or saves failed request according to implementation decision
-- **Logic**: Wireframe has issuer response error and retry path.
+## 4. Auth Boundary Tests
 
-### Scenario: Final signature creates mock credential
-- **Target**: `CredentialService.signHandover(...)`
-- **Input**: Issue request with final handover waiting for signature
-- **Expected Outcome**: Credential is created with `isMock = true`, `issuedAt`, `expiresAt`, wallet address, and `ISSUED` status
-- **Logic**: MVP must not claim production XRPL finality.
+### Scenario: Credential service receives user id from verified JWT context
+- **Target**: Credential facade/service entry method
+- **Input**: `userId` supplied by `JwtAuthGuard` context
+- **Expected Outcome**: User id scopes read/mutation
+- **Logic**: ADR-002 makes Internal JWT the protected API strategy.
 
-### Scenario: Expiration lifecycle blocks future submission
-- **Target**: `CredentialService.processExpiration(...)` and `submitCredential(...)`
-- **Input**: Credential past `expiresAt`
-- **Expected Outcome**: Credential becomes expired/revoked or submission path rejects it
-- **Logic**: Expired credentials are unusable even if cleanup is async.
+### Scenario: Credential never stores JWT session data
+- **Target**: Credential domain/service models
+- **Input**: Credential issue/submission action
+- **Expected Outcome**: No access token or session token is persisted in Credential objects
+- **Logic**: ADR-002 prohibits server-side JWT session storage.

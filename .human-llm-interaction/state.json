@@ -1,27 +1,57 @@
 {
-  "currentTask": "User, Auth 도메인을 중심으로 로그인/로그아웃 기능 개발 시작",
-  "taskClass": "feature",
-  "impactedDomains": ["User", "Auth"],
+  "currentTask": "Update Credential spec from latest main frontend-design and ADR-002",
+  "taskClass": "docs-only",
+  "impactedDomains": [
+    "credential",
+    "auth"
+  ],
   "step": "complete",
-  "completedSteps": ["analyze-task", "select-documents", "load-documents", "implement-domain-layer", "implement-application-layer", "implement-interface-layer", "refine-implementation", "domain-isolation-recovery", "validate"],
+  "completedSteps": [
+    "analyze-task",
+    "select-documents",
+    "load-documents",
+    "apply-adr",
+    "apply-domain",
+    "implement-docs-update",
+    "validate-docs-grep"
+  ],
   "selectedDocuments": [
-    ".ai-agent-context/references/README.md",
+    ".ai-agent-context/.orchestrator.md",
     ".ai-agent-context/specs/README.md",
     ".ai-agent-context/adrs/README.md",
-    ".ai-agent-context/rules/README.md",
-    ".ai-agent-context/rules/conventions/software-architecture.md",
-    ".ai-agent-context/adrs/user/adr-001-user-registration-web3auth.md",
-    ".ai-agent-context/adrs/auth/adr-002-authentication-and-session-management.md"
+    ".ai-agent-context/adrs/auth/adr-002-authentication-and-session-management.md",
+    ".ai-agent-context/specs/auth/apis/spec.md",
+    ".ai-agent-context/specs/auth/modules/usecase.md",
+    ".ai-agent-context/references/frontend-design/Readme.md",
+    ".ai-agent-context/specs/credential/glossary.md",
+    ".ai-agent-context/specs/credential/requirements/functional.md",
+    ".ai-agent-context/specs/credential/requirements/constraints.md",
+    ".ai-agent-context/specs/credential/apis/spec.md",
+    ".ai-agent-context/specs/credential/modules/domain.md",
+    ".ai-agent-context/specs/credential/modules/usecase.md",
+    ".ai-agent-context/specs/credential/modules/events.md",
+    ".ai-agent-context/specs/credential/test-cases/unit.md",
+    ".ai-agent-context/specs/credential/test-cases/integration.md",
+    ".ai-agent-context/specs/credential/test-cases/e2e.md"
   ],
   "artifacts": [
-    "src/app/domain/user/entity/user.entity.ts",
-    "src/app/domain/user/service/user.service.ts",
-    "src/app/infrastructure/repository/user/persistence/user.repository.impl.ts",
-    "src/app/application/auth/auth.facade.ts",
-    "src/app/interfaces/auth/controller/auth.controller.ts",
-    "src/app/interfaces/auth/auth.module.ts",
-    "src/app/interfaces/user/user.module.ts",
-    "src/app/application/user/user.facade.ts",
-    ".ai-agent-context/adrs/auth/adr-002-authentication-and-session-management.md"
-  ]
+    ".ai-agent-context/specs/credential/glossary.md",
+    ".ai-agent-context/specs/credential/requirements/functional.md",
+    ".ai-agent-context/specs/credential/requirements/constraints.md",
+    ".ai-agent-context/specs/credential/requirements/non-functional.md",
+    ".ai-agent-context/specs/credential/apis/spec.md",
+    ".ai-agent-context/specs/credential/modules/domain.md",
+    ".ai-agent-context/specs/credential/modules/usecase.md",
+    ".ai-agent-context/specs/credential/modules/events.md",
+    ".ai-agent-context/specs/credential/test-cases/unit.md",
+    ".ai-agent-context/specs/credential/test-cases/integration.md",
+    ".ai-agent-context/specs/credential/test-cases/e2e.md",
+    ".human-llm-interaction/state.json"
+  ],
+  "validation": {
+    "docsGrep": "checked for stale external wireframe URL, old signature endpoints, and X-User-Id contract drift; remaining X-User-Id mentions are explicitly marked legacy/test fallback",
+    "npmBuild": "not run; docs-only spec update",
+    "npmLint": "not run; docs-only spec update",
+    "npmTest": "not run; docs-only spec update"
+  }
 }

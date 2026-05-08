@@ -1,68 +1,69 @@
 # Credential Glossary
 
 ## 0. Draft Status
-- **Status**: Draft from wireframe evidence. User approval is required before code implementation.
+- **Status**: Approved for MVP 1st implementation. Scope: 5-stage pipeline, Internal JWT, mock XRPL metadata, user-facing APIs, nullable authEventId references. Excluded: operator APIs, production XRPL, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
 - **Primary Sources**:
-  - `https://github.com/cheon-dong-min-bulguhsoong-ee/IDEATION-scaffold/tree/main/frontend/wireframe/v4`
-  - `frontend/wireframe/v4/index.html`
-  - `frontend/wireframe/v4/app-korean.html`
-  - `frontend/wireframe/v4/app-foreigner.html`
-  - `frontend/wireframe/v4/console.html`
-  - `frontend/wireframe/v4/console/request-detail.html`
-  - `frontend/wireframe/v4/console/dispute-detail.html`
-  - `frontend/wireframe/v4/console/member-detail.html`
-- **Evidence Boundary**: Terms marked as `Wireframe Evidence` are visible in the wireframe. Terms marked as `Spec Inference` are proposed backend names derived from the wireframe and must be confirmed.
+  - `.ai-agent-context/references/frontend-design/Readme.md` (single truth for latest wireframe behavior)
+  - `.ai-agent-context/references/frontend-design/*.html`
+  - `.ai-agent-context/adrs/auth/adr-002-authentication-and-session-management.md`
+  - `.ai-agent-context/specs/auth/apis/spec.md`
+  - `.ai-agent-context/references/XRPL-Standards/XLS-0070-credentials/README.md`
+- **Evidence Boundary**: Terms marked `Reference Evidence` are visible in latest `.ai-agent-context/references/frontend-design`. Terms marked `ADR Evidence` are accepted decisions. Terms marked `Spec Inference` are proposed backend terms that require approval before implementation.
 
 ## 1. Primary Business Concepts
 
 | Business Term | System Key (Code) | Source Level | Shared Definition | Concrete Example |
 | :--- | :--- | :--- | :--- | :--- |
-| **Credential** | `Credential` | Wireframe Evidence | XRPL Credential Mock object representing a user's reusable verified document result. It is valid only until expiration and may be deleted/revoked. | `납세증명서 (영문)` credential in the user's wallet. |
-| **XRPL Credential Mock** | `XrplCredentialMock` | Wireframe Evidence | MVP/testnet representation of an XRPL XLS-70 style credential. External institution integration is mock-only for the MVP. | Wireframe badge: `Testnet · Pre-Check Only · XRPL Credential Mock`. |
-| **발급 요청** | `CredentialIssueRequest` | Wireframe Evidence | A user-initiated document/credential issuance request that progresses through handover and signature steps. | `REQ-2026-0419`. |
-| **인계** | `CredentialHandover` | Wireframe Evidence | A transfer step in the credential lifecycle where the processing responsibility moves to the next actor. Each handover requires user signature before advancing. | `인계 1 · 발급 원본`, `인계 2 · 처리위임`, `인계 3 · 인증의뢰`, `인계 4 · 최종 Credential`. |
-| **사용자 서명** | `UserSignature` | Wireframe Evidence | User confirmation with the user's key for a handover step. Missing or mismatched signatures identify a broken trust chain. | `사용자 서명 4 / 4`. |
-| **사용자 지갑** | `UserWallet` | Wireframe Evidence | The destination where the final credential arrives after all required handover signatures. | `지갑에 Credential 이 도착했어요`. |
-| **유효기간** | `expiresAt` | Wireframe Evidence | Time boundary during which a credential can be reused and submitted. Expired credentials must not be treated as usable. | `유효기간 2026-11-02`. |
-| **자동 폐기** | `AutoRevocation` or `AutoDeletion` | Wireframe Evidence | Expiration-triggered destruction/invalidity process for privacy: CredentialDelete, original document deletion, and key destruction. | `CredentialDelete + 원본 삭제 + 키 파기`. |
-| **기관 제출 요청** | `InstitutionSubmissionRequest` | Wireframe Evidence | A request initiated by an institution asking the user to submit an eligible credential. User can submit only when an institution request exists. | `기관이 먼저 요청한 경우에만 보내드릴 수 있어요`. |
-| **제출 이력** | `CredentialSubmissionHistory` | Wireframe Evidence | Audit trail showing which institutions received a credential. One credential may be submitted to multiple institutions. | `한 크리덴셜이 여러 기관에 제출되면 행이 누적돼요`. |
-| **분쟁** | `Dispute` | Wireframe Evidence | A user or institution raised issue about credential/document correctness or processing chain. Credential domain records the related credential state but dispute ownership belongs to Dispute domain. | `오역이 의심된다면 신고할 수 있어요`. |
-| **크리덴셜 ID** | `credentialId` | Wireframe Evidence | Public-facing identifier displayed in operations console and detail screens. | `크리덴셜 ID`. |
-| **지갑 주소** | `walletAddress` | Wireframe Evidence | User wallet address associated with the credential. | `지갑 주소`. |
-| **발급 기관** | `issuerId` | Wireframe Evidence | Institution or authority that issues the source document/credential. | `KR-NTS`, `VN-NTS`, `베트남 정부`, `한국 정부`. |
-| **전달 기관** | `recipientInstitutionId` | Wireframe Evidence | Institution that receives a submitted credential. | `KR-BANK`, `US-CONS`, `AU-IMM`, `CA-IMM`. |
-| **원본 문서** | `sourceDocumentRef` | Spec Inference | Reference to the encrypted original document or storage object backing the credential. Raw source file handling is not owned by the Credential domain unless explicitly approved. | S3 activity and document download screens. |
+| **Credential** | `Credential` | Reference Evidence | Reusable credential/document result shown in the console and user app. It can be valid, submitted, expired, revoked, or failed. | `크리덴셜 ID`, valid document tab row. |
+| **XRPL Credential Mock** | `XrplCredentialMock` | Reference Evidence | MVP/testnet credential representation. Production XRPL finality is not claimed by the current reference. | `Testnet / Mock` badge. |
+| **발급 요청** | `CredentialIssueRequest` | Reference Evidence | A request that moves through the document/credential issuance pipeline until a credential exists or fails. | `REQ-...` in document management and request detail. |
+| **5단계 발급 파이프라인** | `IssuePipelineStage` | Reference Evidence | Operations pipeline used by latest console: 접수, 사전 검토, 번역/검수, 공증 서명, 발급 완료. | Document management accordion and request detail pipeline. |
+| **크리덴셜 생성** | `CredentialCreationSubstep` | Reference Evidence | A progress substep shown inside the 5-stage pipeline when credential creation is the current work. | `substep(크리덴셜 생성 / 사용자 승인)`. |
+| **사용자 승인 / 서명** | `UserApproval` / `UserSignature` | Reference Evidence | User confirmation required for heavy actions and credential-related progress. Exact signature count remains a product decision. | `사용자 승인`, previous wireframe `사용자 서명`. |
+| **사용자 지갑** | `UserWallet` | Reference Evidence | Destination/account associated with issued credential metadata. | Request detail `지갑 주소`. |
+| **유효한 문서** | `ISSUED` | Reference Evidence | Credential is issued and can be used before expiration/revocation. | Document management `valid` tab. |
+| **기관 제출** | `CredentialSubmission` | Reference Evidence | One submission event for a credential to an institution. Row unit is submission, not credential. | `SUB-...`; one credential submitted to N institutions creates N rows. |
+| **기관 제출 결과** | `CredentialSubmissionStatus` | Reference Evidence | Institution submission result state: received, verifying, or rejected. | `received`, `verifying`, `rejected` badges. |
+| **제출 시 인증 ID** | `authEventId` | Reference Evidence | Authentication log event linked to an institution submission. | Submission accordion -> auth log jump. |
+| **인증 로그** | `AuthLog` | Reference Evidence | Operations log for heavy action identity verification. Credential uses it through auth event references, but Auth owns the log. | Auth page table with linked object id. |
+| **트리거 3종** | `AuthTriggerType` | Reference Evidence | Auth gates are limited to issue request, institution submit, dispute report. | `issue_request`, `institution_submit`, `dispute_report`. |
+| **CI 불일치 차단** | `CiMismatchBlocked` | Reference Evidence | Auth failure category where reauthentication CI differs from the user account CI. | Auth log failure filter. |
+| **만료된 문서** | `EXPIRED` | Reference Evidence | Credential validity period has ended. Submission must be blocked. | Document management `expired` tab. |
+| **폐기된 문서** | `REVOKED` | Reference Evidence | Credential has been invalidated by expiration cleanup, dispute/operator action, or lifecycle policy. | Document management `revoked` tab; dispute action `크리덴셜 폐기`. |
+| **분쟁 전환** | `DisputeConversion` | Reference Evidence | Rejected institution submission can start a dispute with prefilled rejection context. Dispute owns the case. | Submitted row accordion `분쟁 신고로 전환`. |
+| **Internal JWT** | `InternalJwtBearer` | ADR Evidence | Server-issued stateless JWT used for protected APIs after Web3Auth login. | `Authorization: Bearer <accessToken>`. |
+| **X-User-Id** | `LegacyUserIdHeader` | Spec Inference | Legacy/test-only fallback seen in older code; not the preferred contract for new Credential APIs after ADR-002. | `X-User-Id` temporary header. |
 
 ## 2. Status & Lifecycle
 
 | Friendly Name | System Status | Source Level | When does it enter this state? | Final Outcome |
 | :--- | :--- | :--- | :--- | :--- |
-| **미발급** | `NOT_ISSUED` | Wireframe Evidence | The user has no credential for the selected document. | User may start issuance. |
-| **발급 진행 중** | `ISSUING` | Wireframe Evidence | A credential issue request exists and one or more handover/signature steps remain. | Advance to `ISSUED` or `FAILED`/`REVOKED`. |
-| **서명 대기** | `SIGNATURE_REQUIRED` | Wireframe Evidence | A handover step is ready but the user's signature is missing. | User signs and the process advances. |
-| **발급 완료 / 사용 가능** | `ISSUED` | Wireframe Evidence | All required handover signatures are completed and the credential is delivered to the wallet. | Credential can be reused until expiration and submitted to eligible institutions. |
-| **기관 제출됨** | `SUBMITTED` | Wireframe Evidence | Credential was sent to an institution submission request. | Submission history is appended. The credential may remain `ISSUED` for reuse. |
-| **만료됨** | `EXPIRED` | Wireframe Evidence | Current time is after `expiresAt`. | Credential must not be submitted. Automatic deletion/revocation flow should run. |
-| **폐기됨** | `REVOKED` | Wireframe Evidence | Credential was manually or automatically invalidated. | Credential must not be submitted or treated as valid. |
-| **실패** | `FAILED` | Wireframe Evidence | Issuer/institution/storage/verification error prevents completion. | User or operator may retry/reissue depending on failure reason. |
+| **진행 중** | `ISSUING` | Reference Evidence | Issue request is in the 5-stage pipeline before credential completion. | Advances to `ISSUED` or `FAILED`. |
+| **사용자 승인 대기** | `USER_APPROVAL_REQUIRED` | Reference Evidence | Pipeline/substep requires user confirmation or auth-gated action. | User approval/auth event allows progress. |
+| **발급 완료 / 유효** | `ISSUED` | Reference Evidence | Pipeline reaches 발급 완료 and credential is created. | Credential can be submitted before expiration/revocation. |
+| **기관 제출됨** | `SUBMITTED` | Reference Evidence | Credential is submitted to one institution request. | Submission row tracks result; credential may remain reusable. |
+| **기관 수령** | `RECEIVED` | Reference Evidence | Institution submission was received. | May move to verifying/rejected or remain accepted by policy. |
+| **검증 중** | `VERIFYING` | Reference Evidence | Institution is verifying submitted credential. | Later accepted/rejected if implemented. |
+| **반려** | `REJECTED` | Reference Evidence | Institution rejects the submission. | User/operator may convert to dispute. |
+| **만료됨** | `EXPIRED` | Reference Evidence | Credential validity period ended. | Submission blocked; cleanup/revocation may follow. |
+| **폐기됨** | `REVOKED` | Reference Evidence | Credential is invalidated by operator/dispute/system lifecycle. | Submission blocked and audit retained. |
+| **실패** | `FAILED` | Reference Evidence | Issuance or credential creation failed. | Retry/reissue policy required. |
 
 ## 3. External & Industry Bridge
 
 | Industry/External Term | Our Internal Name | Source Level | Mapping Role |
 | :--- | :--- | :--- | :--- |
-| **XLS-70 Credential** | `XrplCredential` | Wireframe Evidence | XRPL credential concept used by the product narrative. MVP backend may store only mock metadata until XRPL integration is approved. |
-| **CredentialDelete** | `CredentialDeletionRecord` | Wireframe Evidence | Expiration/revocation action that makes the credential unusable and triggers original deletion/key destruction. |
-| **DID / VC** | `VerifiableCredentialPayload` | Spec Inference | Future VC payload format. Wireframe does not define an exact W3C VC JSON schema. |
-| **Distributed Storage / S3** | `SourceDocumentStorageRef` | Wireframe Evidence | Storage location for encrypted source document artifacts. Credential stores references, not raw file contents, unless later approved. |
-| **PIPA Consent and Expiration Deletion** | `PrivacyLifecyclePolicy` | Wireframe Evidence | Compliance narrative: collection/provision consent and deletion upon expiration. Legal accuracy must be confirmed outside this draft before production use. |
+| **XLS-70 Credential** | `XrplCredential` | Reference Evidence | External XRPL credential standard reference. MVP may store mock metadata only until explicit integration approval. |
+| **Web3Auth ID Token** | `ExternalIdentityToken` | ADR Evidence | Used only at login/registration to obtain Internal JWT. Credential APIs should use Internal JWT, not raw Web3Auth token. |
+| **Internal JWT** | `InternalJwtBearer` | ADR Evidence | Stateless application session token for protected Credential APIs. |
+| **CI / identity verification event** | `AuthEvent` | Reference Evidence | Heavy-action verification evidence linked by id; Auth owns verification policy/log storage. |
 
 ## 4. Hallucination Guards
 
-- **Do not implement from this draft until approved**: This file is a wireframe-derived spec draft, not yet an accepted product contract.
-- **Do not treat Credential as a permanent reusable document**: Wireframe states reuse is limited to the credential validity period.
-- **Do not allow user-initiated arbitrary institution submission**: Wireframe states submission is available only when an institution has requested it first.
-- **Do not claim real XRPL integration**: Wireframe repeatedly labels the MVP as `Testnet`, `Pre-Check Only`, and `XRPL Credential Mock`.
-- **Do not store raw credential/source document in domain entities**: Store references and metadata unless a storage ADR/spec explicitly authorizes raw payload storage.
-- **Do not bypass Document domain**: Credential issuance is related to document issuance and handover, but cross-context calls must use Facade/domain services or ports.
-- **Ambiguity Guard**: If the user says `문서`, clarify whether they mean Document domain source document, Credential reusable proof, or Institution submission artifact.
+- **Do not implement from this draft until approved**: This spec is still a draft update.
+- **Do not use external wireframe URL as source of truth when local reference exists**: Use `.ai-agent-context/references/frontend-design/Readme.md` first.
+- **Do not design new Credential APIs around `X-User-Id`**: ADR-002 makes Internal JWT the protected API strategy. `X-User-Id` may remain legacy/test fallback only if existing code requires it.
+- **Do not collapse the 5-stage operations pipeline into the old 4-handover model**: the latest reference uses 5 stages; any 4-signature rule must be explicitly related to pipeline substeps or deferred.
+- **Do not treat institution submission as one row per credential**: latest reference states row unit is one submission; one credential can create N submission rows.
+- **Do not silently submit credentials**: institution submission is a heavy action and must be user-confirmed/auth-gated.
+- **Do not let Credential own AuthLog or Dispute internals**: link by ids/events and use approved cross-domain boundaries.

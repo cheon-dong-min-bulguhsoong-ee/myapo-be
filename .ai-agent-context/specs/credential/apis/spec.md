@@ -1,47 +1,42 @@
 # Credential API Specification
 
 ## 0. Draft Status
-- **Status**: Draft from wireframe evidence. User approval is required before implementation.
+- **Status**: Approved for MVP 1st implementation. Scope: 5-stage pipeline, Internal JWT, mock XRPL metadata, user-facing APIs, nullable authEventId references. Excluded: operator APIs, production XRPL, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
 - **Base Path**: `/api/v1/credentials`
 - **Response Envelope**: Every response must use `CommonRes<T>`.
 - **Error Model**: All business errors must use `DomainError` and `ErrorCode`.
-- **Auth Caveat**: Current project authentication is temporary. User-facing APIs are written for `CurrentUserId`/`X-User-Id` until Web3Auth/JWT is finalized.
+- **Auth Strategy**: Protected user APIs use Internal JWT from ADR-002: `Authorization: Bearer <accessToken>`. `X-User-Id` is legacy/test fallback only if living code requires it.
 
 ## 1. Overview
-Credential APIs support the user wallet and MVP XRPL Credential Mock lifecycle shown in the wireframe:
-- Start credential issuance from an approved/eligible document flow.
-- Record user signatures for handover steps.
-- List and inspect wallet credentials.
-- Submit valid credentials to institution requests.
-- Reissue expired credentials.
-- Revoke credentials when allowed by operator/dispute flows.
+Credential APIs support the latest frontend-design model:
+- Credential issue requests appear in the 5-stage issue pipeline.
+- Credential submission is a heavy auth-gated action and creates one row per institution submission.
+- Submission rows can link to an Auth-owned auth event id.
+- Rejected submissions can be converted to Dispute context, but Dispute owns case lifecycle.
+- Operator actions remain draft-only until Admin/Auth/Dispute permissions are approved.
 
 ## 2. Authentication & Authorization
-- **User APIs**: Require current user id from temporary auth (`X-User-Id`) or future Web3Auth guard.
-- **Operator APIs**: Draft-only. Must not be implemented until Admin/Auth authorization spec exists.
-- **Ownership Rule**: User-facing endpoints must scope all reads/mutations to the current user.
+- **User APIs**: `InternalJwtBearer` required.
+- **Current User Source**: `JwtAuthGuard` verifies Internal JWT and extracts `userId`.
+- **Logout/Revocation Note**: ADR-002 says server-side JWT revocation is not implemented in MVP; Credential must not store JWT sessions.
+- **Operator APIs**: Draft-only. Must not be implemented until Admin/Auth permission specs are approved.
 
 ## 3. Endpoints
 
 ### 3.1. Create Credential Issue Request
 - **Method**: `POST`
 - **Path**: `/api/v1/credentials/issue-requests`
-- **Source Level**: Spec Inference from wireframe issue start screens.
-- **Description**: Starts a credential issuance flow for an eligible document/document type.
+- **Source Level**: Reference + ADR Evidence
+- **Description**: Starts a credential issue request as heavy action trigger `issue_request` and returns 5-stage pipeline state.
 
-#### API Contract (OpenAPI YAML)
 ```yaml
 paths:
   /api/v1/credentials/issue-requests:
     post:
       summary: Create credential issue request
       operationId: createCredentialIssueRequest
-      parameters:
-        - in: header
-          name: X-User-Id
-          required: true
-          schema:
-            type: string
+      security:
+        - InternalJwtBearer: []
       requestBody:
         required: true
         content:
@@ -58,64 +53,51 @@ paths:
         '400':
           description: Validation failure or unavailable document type
         '401':
-          description: Unauthorized
+          description: Unauthorized Internal JWT
         '409':
           description: Duplicate active issue request
-        '502':
-          description: Issuer response failure
 ```
 
-### 3.2. Sign Handover Step
-- **Method**: `POST`
-- **Path**: `/api/v1/credentials/issue-requests/{issueRequestId}/signatures`
-- **Source Level**: Wireframe Evidence.
-- **Description**: Records the user's signature for the current handover step and advances the request when possible.
+### 3.2. Get Credential Issue Request
+- **Method**: `GET`
+- **Path**: `/api/v1/credentials/issue-requests/{issueRequestId}`
+- **Source Level**: Reference Evidence
+- **Description**: Returns issue request status, 5-stage pipeline, credential result if created, and submission count if any.
 
 ```yaml
 paths:
-  /api/v1/credentials/issue-requests/{issueRequestId}/signatures:
-    post:
-      summary: Sign credential handover step
-      operationId: signCredentialHandover
+  /api/v1/credentials/issue-requests/{issueRequestId}:
+    get:
+      summary: Get credential issue request
+      operationId: getCredentialIssueRequest
+      security:
+        - InternalJwtBearer: []
       parameters:
-        - in: header
-          name: X-User-Id
-          required: true
-          schema:
-            type: string
         - in: path
           name: issueRequestId
           required: true
           schema:
             type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SignCredentialHandoverReq'
       responses:
         '200':
-          description: Signature accepted and current issue status returned
+          description: Issue request returned
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CommonResCredentialIssueRequestRes'
-        '400':
-          description: Invalid handover step or signature payload
+        '401':
+          description: Unauthorized Internal JWT
         '403':
-          description: Issue request owner mismatch
+          description: Owner mismatch
         '404':
           description: Issue request not found
-        '409':
-          description: Signature already recorded or request is not signable
 ```
 
 ### 3.3. List My Credentials
 - **Method**: `GET`
 - **Path**: `/api/v1/credentials`
-- **Source Level**: Wireframe Evidence.
-- **Description**: Returns the current user's wallet credentials with optional status filter.
+- **Source Level**: Reference Evidence
+- **Description**: Returns current user's credentials with optional lifecycle tab/status filter.
 
 ```yaml
 paths:
@@ -123,12 +105,9 @@ paths:
     get:
       summary: List my credentials
       operationId: listMyCredentials
+      security:
+        - InternalJwtBearer: []
       parameters:
-        - in: header
-          name: X-User-Id
-          required: true
-          schema:
-            type: string
         - in: query
           name: status
           required: false
@@ -143,14 +122,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/CommonResListCredentialsRes'
         '401':
-          description: Unauthorized
+          description: Unauthorized Internal JWT
 ```
 
 ### 3.4. Get My Credential Detail
 - **Method**: `GET`
 - **Path**: `/api/v1/credentials/{credentialId}`
-- **Source Level**: Wireframe Evidence.
-- **Description**: Returns metadata, current status, handover history, and submission history for a credential owned by the current user.
+- **Source Level**: Reference Evidence
+- **Description**: Returns credential metadata, issue pipeline summary, and submission history. Raw documents, JWTs, CI originals, and private keys are never returned.
 
 ```yaml
 paths:
@@ -158,12 +137,9 @@ paths:
     get:
       summary: Get my credential detail
       operationId: getMyCredentialDetail
+      security:
+        - InternalJwtBearer: []
       parameters:
-        - in: header
-          name: X-User-Id
-          required: true
-          schema:
-            type: string
         - in: path
           name: credentialId
           required: true
@@ -176,8 +152,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CommonResCredentialDetailRes'
+        '401':
+          description: Unauthorized Internal JWT
         '403':
-          description: Credential owner mismatch
+          description: Owner mismatch
         '404':
           description: Credential not found
 ```
@@ -185,8 +163,8 @@ paths:
 ### 3.5. Submit Credential to Institution Request
 - **Method**: `POST`
 - **Path**: `/api/v1/credentials/{credentialId}/submissions`
-- **Source Level**: Wireframe Evidence.
-- **Description**: Sends a valid credential to an institution request. Submission is blocked without a prior institution request.
+- **Source Level**: Reference + ADR Evidence
+- **Description**: Submits one valid credential to one institution request. This is heavy action trigger `institution_submit` and should link the resulting Auth-owned auth event id.
 
 ```yaml
 paths:
@@ -194,12 +172,9 @@ paths:
     post:
       summary: Submit credential to institution request
       operationId: submitCredential
+      security:
+        - InternalJwtBearer: []
       parameters:
-        - in: header
-          name: X-User-Id
-          required: true
-          schema:
-            type: string
         - in: path
           name: credentialId
           required: true
@@ -219,20 +194,51 @@ paths:
               schema:
                 $ref: '#/components/schemas/CommonResSubmitCredentialRes'
         '400':
-          description: Invalid institution request
+          description: Invalid institution request or missing consent/auth event
+        '401':
+          description: Unauthorized Internal JWT
         '403':
-          description: Credential owner mismatch
+          description: Owner mismatch
         '404':
-          description: Credential or submission request not found
+          description: Credential or institution request not found
         '409':
-          description: Credential expired, revoked, or already submitted to the same request
+          description: Credential expired, revoked, failed, or duplicate submission
 ```
 
-### 3.6. Reissue Credential
+### 3.6. List Credential Submissions
+- **Method**: `GET`
+- **Path**: `/api/v1/credentials/{credentialId}/submissions`
+- **Source Level**: Reference Evidence
+- **Description**: Returns one row per institution submission for a credential.
+
+```yaml
+paths:
+  /api/v1/credentials/{credentialId}/submissions:
+    get:
+      summary: List credential submissions
+      operationId: listCredentialSubmissions
+      security:
+        - InternalJwtBearer: []
+      parameters:
+        - in: path
+          name: credentialId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Submission rows returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonResListCredentialSubmissionsRes'
+```
+
+### 3.7. Reissue Credential
 - **Method**: `POST`
 - **Path**: `/api/v1/credentials/{credentialId}/reissue`
-- **Source Level**: Wireframe Evidence.
-- **Description**: Starts a new issue request from an expired/revoked credential when reissue is allowed.
+- **Source Level**: Reference Evidence
+- **Description**: Starts a new issue request from an expired/revoked/reissuable credential. Exact reissue policy remains an open decision.
 
 ```yaml
 paths:
@@ -240,12 +246,9 @@ paths:
     post:
       summary: Reissue credential
       operationId: reissueCredential
+      security:
+        - InternalJwtBearer: []
       parameters:
-        - in: header
-          name: X-User-Id
-          required: true
-          schema:
-            type: string
         - in: path
           name: credentialId
           required: true
@@ -258,27 +261,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CommonResCreateCredentialIssueRequestRes'
+        '401':
+          description: Unauthorized Internal JWT
         '403':
-          description: Credential owner mismatch
+          description: Owner mismatch
         '404':
           description: Credential not found
         '409':
           description: Credential is not reissuable
 ```
 
-## 4. Draft Operator Endpoints Requiring Additional Auth Spec
-These endpoints appear in the operations console wireframe but must not be implemented until Admin/Auth permissions are specified.
+## 4. Draft Operator Endpoints Requiring Additional Specs
 
-| Operation | Draft Path | Source |
-| :--- | :--- | :--- |
-| Operator credential revoke | `POST /api/v1/ops/credentials/{credentialId}/revoke` | `console/dispute-detail.html`, `console/member-detail.html` |
-| Operator issue request force advance | `POST /api/v1/ops/credential-issue-requests/{issueRequestId}/force-advance` | `console/request-detail.html` |
-| Operator member bulk credential revoke | `POST /api/v1/ops/members/{userId}/credentials/revoke` | `console/member-detail.html` |
+| Operation | Draft Path | Source | Gate |
+| :--- | :--- | :--- | :--- |
+| Revoke credential | `POST /api/v1/ops/credentials/{credentialId}/revoke` | Dispute detail action `크리덴셜 폐기` | Admin/Auth/Dispute permission spec |
+| Force issue request progress | `POST /api/v1/ops/credential-issue-requests/{issueRequestId}/force-advance` | Request detail risk action | Admin/Auth permission spec |
+| Convert rejected submission to dispute | Dispute-owned endpoint TBD | Submitted row `분쟁 신고로 전환` | Dispute spec |
 
 ## 5. Components (Schemas)
 
 ```yaml
 components:
+  securitySchemes:
+    InternalJwtBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Server-issued Internal JWT from /api/v1/auth/login.
   schemas:
     CreateCredentialIssueRequestReq:
       type: object
@@ -286,16 +296,13 @@ components:
       properties:
         documentTypeId:
           type: string
-          description: Document type to issue as a credential.
         documentId:
           type: string
           nullable: true
-          description: Existing document id when issuance is based on a completed Document flow.
-        personaType:
+        authEventId:
           type: string
           nullable: true
-          enum: [KOREAN, FOREIGNER]
-          description: Optional persona override until User nationality/persona mapping is finalized.
+          description: Auth-owned event id for issue_request trigger, when available.
     CreateCredentialIssueRequestRes:
       type: object
       properties:
@@ -303,65 +310,56 @@ components:
           type: string
         status:
           type: string
-          enum: [ISSUING, SIGNATURE_REQUIRED, FAILED]
-        requiredSignatureCount:
-          type: integer
-          example: 4
-        completedSignatureCount:
-          type: integer
-          example: 0
-        currentHandoverStep:
-          type: integer
-          nullable: true
-        nextAction:
-          type: string
-          nullable: true
-    SignCredentialHandoverReq:
-      type: object
-      required: [handoverStep, signature]
-      properties:
-        handoverStep:
-          type: integer
-          minimum: 1
-          maximum: 4
-        signature:
-          type: string
-          description: MVP signature payload or mock signature token.
-        signedAt:
-          type: string
-          format: date-time
-          nullable: true
-    CredentialIssueRequestRes:
-      type: object
-      properties:
-        issueRequestId:
-          type: string
-        credentialId:
-          type: string
-          nullable: true
-        status:
-          type: string
-          enum: [ISSUING, SIGNATURE_REQUIRED, ISSUED, FAILED, REVOKED]
-        requiredSignatureCount:
-          type: integer
-        completedSignatureCount:
-          type: integer
-        handovers:
+          enum: [ISSUING, USER_APPROVAL_REQUIRED, ISSUED, FAILED]
+        pipeline:
           type: array
           items:
-            $ref: '#/components/schemas/CredentialHandoverItem'
+            $ref: '#/components/schemas/IssuePipelineStageItem'
+        currentStage:
+          type: string
+          enum: [RECEIVED, PRE_REVIEW, TRANSLATION_REVIEW, NOTARY_SIGNATURE, ISSUED]
+        currentSubstep:
+          type: string
+          nullable: true
+        authEventId:
+          type: string
+          nullable: true
+    CredentialIssueRequestRes:
+      allOf:
+        - $ref: '#/components/schemas/CreateCredentialIssueRequestRes'
+        - type: object
+          properties:
+            credentialId:
+              type: string
+              nullable: true
+            submissionCount:
+              type: integer
+    IssuePipelineStageItem:
+      type: object
+      properties:
+        stage:
+          type: string
+          enum: [RECEIVED, PRE_REVIEW, TRANSLATION_REVIEW, NOTARY_SIGNATURE, ISSUED]
+        label:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, ACTIVE, DONE, FAILED]
+        substep:
+          type: string
+          nullable: true
     CredentialSummary:
       type: object
       properties:
         credentialId:
+          type: string
+        issueRequestId:
           type: string
         documentTypeId:
           type: string
         documentTypeName:
           type: string
         issuerId:
-          type: string
-        issuerName:
           type: string
         status:
           type: string
@@ -374,9 +372,6 @@ components:
           format: date-time
         walletAddress:
           type: string
-        xrplCredentialId:
-          type: string
-          nullable: true
         isMock:
           type: boolean
     ListCredentialsRes:
@@ -391,12 +386,10 @@ components:
         - $ref: '#/components/schemas/CredentialSummary'
         - type: object
           properties:
-            issueRequestId:
-              type: string
-            handovers:
+            pipeline:
               type: array
               items:
-                $ref: '#/components/schemas/CredentialHandoverItem'
+                $ref: '#/components/schemas/IssuePipelineStageItem'
             submissions:
               type: array
               items:
@@ -404,34 +397,18 @@ components:
             sourceDocumentRef:
               type: string
               nullable: true
-    CredentialHandoverItem:
-      type: object
-      properties:
-        step:
-          type: integer
-        label:
-          type: string
-        actorLabel:
-          type: string
-        status:
-          type: string
-          enum: [PENDING, SIGNATURE_REQUIRED, SIGNED, COMPLETED, FAILED]
-        signedAt:
-          type: string
-          format: date-time
-          nullable: true
-        signatureHash:
-          type: string
-          nullable: true
     SubmitCredentialReq:
       type: object
-      required: [submissionRequestId]
+      required: [submissionRequestId, consentConfirmed]
       properties:
         submissionRequestId:
           type: string
         consentConfirmed:
           type: boolean
-          description: User confirmation for the institution submission.
+        authEventId:
+          type: string
+          nullable: true
+          description: Auth-owned event id for institution_submit trigger, when available.
     SubmitCredentialRes:
       type: object
       properties:
@@ -441,41 +418,59 @@ components:
           type: string
         recipientInstitutionId:
           type: string
+        status:
+          type: string
+          enum: [RECEIVED, VERIFYING, REJECTED]
         submittedAt:
           type: string
           format: date-time
+        authEventId:
+          type: string
+          nullable: true
+    ListCredentialSubmissionsRes:
+      type: object
+      properties:
+        submissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/CredentialSubmissionItem'
     CredentialSubmissionItem:
       type: object
       properties:
         submissionId:
           type: string
+        credentialId:
+          type: string
         recipientInstitutionId:
           type: string
         recipientInstitutionName:
           type: string
+        status:
+          type: string
+          enum: [RECEIVED, VERIFYING, REJECTED]
+        rejectionReason:
+          type: string
+          nullable: true
         submittedAt:
           type: string
           format: date-time
-        status:
+        authEventId:
           type: string
-          enum: [SUBMITTED, ACCEPTED, REJECTED, DISPUTED]
+          nullable: true
 ```
 
 ## 6. Draft Error Codes Needed
-These are proposed `ErrorCode.Credential.*` entries. Exact names must be approved when implementing.
 
 | Draft Error | HTTP | Trigger |
 | :--- | :--- | :--- |
 | `CREDENTIAL_NOT_FOUND` | 404 | Credential id does not exist. |
-| `CREDENTIAL_OWNER_MISMATCH` | 403 | Current user does not own the credential. |
-| `CREDENTIAL_NOT_ISSUED` | 409 | Action requires an issued credential. |
+| `CREDENTIAL_OWNER_MISMATCH` | 403 | Current JWT user does not own the credential. |
 | `CREDENTIAL_EXPIRED` | 409 | Credential expired before submission/use. |
 | `CREDENTIAL_REVOKED` | 409 | Credential was revoked. |
-| `CREDENTIAL_ALREADY_SUBMITTED` | 409 | Duplicate submission for same request. |
+| `CREDENTIAL_NOT_SUBMITTABLE` | 409 | Credential status is failed or otherwise not valid. |
+| `CREDENTIAL_ALREADY_SUBMITTED` | 409 | Duplicate submission for same institution request. |
 | `ISSUE_REQUEST_NOT_FOUND` | 404 | Issue request id does not exist. |
-| `ISSUE_REQUEST_NOT_SIGNABLE` | 409 | Request is not waiting for signature. |
-| `HANDOVER_STEP_INVALID` | 400 | Step is not the current or allowed step. |
-| `HANDOVER_ALREADY_SIGNED` | 409 | Duplicate signature for a step. |
+| `ISSUE_REQUEST_NOT_ADVANCEABLE` | 409 | Issue request cannot advance in current state. |
 | `INSTITUTION_SUBMISSION_REQUEST_NOT_FOUND` | 404 | No matching institution request exists. |
-| `INSTITUTION_REQUEST_REQUIRED` | 409 | User attempted submission without institution request. |
-| `ISSUER_UNAVAILABLE` | 502 | Issuer/upstream mock failed or timed out. |
+| `AUTH_EVENT_REQUIRED` | 400 | Required heavy-action auth evidence is missing. |
+| `AUTH_EVENT_MISMATCH` | 409 | Auth event does not match user/action/object. |
