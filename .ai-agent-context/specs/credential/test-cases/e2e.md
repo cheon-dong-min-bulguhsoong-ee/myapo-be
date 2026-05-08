@@ -1,7 +1,7 @@
 # Credential E2E Test Cases
 
 ## 0. Draft Status
-- **Status**: Draft updated from latest main references. User approval is required before implementation.
+- **Status**: Approved for MVP 1st implementation. Scope: 5-stage pipeline, Internal JWT, mock XRPL metadata, user-facing APIs, nullable authEventId references. Excluded: operator APIs, production XRPL, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
 - **API Boundary**: All responses must use `CommonRes<T>`.
 - **Auth Boundary**: Protected Credential APIs use `Authorization: Bearer <Internal JWT>` from ADR-002.
 

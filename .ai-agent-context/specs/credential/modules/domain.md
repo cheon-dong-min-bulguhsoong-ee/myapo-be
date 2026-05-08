@@ -1,7 +1,7 @@
 # Credential Domain Models
 
 ## 0. Draft Status
-- **Status**: Draft updated from latest main references. User approval is required before implementation.
+- **Status**: Approved for MVP 1st implementation. Scope: 5-stage pipeline, Internal JWT, mock XRPL metadata, user-facing APIs, nullable authEventId references. Excluded: operator APIs, production XRPL, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
 - **Source Boundary**: Names below are proposed backend model names aligned to latest frontend-design and ADR-002.
 
 ## 1. Aggregate: Credential
