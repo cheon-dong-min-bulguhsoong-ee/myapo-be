@@ -77,6 +77,88 @@ export const ErrorCode = {
             '올바르지 않은 국적 코드입니다.',
         ),
     },
+    Credential: {
+        DOCUMENT_TYPE_NOT_FOUND: define(
+            'CREDENTIAL_DOCUMENT_TYPE_NOT_FOUND',
+            404,
+            '해당 크리덴셜 문서 종류를 찾을 수 없거나 신청할 수 없습니다.',
+        ),
+        ISSUE_REQUEST_NOT_FOUND: define(
+            'CREDENTIAL_ISSUE_REQUEST_NOT_FOUND',
+            404,
+            '해당 크리덴셜 발급 요청을 찾을 수 없습니다.',
+        ),
+        NOT_FOUND: define(
+            'CREDENTIAL_NOT_FOUND',
+            404,
+            '해당 크리덴셜을 찾을 수 없습니다.',
+        ),
+        NOT_OWNED: define(
+            'CREDENTIAL_NOT_OWNED',
+            403,
+            '본인의 크리덴셜이 아닙니다.',
+        ),
+        CONSENT_REQUIRED: define(
+            'CREDENTIAL_CONSENT_REQUIRED',
+            400,
+            '기관 제출 동의가 필요합니다.',
+        ),
+        EXPIRED: define(
+            'CREDENTIAL_EXPIRED',
+            409,
+            '만료된 크리덴셜입니다.',
+        ),
+        REVOKED: define(
+            'CREDENTIAL_REVOKED',
+            409,
+            '폐기된 크리덴셜입니다.',
+        ),
+        NOT_SUBMITTABLE: define(
+            'CREDENTIAL_NOT_SUBMITTABLE',
+            409,
+            '제출할 수 없는 상태의 크리덴셜입니다.',
+        ),
+        SUBMISSION_DUPLICATED: define(
+            'CREDENTIAL_SUBMISSION_DUPLICATED',
+            409,
+            '이미 제출된 기관 요청입니다.',
+        ),
+        XRPL_ACCOUNT_INVALID: define(
+            'CREDENTIAL_XRPL_ACCOUNT_INVALID',
+            400,
+            'XRPL 계정 주소 형식이 올바르지 않습니다.',
+        ),
+        XRPL_CREDENTIAL_TYPE_INVALID: define(
+            'CREDENTIAL_XRPL_CREDENTIAL_TYPE_INVALID',
+            400,
+            'XRPL CredentialType 형식이 올바르지 않습니다.',
+        ),
+        XRPL_URI_INVALID: define(
+            'CREDENTIAL_XRPL_URI_INVALID',
+            400,
+            'XRPL URI 형식이 올바르지 않습니다.',
+        ),
+        XRPL_UINT32_INVALID: define(
+            'CREDENTIAL_XRPL_UINT32_INVALID',
+            400,
+            'XRPL UInt32 값 형식이 올바르지 않습니다.',
+        ),
+        XRPL_CREDENTIAL_DELETE_TARGET_REQUIRED: define(
+            'CREDENTIAL_XRPL_DELETE_TARGET_REQUIRED',
+            400,
+            'XRPL CredentialDelete에는 Subject 또는 Issuer가 필요합니다.',
+        ),
+        XRPL_CONFIG_MISSING: define(
+            'CREDENTIAL_XRPL_CONFIG_MISSING',
+            500,
+            'XRPL Testnet 설정이 누락되었습니다.',
+        ),
+        XRPL_TESTNET_PUBLISH_FAILED: define(
+            'CREDENTIAL_XRPL_TESTNET_PUBLISH_FAILED',
+            502,
+            'XRPL Testnet 트랜잭션 제출에 실패했습니다.',
+        ),
+    },
     Document: {
         TYPE_NOT_FOUND: define(
             'DOCUMENT_TYPE_NOT_FOUND',
