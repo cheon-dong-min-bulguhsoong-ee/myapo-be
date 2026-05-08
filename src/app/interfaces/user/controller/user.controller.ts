@@ -7,31 +7,31 @@ import {
   HttpStatus,
   Post,
   UseGuards,
-} from '@nestjs/common';
-import { UserFacade } from '../../../application/user/user.facade';
-import { JwtAuthGuard } from '../../../infrastructure/auth/guards/jwt-auth.guard';
-import { Web3AuthGuard } from '../../../infrastructure/auth/guards/web3auth.guard';
-import { CommonRes } from '../../common/common-res';
-import { CurrentUserId } from '../auth/current-user-id.decorator';
-import { Web3AuthInfo, Web3AuthPayload } from '../auth/web3auth-info.decorator';
-import { RegisterUserReq } from '../req/register-user.req';
-import { RegisterUserRes, UserRes } from '../res/user.res';
+} from "@nestjs/common";
+import { UserFacade } from "../../../application/user/user.facade";
+import { JwtAuthGuard } from "../../../infrastructure/auth/guards/jwt-auth.guard";
+import { Web3AuthGuard } from "../../../infrastructure/auth/guards/web3auth.guard";
+import { CommonRes } from "../../common/common-res";
+import { CurrentUserId } from "../auth/current-user-id.decorator";
+import { Web3AuthInfo, Web3AuthPayload } from "../auth/web3auth-info.decorator";
+import { RegisterUserReq } from "../req/register-user.req";
+import { RegisterUserRes, UserRes } from "../res/user.res";
 import {
   DeleteAccountSwaggerApi,
   GetMyProfileSwaggerApi,
   RegisterUserSwaggerApi,
   UserApiTags,
-} from '../swagger/user.swagger.api';
+} from "../swagger/user.swagger.api";
 
 @UserApiTags()
-@Controller('api/v1/users')
+@Controller("api/v1/users")
 export class UserController {
   constructor(private readonly userFacade: UserFacade) {}
 
   /**
    * 사용자 가입 및 복구.
    */
-  @Post('register')
+  @Post("register")
   @UseGuards(Web3AuthGuard)
   @RegisterUserSwaggerApi()
   async register(
@@ -45,7 +45,7 @@ export class UserController {
   /**
    * 내 정보 조회.
    */
-  @Get('me')
+  @Get("me")
   @UseGuards(JwtAuthGuard)
   @GetMyProfileSwaggerApi()
   async getMe(@CurrentUserId() userId: bigint): Promise<CommonRes<UserRes>> {
@@ -56,7 +56,7 @@ export class UserController {
   /**
    * 회원 탈퇴 (Soft Delete).
    */
-  @Delete('me')
+  @Delete("me")
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @DeleteAccountSwaggerApi()

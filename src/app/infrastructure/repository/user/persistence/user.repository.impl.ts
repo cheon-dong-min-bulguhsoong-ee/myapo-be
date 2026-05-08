@@ -1,13 +1,13 @@
-import { Injectable } from '@nestjs/common';
-import { User as UserRow, UserWallet as UserWalletRow } from '@prisma/client';
-import { User } from '../../../../domain/user/entity/user.entity';
-import { UserWallet } from '../../../../domain/user/entity/user-wallet.entity';
-import { VerifierType } from '../../../../domain/user/enum/verifier-type.enum';
+import { Injectable } from "@nestjs/common";
+import { User as UserRow, UserWallet as UserWalletRow } from "@prisma/client";
+import { User } from "../../../../domain/user/entity/user.entity";
+import { UserWallet } from "../../../../domain/user/entity/user-wallet.entity";
+import { VerifierType } from "../../../../domain/user/enum/verifier-type.enum";
 import {
   CreateUserInput,
   UserRepository,
-} from '../../../../domain/user/repository/user.repository';
-import { PrismaService } from '../../../prisma/prisma.service';
+} from "../../../../domain/user/repository/user.repository";
+import { PrismaService } from "../../../prisma/prisma.service";
 
 @Injectable()
 export class UserRepositoryImpl extends UserRepository {
@@ -29,7 +29,10 @@ export class UserRepositoryImpl extends UserRepository {
     return row ? this.toUserEntity(row) : null;
   }
 
-  async findByVerifier(verifier: string, verifierId: string): Promise<User | null> {
+  async findByVerifier(
+    verifier: string,
+    verifierId: string,
+  ): Promise<User | null> {
     const walletRow = await this.prisma.userWallet.findUnique({
       where: {
         verifier_verifierId: {
@@ -89,6 +92,8 @@ export class UserRepositoryImpl extends UserRepository {
     await this.prisma.user.update({
       where: { id: user.id },
       data: {
+        email: user.email,
+        lastLoginAt: user.lastLoginAt,
         isDelete: user.isDelete,
       },
     });
@@ -99,6 +104,7 @@ export class UserRepositoryImpl extends UserRepository {
       where: { id: userId },
       data: {
         isDelete: false,
+        lastLoginAt: new Date(),
       },
     });
   }
@@ -111,6 +117,7 @@ export class UserRepositoryImpl extends UserRepository {
       row.nationality,
       row.createdAt,
       row.updatedAt,
+      row.lastLoginAt,
       row.isDelete,
     );
   }

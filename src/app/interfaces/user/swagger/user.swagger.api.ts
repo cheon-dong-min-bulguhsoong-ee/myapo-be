@@ -1,17 +1,17 @@
-import { applyDecorators } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ApiCommonRes } from '../../common/api-common-res.decorator';
-import { RegisterUserRes, UserRes } from '../res/user.res';
+import { applyDecorators } from "@nestjs/common";
+import { ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ApiCommonRes } from "../../common/api-common-res.decorator";
+import { RegisterUserRes, UserRes } from "../res/user.res";
 
-export const UserApiTags = (): ClassDecorator => ApiTags('Users');
+export const UserApiTags = (): ClassDecorator => ApiTags("Users");
 
 export const RegisterUserSwaggerApi = (): MethodDecorator =>
   applyDecorators(
     ApiOperation({
-      summary: '사용자 가입 및 복구',
+      summary: "사용자 가입 및 복구",
       description:
-        'Web3Auth 인증 후 사용자 정보를 등록하거나 탈퇴한 계정을 복구합니다. ' +
-        '성공 시 MyApo 자체 Access Token(JWT)을 반환합니다.',
+        "Web3Auth 인증 후 사용자 정보를 등록하거나 탈퇴한 계정을 복구합니다. " +
+        "성공 시 MyApo 자체 Access Token(JWT)을 반환합니다.",
     }),
     ApiCommonRes(RegisterUserRes),
   );
@@ -19,8 +19,8 @@ export const RegisterUserSwaggerApi = (): MethodDecorator =>
 export const GetMyProfileSwaggerApi = (): MethodDecorator =>
   applyDecorators(
     ApiOperation({
-      summary: '내 정보 조회',
-      description: '현재 로그인한 사용자의 프로필 정보를 조회합니다.',
+      summary: "내 정보 조회",
+      description: "현재 로그인한 사용자의 프로필 정보를 조회합니다.",
     }),
     ApiCommonRes(UserRes),
   );
@@ -28,8 +28,8 @@ export const GetMyProfileSwaggerApi = (): MethodDecorator =>
 export const DeleteAccountSwaggerApi = (): MethodDecorator =>
   applyDecorators(
     ApiOperation({
-      summary: '회원 탈퇴',
-      description: '사용자 계정을 Soft Delete 처리합니다.',
+      summary: "회원 탈퇴",
+      description: "사용자 계정을 Soft Delete 처리합니다.",
     }),
     ApiCommonRes(Object), // No specific response body for 204
   );

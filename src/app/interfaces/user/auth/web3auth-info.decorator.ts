@@ -1,6 +1,6 @@
-import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { DomainError } from '../../../domain/common/error/domain.error';
-import { ErrorCode } from '../../../domain/common/error/error-code';
+import { createParamDecorator, ExecutionContext } from "@nestjs/common";
+import { DomainError } from "../../../domain/common/error/domain.error";
+import { ErrorCode } from "../../../domain/common/error/error-code";
 
 export interface Web3AuthPayload {
   email: string;
@@ -19,7 +19,8 @@ export const Web3AuthInfo = createParamDecorator(
 
     if (!payload) {
       throw new DomainError(ErrorCode.Common.INTERNAL_SERVER_ERROR, {
-        message: 'Web3AuthPayload not found in request. Ensure Web3AuthGuard is applied.',
+        message:
+          "Web3AuthPayload not found in request. Ensure Web3AuthGuard is applied.",
       });
     }
 

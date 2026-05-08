@@ -26,3 +26,12 @@
     1. `userId`로 사용자 존재 여부 확인.
     2. 사용자의 `isDelete` 플래그를 true로 변경.
     3. 연관된 `UserWallet`의 상태도 필요 시 동기화 (또는 함께 Soft Delete).
+
+## 4. LogoutUseCase
+- **Actor**: Authenticated User
+- **Input**: `userId`
+- **Output**: Success
+- **Flow**:
+    1. (Server) Internal Access Token의 유효성을 검증하고 세션 종료를 기록(필요시).
+    2. (Client-side Requirement) 클라이언트는 저장된 JWT를 폐기해야 함.
+    3. (Optional) "계정 전환" 또는 "완전 로그아웃" 시 클라이언트에서 Web3Auth SDK의 `logout()`을 호출하여 외부 세션을 정리함.

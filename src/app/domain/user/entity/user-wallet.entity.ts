@@ -1,4 +1,4 @@
-import { VerifierType } from '../enum/verifier-type.enum';
+import { VerifierType } from "../enum/verifier-type.enum";
 
 /**
  * 사용자와 1:1 매핑되는 XRPL 지갑 정보 엔티티.

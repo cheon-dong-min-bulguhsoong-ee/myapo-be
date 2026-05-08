@@ -1,5 +1,5 @@
-import { DomainError } from '../../common/error/domain.error';
-import { ErrorCode } from '../../common/error/error-code';
+import { DomainError } from "../../common/error/domain.error";
+import { ErrorCode } from "../../common/error/error-code";
 
 /**
  * 시스템 사용자 엔티티.
@@ -12,6 +12,7 @@ export class User {
     public readonly nationality: string,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
+    private _lastLoginAt: Date | null,
     private _isDelete: boolean,
   ) {
     this.validateNationality(nationality);
@@ -19,6 +20,21 @@ export class User {
 
   get isDelete(): boolean {
     return this._isDelete;
+  }
+
+  get lastLoginAt(): Date | null {
+    return this._lastLoginAt;
+  }
+
+  /**
+   * 로그인 정보를 기록한다. (이메일 동기화 포함)
+   */
+  public recordLogin(currentEmail?: string): void {
+    this._lastLoginAt = new Date();
+    if (currentEmail && currentEmail !== this.email) {
+      // ADR-001: 토큰 정보를 Source of Truth로 간주하여 이메일 동기화
+      (this as any).email = currentEmail;
+    }
   }
 
   /**
@@ -41,7 +57,9 @@ export class User {
   private validateNationality(nationality: string): void {
     const iso2Regex = /^[A-Z]{2}$/;
     if (!iso2Regex.test(nationality)) {
-      throw new DomainError(ErrorCode.User.INVALID_NATIONALITY, { nationality });
+      throw new DomainError(ErrorCode.User.INVALID_NATIONALITY, {
+        nationality,
+      });
     }
   }
 }

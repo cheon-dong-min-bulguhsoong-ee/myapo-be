@@ -1,5 +1,5 @@
-import { User } from '../entity/user.entity';
-import { UserWallet } from '../entity/user-wallet.entity';
+import { User } from "../entity/user.entity";
+import { UserWallet } from "../entity/user-wallet.entity";
 
 export interface CreateUserInput {
   email: string;
@@ -16,7 +16,10 @@ export interface CreateUserInput {
 export abstract class UserRepository {
   abstract findById(id: bigint): Promise<User | null>;
   abstract findByEmail(email: string): Promise<User | null>;
-  abstract findByVerifier(verifier: string, verifierId: string): Promise<User | null>;
+  abstract findByVerifier(
+    verifier: string,
+    verifierId: string,
+  ): Promise<User | null>;
   abstract findByXrplAddress(xrplAddress: string): Promise<User | null>;
   abstract findWalletByUserId(userId: bigint): Promise<UserWallet | null>;
 
