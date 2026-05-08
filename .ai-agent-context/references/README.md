@@ -2,6 +2,34 @@
 
 A curated list of resources for reference during the LLM design and implementation phases.
 
+## ALL (LLM FIRST READ, CRITICAL)
+*The blueprint of the service we are building.*
+
+- [MyApo Service Full Specification](./frontend-design/Readme.md)
+
+## Frontend Design & Wireframes
+*Interactive wireframes and functional screen specifications.*
+
+### Main Entry Points
+- [Landing Page (Index)](./frontend-design/index.html)
+- [Mobile App Main](./frontend-design/app.html)
+- [Admin Console Dashboard](./frontend-design/console.html)
+
+### User Personas (Mobile)
+- [Korean User Experience](./frontend-design/app-korean.html)
+- [Foreigner User Experience](./frontend-design/app-foreigner.html)
+
+### Collaboration Partners (Institutions)
+- [KR Issuing Institution Dashboard](./frontend-design/institution-kr.html)
+- [Translator & Notary Dashboard](./frontend-design/institution-translator.html)
+- [Apostille Office Dashboard](./frontend-design/institution-apostille.html)
+- [Overseas Receiving Agency Dashboard](./frontend-design/institution-overseas.html)
+
+### Console Detail Views
+- [Request Detail (Issuance)](./frontend-design/console/request-detail.html)
+- [Dispute Tracking Detail](./frontend-design/console/dispute-detail.html)
+- [Member Profile Detail](./frontend-design/console/member-detail.html)
+
 ## User, Auth
 *Resources related to Web3Auth, OAuth, and JWT management.*
 

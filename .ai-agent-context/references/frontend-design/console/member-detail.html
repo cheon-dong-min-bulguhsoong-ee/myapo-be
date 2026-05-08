@@ -1,0 +1,921 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>회원 상세 — MYAPO OPS</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { theme: { extend: { colors:{
+    primary:'#3182F6','primary-deep':'#1B64DA','primary-soft':'#E8F2FE',
+    success:'#00C48C','success-soft':'#E6FAF3',
+    warning:'#FFB020','warning-soft':'#FFF4DE',
+    danger:'#F04452','danger-soft':'#FDE7E9',
+    base:'#F9FAFB',border:'#E5E8EB',ink:'#191F28',sub:'#4E5968',muted:'#8B95A1',surface:'#FFFFFF'
+  }, fontFamily:{
+    sans:['Pretendard Variable','Pretendard','-apple-system','system-ui','sans-serif'],
+    mono:['JetBrains Mono','monospace']
+  } } } }
+</script>
+<style>
+  body{font-family:'Pretendard Variable',Pretendard,sans-serif;background:#F9FAFB;color:#191F28;-webkit-font-smoothing:antialiased;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  .num{font-feature-settings:"tnum" 1;letter-spacing:-0.01em;}
+  .vpill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;}
+  .badge-testnet{background:#E2F7FF;color:#0594BF;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;}
+  .panel{background:#fff;border:1px solid #E5E8EB;border-radius:12px;padding:20px 22px;box-shadow:0 1px 2px rgba(0,0,0,.04),0 1px 3px rgba(0,0,0,.06);}
+  .btn{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:8px;border:1px solid #E5E8EB;background:#fff;font-size:12px;font-weight:600;color:#4E5968;cursor:pointer;}
+  .btn:hover{background:#F9FAFB;color:#191F28;}
+  .btn.primary{background:#3182F6;border-color:#3182F6;color:#fff;}
+  .btn.primary:hover{background:#1B64DA;border-color:#1B64DA;}
+  .btn.danger{background:#fff;border-color:#F04452;color:#F04452;}
+  .btn.danger:hover{background:#FDE7E9;}
+  .btn.warn{background:#fff;border-color:#FFB020;color:#a86c00;}
+  .btn.warn:hover{background:#FFF4DE;}
+  .btn.sm{height:28px;padding:0 10px;font-size:11px;}
+
+  .stat{background:#F9FAFB;border-radius:10px;padding:12px 14px;border:1px solid #F2F4F6;}
+  .stat .lbl{font-size:11px;font-weight:700;color:#8B95A1;text-transform:uppercase;letter-spacing:.06em;}
+  .stat .val{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:800;color:#191F28;font-feature-settings:"tnum" 1;letter-spacing:-0.02em;margin-top:4px;}
+  .stat .val .u{font-size:12px;color:#8B95A1;font-weight:700;margin-left:4px;}
+  .stat.warn .val{color:#F04452;}
+
+  .tabs{display:flex;gap:2px;border-bottom:1px solid #E5E8EB;margin-bottom:18px;}
+  .tab{padding:10px 16px;font-size:13px;font-weight:700;color:#8B95A1;border-bottom:2px solid transparent;cursor:pointer;background:transparent;border:0;font-family:inherit;}
+  .tab.active{color:#3182F6;border-bottom-color:#3182F6;}
+
+  .tbl-row{display:grid;padding:12px 0;border-bottom:1px solid #F2F4F6;font-size:13px;align-items:center;column-gap:10px;}
+  .tbl-row:last-child{border-bottom:0;}
+  .tbl-row.click{cursor:pointer;border-radius:6px;}
+  .tbl-row.click:hover{background:#F9FAFB;}
+  .tbl-head{display:grid;padding:8px 0;font-size:11px;font-weight:700;color:#8B95A1;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #E5E8EB;column-gap:10px;}
+
+  .avatar{width:56px;height:56px;border-radius:999px;background:#E8F2FE;color:#1B64DA;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;flex-shrink:0;}
+  .locked .avatar{background:#F2F4F6;color:#8B95A1;}
+  .locked-tone{background:linear-gradient(180deg,#F2F4F6,#fff 60%);}
+
+  /* KYC */
+  .kv{display:grid;grid-template-columns:120px 1fr;gap:10px 16px;font-size:13px;}
+  .kv dt{color:#8B95A1;font-weight:600;}
+  .kv dd{margin:0;color:#191F28;font-weight:600;}
+  .mask{font-family:'JetBrains Mono',monospace;font-size:12px;color:#191F28;}
+  .mask-info{display:inline-block;width:14px;height:14px;border-radius:999px;background:#F2F4F6;color:#8B95A1;font-size:9px;font-weight:800;text-align:center;line-height:14px;margin-left:4px;cursor:help;}
+
+  /* Risk panel */
+  .risk-item{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:8px;border:1px solid;margin-bottom:8px;}
+  .risk-item:last-child{margin-bottom:0;}
+  .risk-item .pip{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:11px;flex-shrink:0;}
+  .risk-item .ttl{font-size:12px;font-weight:800;color:#191F28;}
+  .risk-item .desc{font-size:11px;color:#4E5968;margin-top:2px;line-height:1.5;}
+
+  /* Timeline */
+  .tl{position:relative;padding-left:18px;}
+  .tl::before{content:'';position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:#E5E8EB;}
+  .tl-row{position:relative;padding:8px 0 12px;}
+  .tl-dot{position:absolute;left:-18px;top:12px;width:14px;height:14px;border-radius:999px;border:3px solid #fff;background:#8B95A1;box-shadow:0 0 0 1px #E5E8EB;}
+  .tl-dot.login{background:#3182F6;}
+  .tl-dot.issue{background:#00C48C;}
+  .tl-dot.dispute{background:#F04452;}
+  .tl-dot.action{background:#FFB020;}
+  .tl-dot.memo{background:#7341D6;}
+  .tl-bar{display:flex;align-items:center;gap:8px;font-size:12px;color:#191F28;font-weight:700;}
+  .tl-meta{font-size:11px;color:#8B95A1;margin-top:2px;}
+  .tl-bundle{padding:6px 10px;background:#F9FAFB;border-radius:6px;border:1px dashed #E5E8EB;font-size:11px;color:#4E5968;margin-top:4px;}
+
+  /* Inline accordion (issuances) */
+  .acc-row{border-bottom:1px solid #F2F4F6;}
+  .acc-row.open{background:#F4F9FF;border-radius:8px;}
+  .acc-row .top{padding:12px 8px;cursor:pointer;}
+  .acc-body{display:none;padding:14px 12px 18px;border-top:1px dashed #DDE3E9;}
+  .acc-row.open .acc-body{display:block;}
+  .pipe{display:flex;align-items:center;gap:6px;}
+  .pipe .step{display:flex;align-items:center;gap:6px;font-size:11px;color:#8B95A1;}
+  .pipe .step.done{color:#00C48C;}
+  .pipe .step.cur{color:#3182F6;font-weight:700;}
+  .pipe .dot{width:14px;height:14px;border-radius:999px;background:#E5E8EB;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:800;}
+  .pipe .step.done .dot{background:#00C48C;}
+  .pipe .step.cur .dot{background:#3182F6;}
+  .pipe .arrow{color:#DDE3E9;font-size:10px;}
+
+  /* Modal */
+  .mo-overlay{position:fixed;inset:0;background:rgba(17,24,39,.45);display:flex;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(4px);}
+  .mo-overlay[hidden]{display:none;}
+  .mo-modal{background:#fff;border-radius:16px;width:480px;max-width:92vw;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.18);}
+  .mo-head{padding:18px 20px 12px;border-bottom:1px solid #F2F4F6;}
+  .mo-body{padding:16px 20px;overflow:auto;display:flex;flex-direction:column;gap:14px;}
+  .mo-foot{padding:14px 20px;border-top:1px solid #F2F4F6;display:flex;justify-content:flex-end;gap:8px;}
+  .mo-body textarea, .mo-body select, .mo-body input[type=text]{width:100%;border:1px solid #E5E8EB;border-radius:8px;padding:10px 12px;font-size:13px;font-family:inherit;}
+  .mo-body textarea:focus, .mo-body select:focus, .mo-body input:focus{outline:none;border-color:#3182F6;box-shadow:0 0 0 3px rgba(49,130,246,.12);}
+  .mo-row{display:flex;flex-direction:column;gap:6px;}
+  .mo-row label{font-size:12px;font-weight:700;color:#191F28;}
+</style>
+</head>
+<body class="min-h-screen">
+
+<header class="bg-white border-b border-border sticky top-0 z-50">
+  <div class="max-w-[1280px] mx-auto px-8 py-4 flex items-center gap-4">
+    <button class="btn" onclick="window.close()" title="닫기">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></svg>
+      닫기
+    </button>
+    <div>
+      <div class="text-[10px] font-bold text-muted uppercase tracking-[0.06em]">회원 상세</div>
+      <div class="text-[20px] font-extrabold text-ink mt-0.5" style="letter-spacing:-0.02em;">
+        <span class="mono num text-primary-deep" id="m-id">MA-2026-00001</span>
+      </div>
+    </div>
+    <div class="ml-auto flex items-center gap-2">
+      <span class="badge-testnet">Testnet</span>
+      <button class="btn" onclick="window.print()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>인쇄</button>
+      <button class="btn" onclick="copyShare()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>공유 링크 복사</button>
+      <button class="btn" onclick="location.reload()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>새로고침</button>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-[1280px] mx-auto px-8 py-7 space-y-5 pb-16">
+
+  <!-- header card -->
+  <div class="panel" id="m-headcard">
+    <div class="flex items-center gap-5">
+      <div class="avatar" id="m-avatar">??</div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-3 mb-2 flex-wrap">
+          <h2 class="text-[22px] font-extrabold text-ink" style="letter-spacing:-0.02em;" id="m-name">—</h2>
+          <span id="m-state-badge" class="vpill bg-success-soft text-success">활성</span>
+          <span class="vpill bg-base border border-border text-sub" id="m-country-badge"><span id="m-flag">🇻🇳</span> <span id="m-country">베트남</span></span>
+        </div>
+        <div class="flex items-center gap-3 text-[13px] text-muted flex-wrap">
+          <span class="mono" id="m-email">—</span>
+          <span>·</span>
+          <span>가입 <span class="mono num" id="m-joined" title="—">—</span></span>
+          <span>·</span>
+          <span>최근 로그인 <span class="text-sub font-semibold" id="m-last" title="—">—</span></span>
+        </div>
+        <div class="flex items-center gap-5 mt-3 text-[12px]">
+          <span class="text-muted">발급 <b class="text-ink mono num" id="m-iss-cnt">0</b>건</span>
+          <span class="text-muted">진행 중 <b class="text-ink mono num" id="m-prog-cnt">0</b>건</span>
+          <span class="text-muted">분쟁 <b class="text-ink mono num" id="m-disp-cnt">0</b>건</span>
+          <span class="text-muted">미해결 분쟁 <b class="text-danger mono num" id="m-open-cnt">0</b>건</span>
+        </div>
+      </div>
+    </div>
+    <div id="m-locked-banner" class="hidden mt-3 px-3 py-2 rounded-lg bg-base border border-border text-[12px] text-muted">
+      <span class="font-bold text-sub" id="m-locked-title">정지 상태</span> · <span id="m-locked-desc">이 회원은 운영자 조치로 잠겨 있어요.</span>
+    </div>
+  </div>
+
+  <!-- top stats -->
+  <div class="grid grid-cols-4 gap-3">
+    <div class="stat"><div class="lbl">총 발급</div><div class="val"><span id="s-issued">0</span><span class="u">건</span></div></div>
+    <div class="stat"><div class="lbl">총 분쟁</div><div class="val"><span id="s-disputes">0</span><span class="u">건</span></div></div>
+    <div class="stat"><div class="lbl">총 정산</div><div class="val text-muted">—<span class="u">정산 메뉴 활성화 후</span></div></div>
+    <div class="stat"><div class="lbl">재요청률</div><div class="val"><span id="s-rerate">0</span><span class="u">%</span></div></div>
+  </div>
+
+  <div class="grid gap-5" style="grid-template-columns:1fr 340px;">
+
+    <!-- LEFT: tabs -->
+    <div class="panel">
+      <div class="tabs">
+        <button class="tab active" data-tab="overview">개요</button>
+        <button class="tab" data-tab="issue">발급 이력 <span class="num ml-1 text-muted" id="t-issue-cnt">0</span></button>
+        <button class="tab" data-tab="dispute">분쟁 이력 <span class="num ml-1 text-muted" id="t-disp-cnt">0</span></button>
+        <button class="tab" data-tab="s3">S3 활동 <span class="num ml-1 text-muted" id="t-s3-cnt">0</span></button>
+        <button class="tab" data-tab="timeline">타임라인</button>
+      </div>
+
+      <!-- A. Overview -->
+      <div data-tabbody="overview">
+        <div class="grid grid-cols-2 gap-5">
+          <div>
+            <div class="text-[12px] font-bold text-muted uppercase tracking-[0.06em] mb-3">기본 정보</div>
+            <dl class="kv">
+              <dt>이메일</dt><dd class="mask" id="o-email">—</dd>
+              <dt>전화</dt><dd class="mask" id="o-phone">—</dd>
+              <dt>국가</dt><dd id="o-country">—</dd>
+              <dt>체류 자격</dt><dd id="o-visa">—</dd>
+              <dt>가입 경로</dt><dd id="o-channel">—</dd>
+            </dl>
+          </div>
+          <div>
+            <div class="text-[12px] font-bold text-muted uppercase tracking-[0.06em] mb-3">KYC 항목 <span class="text-muted font-normal normal-case tracking-normal">(마스킹 표시)</span></div>
+            <dl class="kv">
+              <dt>주민등록번호</dt><dd class="mask" id="o-rrn">—<span class="mask-info" title="앞 6자리·뒤 1자리만 노출">i</span></dd>
+              <dt>외국인등록번호</dt><dd class="mask" id="o-arn">—<span class="mask-info" title="앞 6자리·뒤 1자리만 노출">i</span></dd>
+              <dt>여권번호</dt><dd class="mask" id="o-pass">—<span class="mask-info" title="앞 1자리·끝 2자리만 노출">i</span></dd>
+              <dt>휴대전화</dt><dd class="mask" id="o-mobile">—<span class="mask-info" title="앞 3자리·끝 4자리만 노출">i</span></dd>
+            </dl>
+            <div class="mt-3 text-[11px] text-muted">raw 값은 클릭·hover로 노출되지 않아요. 별도 신청 절차가 필요해요.</div>
+          </div>
+        </div>
+
+        <div class="mt-6 pt-5 border-t border-border">
+          <div class="text-[12px] font-bold text-muted uppercase tracking-[0.06em] mb-3">최근 활동 (최근 5건)</div>
+          <div id="o-recent" class="space-y-2 text-[12px]"></div>
+        </div>
+      </div>
+
+      <!-- B. Issuances -->
+      <div data-tabbody="issue" class="hidden">
+        <!-- mini KPI -->
+        <div class="grid grid-cols-6 gap-2 mb-4">
+          <div class="stat" style="padding:10px 12px;"><div class="lbl">전체</div><div class="val" style="font-size:18px;" id="ik-all">0</div></div>
+          <div class="stat" style="padding:10px 12px;"><div class="lbl">진행 중</div><div class="val" style="font-size:18px;color:#3182F6;" id="ik-prog">0</div></div>
+          <div class="stat" style="padding:10px 12px;"><div class="lbl">유효</div><div class="val" style="font-size:18px;color:#00C48C;" id="ik-valid">0</div></div>
+          <div class="stat" style="padding:10px 12px;"><div class="lbl">만료</div><div class="val" style="font-size:18px;color:#8B95A1;" id="ik-exp">0</div></div>
+          <div class="stat" style="padding:10px 12px;"><div class="lbl">폐기</div><div class="val" style="font-size:18px;color:#8B95A1;" id="ik-rev">0</div></div>
+          <div class="stat" style="padding:10px 12px;"><div class="lbl">실패</div><div class="val" style="font-size:18px;color:#F04452;" id="ik-fail">0</div></div>
+        </div>
+
+        <!-- search bar -->
+        <div class="flex items-center gap-2 mb-3 flex-wrap">
+          <input type="search" id="i-q" placeholder="요청번호 · 문서 유형으로 검색" class="border border-border rounded-lg px-3 py-2 text-[12px] flex-1 min-w-[220px]" />
+          <select id="i-state" class="border border-border rounded-lg px-3 py-2 text-[12px]">
+            <option value="">상태 전체</option><option>진행 중</option><option>유효</option><option>만료</option><option>폐기</option><option>실패</option>
+          </select>
+          <select id="i-disp" class="border border-border rounded-lg px-3 py-2 text-[12px]">
+            <option value="">분쟁 전체</option><option value="yes">분쟁 보유</option><option value="no">분쟁 없음</option>
+          </select>
+        </div>
+
+        <div class="tbl-head" style="grid-template-columns:140px 1fr 90px 110px 110px 60px;">
+          <span>요청번호</span><span>문서 유형</span><span>상태</span><span>발급일</span><span>만료일</span><span></span>
+        </div>
+        <div id="issue-list"></div>
+      </div>
+
+      <!-- C. Disputes -->
+      <div data-tabbody="dispute" class="hidden">
+        <div id="d-pattern" class="hidden mb-3 px-3 py-2 rounded-lg bg-warning-soft border border-warning text-[12px] text-ink">
+          <b>패턴 감지:</b> <span id="d-pattern-msg">—</span>
+        </div>
+        <div class="flex items-center gap-2 mb-3 flex-wrap">
+          <input type="search" id="d-q" placeholder="분쟁 ID · 사유로 검색" class="border border-border rounded-lg px-3 py-2 text-[12px] flex-1 min-w-[220px]" />
+          <select id="d-state" class="border border-border rounded-lg px-3 py-2 text-[12px]">
+            <option value="">상태 전체</option><option>접수</option><option>검토 중</option><option>추가 정보 요청</option><option>재처리 중</option><option>해결</option><option>기각</option><option>탈퇴 종료</option>
+          </select>
+        </div>
+        <div class="tbl-head" style="grid-template-columns:120px 140px 1fr 110px 90px 100px;">
+          <span>분쟁 ID</span><span>요청번호</span><span>사유</span><span>접수일</span><span>경과</span><span>상태</span>
+        </div>
+        <div id="dispute-list"></div>
+      </div>
+
+      <!-- D. S3 -->
+      <div data-tabbody="s3" class="hidden">
+        <div id="s-warn" class="hidden mb-3 px-3 py-2 rounded-lg bg-danger-soft border border-danger text-[12px] text-ink">
+          <b>비정상 활동 감지:</b> <span id="s-warn-msg">—</span>
+        </div>
+        <div class="tbl-head" style="grid-template-columns:160px 90px 1fr 100px 80px;">
+          <span>시각</span><span>동작</span><span>파일</span><span>크기</span><span>결과</span>
+        </div>
+        <div id="s3-list"></div>
+      </div>
+
+      <!-- E. Timeline -->
+      <div data-tabbody="timeline" class="hidden">
+        <div class="flex items-center gap-2 mb-4 flex-wrap">
+          <span class="text-[12px] text-muted font-bold">기간</span>
+          <select id="tl-range" class="border border-border rounded-lg px-3 py-1.5 text-[12px]">
+            <option value="30">최근 30일 (기본)</option>
+            <option value="all">전체</option>
+          </select>
+          <span class="text-[12px] text-muted font-bold ml-2">종류</span>
+          <button class="btn sm tl-f active" data-f="all">전체</button>
+          <button class="btn sm tl-f" data-f="login">로그인</button>
+          <button class="btn sm tl-f" data-f="issue">발급</button>
+          <button class="btn sm tl-f" data-f="dispute">분쟁</button>
+          <button class="btn sm tl-f" data-f="action">운영 액션</button>
+          <button class="btn sm tl-f" data-f="memo">메모</button>
+        </div>
+        <div id="tl-list" class="tl"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: action sidebar -->
+    <div class="space-y-5">
+
+      <!-- Risk panel (conditional) -->
+      <div class="panel" id="risk-panel" style="display:none;">
+        <div class="flex items-center gap-2 mb-3">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F04452" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <div class="text-[14px] font-bold text-ink">위험 신호</div>
+        </div>
+        <div id="risk-list"></div>
+      </div>
+
+      <!-- Memo -->
+      <div class="panel">
+        <div class="text-[14px] font-bold text-ink mb-3">운영자 메모</div>
+        <textarea id="memo-text" placeholder="이 회원에 대한 메모를 남겨주세요. 타임라인에 함께 기록돼요."
+          class="w-full min-h-[88px] border border-border rounded-lg p-3 text-[13px] resize-y outline-none focus:border-primary"
+          style="font-family:inherit;"></textarea>
+        <button class="btn primary mt-3" onclick="saveMemo()">메모 저장</button>
+        <div id="memo-list" class="mt-4 space-y-3"></div>
+      </div>
+
+      <!-- State change -->
+      <div class="panel">
+        <div class="text-[14px] font-bold text-ink mb-1">상태 변경</div>
+        <div class="text-[11px] text-muted mb-3">변경 직전에 최신 상태를 다시 확인해요.</div>
+        <div class="flex flex-col gap-2">
+          <button class="btn" onclick="openStateModal('활성')" id="bt-active"><span class="vpill bg-success-soft text-success">활성으로</span></button>
+          <button class="btn warn" onclick="openStateModal('정지')" id="bt-suspend">정지로 처리</button>
+          <button class="btn danger" onclick="openStateModal('탈퇴')" id="bt-leave">탈퇴 처리</button>
+        </div>
+      </div>
+
+      <!-- Related actions -->
+      <div class="panel">
+        <div class="text-[14px] font-bold text-ink mb-3">연계 액션</div>
+        <div class="flex flex-col gap-2">
+          <button class="btn" onclick="actionConfirm('비밀번호 재설정 메일 발송', '회원에게 재설정 링크를 보낼까요?')">비밀번호 재설정 메일</button>
+          <button class="btn" onclick="actionConfirm('알림 발송', '앱 푸시·이메일로 알림을 보낼까요?')">알림 발송</button>
+          <button class="btn" onclick="actionConfirm('진행 중 발급 강제 취소', '진행 중인 발급 요청을 강제 취소할까요?')">진행 중 발급 강제 취소</button>
+          <button class="btn danger" onclick="actionConfirm('보유 크리덴셜 일괄 폐기', '관리자 승인이 필요한 중대 액션이에요. 계속할까요?', true)">보유 크리덴셜 일괄 폐기</button>
+          <button class="btn" disabled style="opacity:0.5;cursor:not-allowed;" title="정산 메뉴 활성화 후">환불·정산 차감 (예정)</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<!-- State change modal -->
+<div id="state-modal" class="mo-overlay" hidden>
+  <div class="mo-modal" role="dialog" aria-modal="true">
+    <div class="mo-head">
+      <div class="text-ink font-extrabold text-[15px]" id="sm-title">상태 변경</div>
+      <div class="text-muted text-[12px] mt-1" id="sm-desc">사유는 타임라인에 자동 기록돼요.</div>
+    </div>
+    <div class="mo-body">
+      <div class="mo-row" id="sm-period-wrap" style="display:none;">
+        <label>정지 기간</label>
+        <select id="sm-period">
+          <option value="7">7일</option><option value="30">30일</option><option value="90">90일</option><option value="forever">영구</option>
+        </select>
+      </div>
+      <div class="mo-row">
+        <label>사유 <span class="text-danger">*</span></label>
+        <textarea id="sm-reason" rows="3" placeholder="예: 동일 IP에서 다중 계정 의심 활동 반복 (#사례번호)"></textarea>
+      </div>
+    </div>
+    <div class="mo-foot">
+      <button class="btn" onclick="closeStateModal()">취소</button>
+      <button class="btn primary" id="sm-go" disabled onclick="applyStateChange()">변경 실행</button>
+    </div>
+  </div>
+</div>
+
+<!-- Action confirm modal -->
+<div id="act-modal" class="mo-overlay" hidden>
+  <div class="mo-modal" role="dialog" aria-modal="true">
+    <div class="mo-head">
+      <div class="text-ink font-extrabold text-[15px]" id="am-title">액션 확인</div>
+      <div class="text-muted text-[12px] mt-1" id="am-desc">—</div>
+    </div>
+    <div class="mo-body">
+      <div class="mo-row">
+        <label>사유 <span class="text-danger">*</span></label>
+        <textarea id="am-reason" rows="3" placeholder="실행 사유를 적어주세요"></textarea>
+      </div>
+      <div id="am-admin-hint" class="hidden text-[11px] text-warning bg-warning-soft border border-warning rounded-lg p-2">⚠️ 관리자 승인이 필요한 중대 액션이에요.</div>
+    </div>
+    <div class="mo-foot">
+      <button class="btn" onclick="closeActModal()">취소</button>
+      <button class="btn primary" id="am-go" disabled onclick="execAction()">실행</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============== Mock data ==============
+const params = new URLSearchParams(location.search);
+const MID = params.get('id') || 'MA-2026-00008';
+
+// 회원 mock — 실제 console.html과 일관되게
+const MEMBERS = {
+  'MA-2026-00008': {
+    name:'Tran Van Minh', email:'tvminh@hotmail.com', country:'베트남', flag:'🇻🇳', joined:'2026-01-12', joinedFull:'2026-01-12 09:14:08 KST',
+    state:'활성', last:'5분 전', lastFull:'2026-05-04 14:22:11 KST',
+    issuedCount:8, inProgressCount:1, disputeCount:2, openDisputeCount:1, rerate:18,
+    visa:'E-9 비전문취업', channel:'카카오 로그인',
+    kyc:{ rrn:'—', arn:'010203-5******', pass:'M*****78', mobile:'010-****-1234' },
+    risks:['repeat_dispute'],
+  },
+  'MA-2026-00002': {
+    name:'Hassan Ahmed', email:'hassan@gmail.com', country:'파키스탄', flag:'🇵🇰', joined:'2025-07-14', joinedFull:'2025-07-14 11:02:48 KST',
+    state:'정지', last:'1주 전', lastFull:'2026-04-27 09:14:00 KST',
+    issuedCount:5, inProgressCount:0, disputeCount:2, openDisputeCount:0, rerate:0,
+    visa:'D-2 유학', channel:'이메일 가입',
+    kyc:{ rrn:'—', arn:'920510-5******', pass:'P*****22', mobile:'010-****-9821' },
+    risks:['vpn'], lockedTitle:'정지 상태', lockedDesc:'2026-04-12부터 정지됨 — 사유: VPN 대역 반복 로그인',
+  },
+  'MA-2026-00014': {
+    name:'Carlos Suarez', email:'csuarez@yahoo.com', country:'멕시코', flag:'🇲🇽', joined:'2026-01-30', joinedFull:'2026-01-30 14:18:42 KST',
+    state:'활성', last:'2일 전', lastFull:'2026-05-02 16:08:11 KST',
+    issuedCount:1, inProgressCount:0, disputeCount:0, openDisputeCount:0, rerate:0,
+    visa:'F-4 재외동포', channel:'카카오 로그인',
+    kyc:{ rrn:'880412-1******', arn:'—', pass:'C*****08', mobile:'010-****-5544' },
+    risks:['multi_account'],
+  },
+  'MA-2026-00018': {
+    name:'Diego Ruiz', email:'diego.ruiz@hotmail.com', country:'아르헨티나', flag:'🇦🇷', joined:'2025-05-22', joinedFull:'2025-05-22 09:42:18 KST',
+    state:'탈퇴', last:'45일 전', lastFull:'2026-03-19 11:08:22 KST',
+    issuedCount:1, inProgressCount:0, disputeCount:0, openDisputeCount:0, rerate:0,
+    visa:'C-3 단기방문', channel:'이메일 가입',
+    kyc:{ rrn:'—', arn:'880914-5******', pass:'D*****11', mobile:'010-****-2231' },
+    risks:[], lockedTitle:'탈퇴 회원', lockedDesc:'2026-03-25 본인 요청 탈퇴 · 5년간 데이터 보존',
+  },
+  'MA-2026-00019': {
+    name:'Marcelo Lopez', email:'mlopez@outlook.com', country:'페루', flag:'🇵🇪', joined:'2025-06-30', joinedFull:'2025-06-30 13:05:00 KST',
+    state:'활성', last:'5일 전', lastFull:'2026-04-29 09:14:08 KST',
+    issuedCount:9, inProgressCount:0, disputeCount:3, openDisputeCount:0, rerate:33,
+    visa:'F-2-7 거주', channel:'카카오 로그인',
+    kyc:{ rrn:'870914-1******', arn:'—', pass:'M*****99', mobile:'010-****-7714' },
+    risks:['repeat_dispute'],
+  },
+};
+
+const M = MEMBERS[MID] || MEMBERS['MA-2026-00008'];
+
+const RISK_META = {
+  repeat_dispute:    { label:'반복 분쟁',     short:'반', color:'#F04452', bg:'#FDE7E9', desc:'같은 사유의 분쟁이 3회 이상 반복됐어요. 같은 발급 기관·같은 사유로 묶여요.' },
+  impossible_travel: { label:'비정상 이동',   short:'이', color:'#FFB020', bg:'#FFF4DE', desc:'5분 내 한국·해외 등 원거리 IP 점프가 감지됐어요.' },
+  vpn:               { label:'의심 IP',       short:'V', color:'#7341D6', bg:'#F4F0FF', desc:'VPN/Tor/블랙리스트 대역에서 반복 로그인됐어요.' },
+  rapid_revoke:      { label:'발급-폐기 반복', short:'폐', color:'#FFB020', bg:'#FFF4DE', desc:'7일 내 발급 → 즉시 폐기를 3회 이상 반복했어요.' },
+  multi_account:     { label:'다중 계정 의심', short:'다', color:'#F04452', bg:'#FDE7E9', desc:'유사 이메일·KYC·디바이스 핑거프린트가 일치하는 계정이 발견됐어요.' },
+};
+
+// 발급 이력 mock — 회원에 따라 다르게
+function mockIssuesFor(m){
+  const docs = ['출생증명서','혼인증명서','학력증명서','범죄경력증명서','경력증명서','소득증명서','등본','초본'];
+  const states = m.state === '탈퇴' ? ['만료','만료','만료'] : ['유효','유효','유효','폐기','만료','진행 중','실패'];
+  const total = m.issuedCount + m.inProgressCount;
+  const out = [];
+  for (let i=0;i<total;i++){
+    const reqId = 'REQ-2026-' + String(400 - i*7).padStart(4,'0');
+    const st = i === 0 && m.inProgressCount ? '진행 중' : states[i % states.length];
+    const docType = docs[i % docs.length];
+    const issued = '2026-' + String(((4 - Math.floor(i/2)) + 12) % 12 + 1).padStart(2,'0') + '-' + String(28 - (i*3)%28).padStart(2,'0');
+    const expires = st === '진행 중' ? '—' : '2027-' + issued.slice(5);
+    const hasDispute = (i === 0 && m.disputeCount > 0) || (i === 2 && m.disputeCount > 1);
+    out.push({ req:reqId, doc:docType, state:st, issued, expires, hasDispute, dspId: hasDispute ? `DSP-${String(38-i).padStart(3,'0')}` : null });
+  }
+  return out;
+}
+const ISSUES = mockIssuesFor(M);
+
+// 분쟁 mock
+function mockDisputes(m){
+  if (m.disputeCount === 0) return [];
+  const reasons = ['아포스티유 인장 불선명','범죄경력증명서 번역 항목 누락','이름 표기 오류','발급일자 불일치','발급기관 인감 불명확'];
+  const states = m.state === '탈퇴' ? ['탈퇴 종료'] : ['검토 중','해결','기각','추가 정보 요청','재처리 중'];
+  const out = [];
+  for (let i=0;i<m.disputeCount;i++){
+    out.push({
+      id:`DSP-${String(38-i).padStart(3,'0')}`,
+      req: ISSUES[i*2]?.req || `REQ-2026-${String(400 - i*7).padStart(4,'0')}`,
+      reason: reasons[i % reasons.length],
+      at: `2026-${String(((4 - i) + 12) % 12 + 1).padStart(2,'0')}-${String(20 - i*2).padStart(2,'0')}`,
+      age: `${(i+1)*7}일 경과`,
+      state: i === 0 && m.openDisputeCount > 0 ? '검토 중' : states[i % states.length],
+    });
+  }
+  return out;
+}
+const DISPUTES = mockDisputes(M);
+
+// S3 mock
+function mockS3(m){
+  const files = ['REQ-2026-0419-original.pdf','REQ-2026-0419-final.pdf','REQ-2026-0405-translation.pdf','REQ-2026-0405-original.pdf','REQ-2026-0388-final.pdf'];
+  const out = [];
+  const total = Math.min(m.issuedCount * 2, 12);
+  for (let i=0;i<total;i++){
+    out.push({
+      t: `2026-${String((4 + i%2)).padStart(2,'0')}-${String(28 - i).padStart(2,'0')} 14:${String(22 - i).padStart(2,'0')}:11`,
+      op: i % 2 === 0 ? '업로드' : '다운로드',
+      file: files[i % files.length],
+      size: `${(1.5 + (i%3) * 0.4).toFixed(1)} MB`,
+      ok: i !== 4,
+    });
+  }
+  return out;
+}
+const S3 = mockS3(M);
+
+// Login history (timeline에서 사용)
+function mockLogins(m){
+  if (m.state === '탈퇴') return [];
+  const out = [];
+  const ips = ['121.165.42.18 (서울)','211.234.8.91 (안산)','58.234.115.7 (인천)'];
+  if (m.risks.includes('vpn')) ips.push('185.220.101.4 (Tor 출구)');
+  if (m.risks.includes('impossible_travel')) ips.push('103.244.36.2 (싱가포르)');
+  for (let i=0;i<14;i++){
+    out.push({
+      t:`2026-05-${String(3 - Math.floor(i/3)).padStart(2,'0')} ${String(14 - (i%5)).padStart(2,'0')}:${String((22 - i*3) + 60).padStart(2,'0')}:11`,
+      ip: ips[i % ips.length],
+      ok: i !== 9,
+    });
+  }
+  return out;
+}
+const LOGINS = mockLogins(M);
+
+// ============== Render header ==============
+document.getElementById('m-id').textContent = MID;
+document.getElementById('m-name').textContent = M.name;
+document.getElementById('m-avatar').textContent = M.name.split(' ').map(s=>s[0]).join('').slice(0,2).toUpperCase();
+document.getElementById('m-email').textContent = M.email;
+document.getElementById('m-country').textContent = M.country;
+document.getElementById('m-flag').textContent = M.flag;
+const joinedEl = document.getElementById('m-joined');
+joinedEl.textContent = M.joined; joinedEl.title = M.joinedFull;
+const lastEl = document.getElementById('m-last');
+lastEl.textContent = M.last; lastEl.title = M.lastFull;
+document.getElementById('m-iss-cnt').textContent = M.issuedCount;
+document.getElementById('m-prog-cnt').textContent = M.inProgressCount;
+document.getElementById('m-disp-cnt').textContent = M.disputeCount;
+document.getElementById('m-open-cnt').textContent = M.openDisputeCount;
+
+const stateBadge = document.getElementById('m-state-badge');
+if (M.state === '활성') { stateBadge.className = 'vpill bg-success-soft text-success'; stateBadge.textContent = '활성'; }
+else if (M.state === '정지') { stateBadge.className = 'vpill bg-warning-soft text-warning'; stateBadge.textContent = '정지'; stateBadge.style.color = '#a86c00'; }
+else { stateBadge.className = 'vpill bg-base border border-border text-muted'; stateBadge.textContent = '탈퇴'; }
+
+if (M.state !== '활성'){
+  document.getElementById('m-headcard').classList.add('locked','locked-tone');
+  const banner = document.getElementById('m-locked-banner');
+  banner.classList.remove('hidden');
+  document.getElementById('m-locked-title').textContent = M.lockedTitle || (M.state + ' 상태');
+  document.getElementById('m-locked-desc').textContent = M.lockedDesc || '이 회원은 운영자 조치로 잠겨 있어요.';
+}
+
+// stats
+document.getElementById('s-issued').textContent = M.issuedCount;
+document.getElementById('s-disputes').textContent = M.disputeCount;
+document.getElementById('s-rerate').textContent = M.rerate;
+
+// tab counts
+document.getElementById('t-issue-cnt').textContent = ISSUES.length;
+document.getElementById('t-disp-cnt').textContent = DISPUTES.length;
+document.getElementById('t-s3-cnt').textContent = S3.length;
+
+// ============== Overview ==============
+document.getElementById('o-email').innerHTML = maskEmail(M.email);
+document.getElementById('o-phone').innerHTML = M.kyc.mobile;
+document.getElementById('o-country').textContent = M.country;
+document.getElementById('o-visa').textContent = M.visa;
+document.getElementById('o-channel').textContent = M.channel;
+document.getElementById('o-rrn').innerHTML = M.kyc.rrn + '<span class="mask-info" title="앞 6자리·뒤 1자리만 노출">i</span>';
+document.getElementById('o-arn').innerHTML = M.kyc.arn + '<span class="mask-info" title="앞 6자리·뒤 1자리만 노출">i</span>';
+document.getElementById('o-pass').innerHTML = M.kyc.pass + '<span class="mask-info" title="앞 1자리·끝 2자리만 노출">i</span>';
+document.getElementById('o-mobile').innerHTML = M.kyc.mobile + '<span class="mask-info" title="앞 3자리·끝 4자리만 노출">i</span>';
+
+function maskEmail(e){
+  if (!e) return '—';
+  const [local, dom] = e.split('@');
+  if (!dom) return e;
+  return `<span>${local.slice(0,2)}***@${dom}</span>`;
+}
+
+// 최근 활동 (오버뷰 미니 타임라인)
+const recentItems = [];
+LOGINS.slice(0,2).forEach(l => recentItems.push({ t:l.t, kind:'login', text: l.ok ? '로그인' : '로그인 실패', meta: l.ip }));
+ISSUES.slice(0,2).forEach(i => recentItems.push({ t: i.issued + ' 09:00:00', kind:'issue', text: i.doc + ' ' + i.state, meta: i.req }));
+DISPUTES.slice(0,1).forEach(d => recentItems.push({ t: d.at + ' 14:22:00', kind:'dispute', text: '분쟁 ' + d.state, meta: d.reason }));
+recentItems.sort((a,b) => b.t.localeCompare(a.t));
+document.getElementById('o-recent').innerHTML = recentItems.slice(0,5).map(r => `
+  <div class="flex items-center gap-3 py-1">
+    <span class="tl-dot ${r.kind}" style="position:static;border:0;box-shadow:none;width:8px;height:8px;flex-shrink:0;"></span>
+    <span class="text-ink font-semibold">${r.text}</span>
+    <span class="text-muted">· ${r.meta}</span>
+    <span class="text-muted ml-auto mono text-[11px]" title="${r.t} KST">${relTime(r.t)}</span>
+  </div>
+`).join('') || '<div class="text-muted text-[12px]">활동 기록이 없어요.</div>';
+
+function relTime(t){
+  // 단순화: 일자 차이 기반
+  const d = new Date(t.replace(' ','T') + ':00');
+  const diff = (new Date('2026-05-04T14:30:00') - d) / 1000;
+  if (diff < 60) return Math.floor(diff) + '초 전';
+  if (diff < 3600) return Math.floor(diff/60) + '분 전';
+  if (diff < 86400) return Math.floor(diff/3600) + '시간 전';
+  return Math.floor(diff/86400) + '일 전';
+}
+
+// ============== Issuances tab ==============
+function renderIssues(){
+  const q = document.getElementById('i-q').value.trim().toLowerCase();
+  const fs = document.getElementById('i-state').value;
+  const fd = document.getElementById('i-disp').value;
+  const filtered = ISSUES.filter(i => {
+    if (q && !(i.req.toLowerCase().includes(q) || i.doc.toLowerCase().includes(q))) return false;
+    if (fs && i.state !== fs) return false;
+    if (fd === 'yes' && !i.hasDispute) return false;
+    if (fd === 'no' && i.hasDispute) return false;
+    return true;
+  });
+  // mini KPI (전체 기준)
+  const c = (st) => ISSUES.filter(i => i.state === st).length;
+  document.getElementById('ik-all').textContent = ISSUES.length;
+  document.getElementById('ik-prog').textContent = c('진행 중');
+  document.getElementById('ik-valid').textContent = c('유효');
+  document.getElementById('ik-exp').textContent = c('만료');
+  document.getElementById('ik-rev').textContent = c('폐기');
+  document.getElementById('ik-fail').textContent = c('실패');
+
+  const list = document.getElementById('issue-list');
+  if (!filtered.length){ list.innerHTML = '<div class="py-8 text-center text-muted text-[12px]">검색 결과가 없어요.</div>'; return; }
+  list.innerHTML = filtered.map((i, idx) => {
+    const stClass = {
+      '유효':'bg-success-soft text-success','진행 중':'bg-primary-soft text-primary-deep',
+      '폐기':'bg-base border border-border text-muted','만료':'bg-base border border-border text-muted',
+      '실패':'bg-danger-soft text-danger',
+    }[i.state] || 'bg-base border border-border text-muted';
+    return `
+    <div class="acc-row" data-idx="${idx}">
+      <div class="top tbl-row" style="grid-template-columns:140px 1fr 90px 110px 110px 60px;border-bottom:0;padding-left:8px;padding-right:8px;" onclick="toggleAcc(${idx})">
+        <span class="mono text-[12px] font-bold text-ink">${i.req}</span>
+        <span class="text-sub flex items-center gap-2">${i.doc}${i.hasDispute ? `<span class="vpill bg-danger-soft text-danger" style="padding:1px 7px;font-size:10px;">분쟁</span>` : ''}</span>
+        <span><span class="vpill ${stClass}">${i.state}</span></span>
+        <span class="text-sub mono text-[12px]">${i.issued}</span>
+        <span class="text-sub mono text-[12px]">${i.expires}</span>
+        <span class="text-muted text-[10px] text-right" id="acc-chev-${idx}">▼</span>
+      </div>
+      <div class="acc-body">
+        <div class="text-[11px] text-muted font-bold uppercase tracking-[0.06em] mb-2">발급 파이프라인</div>
+        <div class="pipe">
+          ${pipeline(i.state)}
+        </div>
+        <div class="flex items-center gap-2 mt-4 flex-wrap">
+          <a class="btn sm primary" href="request-detail.html?id=${i.req}" target="_blank">상세 페이지</a>
+          ${i.hasDispute ? `<a class="btn sm" href="dispute-detail.html?id=${i.dspId}" target="_blank">이 요청의 분쟁: ${i.dspId} →</a>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function pipeline(state){
+  const steps = ['요청 접수','원본 검증','번역','발급','전달'];
+  let curIdx = 4;
+  if (state === '진행 중') curIdx = 2;
+  if (state === '실패') curIdx = 1;
+  return steps.map((s,i) => {
+    let cls = 'step';
+    if (i < curIdx || state === '유효' || state === '폐기' || state === '만료') cls += ' done';
+    if (i === curIdx && state === '진행 중') cls += ' cur';
+    const dot = (i < curIdx || state === '유효') ? '✓' : (i === curIdx && state === '진행 중' ? '·' : '');
+    return `<span class="${cls}"><span class="dot">${dot}</span>${s}</span>${i < steps.length-1 ? '<span class="arrow">›</span>' : ''}`;
+  }).join('');
+}
+window.toggleAcc = (idx) => {
+  const row = document.querySelector(`.acc-row[data-idx="${idx}"]`);
+  row.classList.toggle('open');
+  const chev = document.getElementById('acc-chev-'+idx);
+  if (chev) chev.textContent = row.classList.contains('open') ? '▲' : '▼';
+};
+['i-q','i-state','i-disp'].forEach(id => document.getElementById(id).addEventListener('input', renderIssues));
+['i-state','i-disp'].forEach(id => document.getElementById(id).addEventListener('change', renderIssues));
+renderIssues();
+
+// ============== Disputes tab ==============
+function renderDisputes(){
+  const q = document.getElementById('d-q').value.trim().toLowerCase();
+  const fs = document.getElementById('d-state').value;
+  const filtered = DISPUTES.filter(d => {
+    if (q && !(d.id.toLowerCase().includes(q) || d.reason.toLowerCase().includes(q))) return false;
+    if (fs && d.state !== fs) return false;
+    return true;
+  });
+
+  // 패턴 감지
+  const pattern = document.getElementById('d-pattern');
+  const reasons = {};
+  DISPUTES.forEach(d => { reasons[d.reason] = (reasons[d.reason] || 0) + 1; });
+  const repeat = Object.entries(reasons).filter(([_,n]) => n >= 2);
+  if (repeat.length){
+    pattern.classList.remove('hidden');
+    document.getElementById('d-pattern-msg').textContent = `같은 사유 반복 — "${repeat[0][0]}" ${repeat[0][1]}회`;
+  } else pattern.classList.add('hidden');
+
+  const list = document.getElementById('dispute-list');
+  if (!filtered.length){ list.innerHTML = '<div class="py-8 text-center text-muted text-[12px]">분쟁 이력이 없어요.</div>'; return; }
+  list.innerHTML = filtered.map(d => {
+    const stClass = {
+      '검토 중':'bg-primary-soft text-primary-deep','접수':'bg-warning-soft text-warning',
+      '해결':'bg-success-soft text-success','기각':'bg-base border border-border text-muted',
+      '추가 정보 요청':'bg-warning-soft text-warning','재처리 중':'bg-primary-soft text-primary-deep',
+      '탈퇴 종료':'bg-base border border-border text-muted',
+    }[d.state] || 'bg-base border border-border text-muted';
+    const stStyle = d.state === '정지' || d.state === '추가 정보 요청' || d.state === '접수' ? 'style="color:#a86c00;"' : '';
+    return `
+      <div class="tbl-row click" style="grid-template-columns:120px 140px 1fr 110px 90px 100px;" onclick="window.open('dispute-detail.html?id=${d.id}','_blank')">
+        <span class="mono text-[12px] font-bold text-ink">${d.id}</span>
+        <span class="mono text-[12px] text-sub">${d.req}</span>
+        <span class="text-sub">${d.reason}</span>
+        <span class="text-sub mono text-[12px]">${d.at}</span>
+        <span class="text-muted text-[12px]">${d.age}</span>
+        <span><span class="vpill ${stClass}" ${stStyle}>${d.state}</span></span>
+      </div>`;
+  }).join('');
+}
+['d-q','d-state'].forEach(id => document.getElementById(id).addEventListener('input', renderDisputes));
+document.getElementById('d-state').addEventListener('change', renderDisputes);
+renderDisputes();
+
+// ============== S3 tab ==============
+function renderS3(){
+  const list = document.getElementById('s3-list');
+  if (!S3.length){ list.innerHTML = '<div class="py-8 text-center text-muted text-[12px]">S3 활동 기록이 없어요.</div>'; return; }
+  // 비정상 활동: 짧은 시간 다량 다운로드
+  const downloads = S3.filter(s => s.op === '다운로드').length;
+  if (downloads >= 5){
+    document.getElementById('s-warn').classList.remove('hidden');
+    document.getElementById('s-warn-msg').textContent = `최근 24시간 내 다운로드 ${downloads}건 — 일반 평균 대비 4배 이상`;
+  }
+  list.innerHTML = S3.map(s => `
+    <div class="tbl-row" style="grid-template-columns:160px 90px 1fr 100px 80px;">
+      <span class="mono text-[11px] text-muted" title="${s.t} KST">${s.t}</span>
+      <span><span class="vpill ${s.op === '업로드' ? 'bg-primary-soft text-primary-deep' : 'bg-base border border-border text-sub'}">${s.op}</span></span>
+      <span class="mono text-[12px] text-ink">${s.file}</span>
+      <span class="text-sub mono text-[12px]">${s.size}</span>
+      <span>${s.ok ? '<span class="vpill bg-success-soft text-success">성공</span>' : '<span class="vpill bg-danger-soft text-danger">실패</span>'}</span>
+    </div>`).join('');
+}
+renderS3();
+
+// ============== Timeline tab ==============
+let TL_FILTER = 'all';
+let TL_RANGE = '30';
+function buildTimeline(){
+  const items = [];
+  // 가입
+  items.push({ t: M.joinedFull, kind:'action', text:'회원가입 완료', meta:'본인인증 완료 · ' + M.channel });
+  // 로그인 (전체 노출 — 묶음 표시는 단순화)
+  LOGINS.forEach(l => items.push({ t: l.t + ' KST', kind:'login', text: l.ok ? '로그인 성공' : '로그인 실패', meta: l.ip }));
+  // 발급
+  ISSUES.forEach(i => items.push({ t: i.issued + ' 09:14:00 KST', kind:'issue', text: `${i.doc} ${i.state}`, meta: i.req }));
+  // 분쟁
+  DISPUTES.forEach(d => items.push({ t: d.at + ' 14:22:18 KST', kind:'dispute', text: `분쟁 ${d.state}`, meta: `${d.id} · ${d.reason}` }));
+  // 운영 액션 (정지/탈퇴)
+  if (M.state === '정지' && M.lockedDesc) items.push({ t:'2026-04-12 11:08:00 KST', kind:'action', text:'정지 처리', meta: M.lockedDesc });
+  if (M.state === '탈퇴') items.push({ t:'2026-03-25 09:08:00 KST', kind:'action', text:'탈퇴 처리', meta:'본인 요청 · 5년 보존' });
+  return items.sort((a,b) => b.t.localeCompare(a.t));
+}
+function renderTimeline(){
+  const all = buildTimeline();
+  const cutoff = TL_RANGE === '30' ? new Date('2026-04-04T00:00:00') : new Date('2020-01-01');
+  let items = all.filter(i => {
+    const d = new Date(i.t.replace(' KST','').replace(' ','T'));
+    if (d < cutoff) return false;
+    if (TL_FILTER !== 'all' && i.kind !== TL_FILTER) return false;
+    return true;
+  });
+  // 묶음: 같은 IP에서 5분 내 재로그인
+  const grouped = [];
+  for (let i=0;i<items.length;i++){
+    const cur = items[i];
+    if (cur.kind === 'login'){
+      const bundle = [cur];
+      while (i+1 < items.length && items[i+1].kind === 'login' && items[i+1].meta === cur.meta){
+        bundle.push(items[i+1]); i++;
+      }
+      if (bundle.length > 1){
+        grouped.push({ ...cur, bundle });
+      } else grouped.push(cur);
+    } else grouped.push(cur);
+  }
+  const list = document.getElementById('tl-list');
+  if (!grouped.length){ list.innerHTML = '<div class="py-8 text-center text-muted text-[12px]">표시할 이벤트가 없어요.</div>'; return; }
+  list.innerHTML = grouped.map(it => `
+    <div class="tl-row">
+      <div class="tl-dot ${it.kind}"></div>
+      <div class="tl-bar">
+        <span>${it.text}</span>
+        <span class="text-muted ml-auto mono text-[11px]" title="${it.t}">${relTime(it.t.replace(' KST',''))}</span>
+      </div>
+      <div class="tl-meta">${it.meta}</div>
+      ${it.bundle ? `<div class="tl-bundle">같은 IP에서 ${it.bundle.length}회 재로그인 — 5분 내 ${it.bundle[it.bundle.length-1].t.split(' ')[1]} ~ ${it.bundle[0].t.split(' ')[1]}</div>` : ''}
+    </div>
+  `).join('');
+}
+document.getElementById('tl-range').addEventListener('change', e => { TL_RANGE = e.target.value; renderTimeline(); });
+document.querySelectorAll('.tl-f').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.tl-f').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    TL_FILTER = b.dataset.f;
+    renderTimeline();
+  });
+});
+// active style
+const styleEl = document.createElement('style');
+styleEl.textContent = '.tl-f.active{border-color:#3182F6;background:#F4F9FF;color:#1B64DA;}';
+document.head.appendChild(styleEl);
+renderTimeline();
+
+// ============== Risk panel ==============
+const riskPanel = document.getElementById('risk-panel');
+if (M.risks && M.risks.length){
+  riskPanel.style.display = '';
+  document.getElementById('risk-list').innerHTML = M.risks.map(r => {
+    const meta = RISK_META[r];
+    return `<div class="risk-item" style="background:${meta.bg};border-color:${meta.color};">
+      <div class="pip" style="background:${meta.color};">${meta.short}</div>
+      <div><div class="ttl">${meta.label}</div><div class="desc">${meta.desc}</div></div>
+    </div>`;
+  }).join('');
+}
+
+// ============== Memo ==============
+const memos = [];
+function saveMemo(){
+  const t = document.getElementById('memo-text').value.trim();
+  if (!t) return;
+  memos.unshift({ t:'2026-05-04 14:30:00 KST', who:'운영자 A', text: t });
+  document.getElementById('memo-text').value = '';
+  renderMemos();
+}
+function renderMemos(){
+  const el = document.getElementById('memo-list');
+  if (!memos.length){ el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="text-[11px] font-bold text-muted uppercase tracking-[0.06em] mb-2 mt-2">저장된 메모</div>' +
+    memos.map(m => `
+      <div class="border border-border rounded-lg p-2.5">
+        <div class="text-[12px] text-ink">${m.text}</div>
+        <div class="text-[11px] text-muted mt-1 mono">${m.who} · ${m.t}</div>
+      </div>
+    `).join('');
+}
+window.saveMemo = saveMemo;
+
+// ============== State change modal ==============
+let smTarget = '활성';
+function openStateModal(target){
+  smTarget = target;
+  document.getElementById('sm-title').textContent = target + '으로 변경';
+  document.getElementById('sm-desc').textContent = target === '정지' ? '회원의 보유 크리덴셜이 자동 폐기되고, 정지 해제 시 자동 재발급돼요.' :
+    target === '탈퇴' ? '발급 이력은 5년간 보존된 뒤 익명화돼요. 미해결 분쟁은 "탈퇴 종료" 상태로 변경돼요.' :
+    '회원을 다시 활성 상태로 되돌려요.';
+  document.getElementById('sm-period-wrap').style.display = target === '정지' ? '' : 'none';
+  document.getElementById('state-modal').hidden = false;
+  document.getElementById('sm-reason').value = '';
+  document.getElementById('sm-go').disabled = true;
+}
+function closeStateModal(){ document.getElementById('state-modal').hidden = true; }
+function applyStateChange(){
+  alert(`상태 변경: ${M.state} → ${smTarget}\n타임라인에 자동 기록됐어요.`);
+  closeStateModal();
+}
+document.getElementById('sm-reason').addEventListener('input', e => {
+  document.getElementById('sm-go').disabled = e.target.value.trim().length < 5;
+});
+window.openStateModal = openStateModal;
+window.closeStateModal = closeStateModal;
+window.applyStateChange = applyStateChange;
+
+// ============== Action modal ==============
+let amCallback = null;
+function actionConfirm(title, desc, isAdmin){
+  document.getElementById('am-title').textContent = title;
+  document.getElementById('am-desc').textContent = desc;
+  document.getElementById('am-admin-hint').classList.toggle('hidden', !isAdmin);
+  document.getElementById('am-reason').value = '';
+  document.getElementById('am-go').disabled = true;
+  document.getElementById('act-modal').hidden = false;
+  amCallback = title;
+}
+function closeActModal(){ document.getElementById('act-modal').hidden = true; }
+function execAction(){
+  alert(`"${amCallback}" 액션이 실행됐어요.\n타임라인에 자동 기록됐어요.`);
+  closeActModal();
+}
+document.getElementById('am-reason').addEventListener('input', e => {
+  document.getElementById('am-go').disabled = e.target.value.trim().length < 5;
+});
+window.actionConfirm = actionConfirm;
+window.closeActModal = closeActModal;
+window.execAction = execAction;
+
+// ============== Tabs ==============
+document.querySelectorAll('.tab[data-tab]').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab[data-tab]').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    const tab = t.dataset.tab;
+    document.querySelectorAll('[data-tabbody]').forEach(b => b.classList.toggle('hidden', b.dataset.tabbody !== tab));
+  });
+});
+
+// ============== Share ==============
+function copyShare(){
+  navigator.clipboard.writeText(location.href).then(() => alert('공유 링크를 복사했어요.'));
+}
+window.copyShare = copyShare;
+</script>
+</body>
+</html>

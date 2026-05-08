@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1440" />
+<title>외국인등록사실증명 발급 처리 시스템 · 법무부 출입국·외국인정책본부</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  tailwind.config = { theme: { extend: { colors:{
+    primary:'#3182F6','primary-deep':'#1B64DA','primary-soft':'#E8F2FE',
+    success:'#00C48C','success-soft':'#E6FAF3',
+    warning:'#FFB020','warning-soft':'#FFF4DE',
+    danger:'#F04452','danger-soft':'#FDE7E9',
+    info:'#18BFFF','info-soft':'#E2F7FF',
+    base:'#F9FAFB',border:'#E5E8EB',ink:'#191F28',sub:'#4E5968',muted:'#8B95A1',surface:'#FFFFFF'
+  }, fontFamily:{
+    sans:['Pretendard Variable','Pretendard','-apple-system','system-ui','sans-serif'],
+    mono:['JetBrains Mono','monospace']
+  }, borderRadius:{xs:'8px',sm:'12px',md:'16px',pill:'999px'},
+    boxShadow:{card:'0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.06)'} } } }
+</script>
+<style>
+  html,body{background:#EAECEF;}
+  body{font-family:'Pretendard Variable',Pretendard,-apple-system,system-ui,sans-serif;color:#191F28;-webkit-font-smoothing:antialiased;}
+  .mono{font-family:'JetBrains Mono','SFMono-Regular',Menlo,monospace;}
+  .num{font-feature-settings:"tnum" 1;letter-spacing:-0.01em;}
+
+  /* 글로벌 4탭 */
+  .global-tabs{position:sticky;top:0;z-index:200;display:flex;gap:0;background:#fff;border-bottom:1px solid #E5E8EB;padding:0 32px;}
+  .global-tab{padding:14px 20px;font-size:14px;font-weight:600;color:#4E5968;text-decoration:none;border-bottom:2px solid transparent;}
+  .global-tab.active{color:#3182F6;border-bottom-color:#3182F6;}
+  :focus-visible{outline:2px solid #3182F6;outline-offset:2px;}
+
+  /* 데스크톱 윈도우 프레임 */
+  .desktop{width:1400px;background:#F9FAFB;border-radius:14px;overflow:hidden;border:1px solid #E5E8EB;box-shadow:0 10px 36px rgba(0,0,0,.10);}
+  .winbar{height:36px;background:#EEF0F3;display:flex;align-items:center;padding:0 12px;gap:6px;border-bottom:1px solid #E5E8EB;flex-shrink:0;}
+  .winbar .dot{width:10px;height:10px;border-radius:999px;}
+  .badge-testnet{background:#E2F7FF;color:#0594BF;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;}
+  .badge-mock{background:#FFF4DE;color:#7a5400;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;}
+
+  /* 사이드바 */
+  .side{width:240px;background:#FFFFFF;border-right:1px solid #E5E8EB;flex-shrink:0;display:flex;flex-direction:column;}
+  .side-link{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:600;color:#4E5968;cursor:pointer;margin:1px 6px;text-decoration:none;}
+  .side-link:hover{background:#F9FAFB;}
+  .side-link.active{background:#E8F2FE;color:#3182F6;}
+  .side-link [data-lucide]{width:16px;height:16px;stroke-width:2;flex-shrink:0;}
+  [data-lucide]{width:18px;height:18px;stroke-width:2;}
+
+  /* 상호 링크 */
+
+  /* LIVE 배지 */
+  .last-tick{font-size:11px;color:#8B95A1;font-weight:600;font-family:'JetBrains Mono',monospace;font-feature-settings:"tnum" 1;}
+
+  /* KPI 카드 (콘솔 stat 패턴) */
+  .stat{background:#fff;border:1px solid #E5E8EB;border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:6px;text-align:left;}
+  .stat .h{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+  .stat .lbl{font-size:11px;font-weight:700;color:#8B95A1;}
+  .stat .ic{width:24px;height:24px;border-radius:8px;background:#F4F9FF;color:#3182F6;display:flex;align-items:center;justify-content:center;}
+  .stat .ic [data-lucide]{width:13px;height:13px;}
+  .stat.success .ic{background:#E6FAF3;color:#00C48C;}
+  .stat.warning .ic{background:#FFF4DE;color:#B27500;}
+  .stat.danger  .ic{background:#FDE7E9;color:#C0303B;}
+  .stat .v{display:flex;align-items:baseline;gap:5px;}
+  .stat .n{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:800;color:#191F28;font-feature-settings:"tnum" 1;letter-spacing:-0.02em;}
+  .stat.success .n{color:#00834C;}
+  .stat.warning .n{color:#7a5400;}
+  .stat.danger  .n{color:#C0303B;}
+  .stat .u{font-size:11px;font-weight:700;color:#8B95A1;}
+  .stat .foot{font-size:11px;color:#8B95A1;font-weight:600;}
+
+  /* 테이블 */
+  .tbl{background:#fff;border:1px solid #E5E8EB;border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04),0 1px 3px rgba(0,0,0,.06);}
+  .tbl-head{display:grid;grid-template-columns:140px 1.6fr 1.5fr 110px 80px;column-gap:12px;background:#F9FAFB;padding:11px 18px;font-size:11px;font-weight:700;color:#8B95A1;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #E5E8EB;}
+  .tbl-row{display:grid;grid-template-columns:140px 1.6fr 1.5fr 110px 80px;column-gap:12px;padding:14px 18px;border-bottom:1px solid #F2F4F6;font-size:13px;align-items:center;cursor:pointer;}
+  .tbl-row:last-child{border-bottom:0;}
+  .tbl-row:hover{background:#F9FAFB;}
+  .tbl-row.open{background:#F4F9FF;}
+  .tbl-row .req{font-family:'JetBrains Mono',monospace;font-weight:700;color:#1B64DA;font-size:12px;}
+  .tbl-row .applicant b{color:#191F28;font-weight:700;}
+  .tbl-row .applicant span{color:#8B95A1;font-family:'JetBrains Mono',monospace;font-size:11px;display:block;margin-top:2px;}
+  .tbl-row .doc{color:#191F28;font-weight:600;}
+
+  .vpill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700;white-space:nowrap;}
+  .vpill.wait{background:#F2F4F6;color:#4E5968;}
+  .vpill.review{background:#FFF4DE;color:#7a5400;}
+  .vpill.issuing{background:#E8F2FE;color:#1B64DA;}
+  .vpill.done{background:#E6FAF3;color:#00834C;}
+  .vpill.reject{background:#FDE7E9;color:#C0303B;}
+  .vpill.hold{background:#F2F4F6;color:#191F28;border:1px solid #C5CCD3;}
+
+
+  /* 우측 detail 패널 — 인라인 expand row */
+  .row-wrap{border-bottom:1px solid #F2F4F6;}
+  .row-wrap:last-child{border-bottom:0;}
+  .row-wrap .tbl-row{border-bottom:0;}
+  .row-expand{display:none;background:#FAFBFC;border-top:1px solid #E5E8EB;padding:24px 22px;}
+  .row-wrap.open .row-expand{display:block;}
+
+  /* 패널 */
+  .panel{background:#fff;border:1px solid #E5E8EB;border-radius:12px;padding:20px 22px;}
+  .panel h4{font-size:13px;font-weight:800;color:#191F28;margin-bottom:14px;}
+
+  /* 메타 그리드 */
+  .kv{display:grid;grid-template-columns:120px 1fr;gap:10px 16px;font-size:13px;line-height:1.5;}
+  .kv dt{color:#8B95A1;font-weight:600;}
+  .kv dd{margin:0;color:#191F28;font-weight:600;}
+
+  /* 버튼 */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:38px;padding:0 16px;border-radius:6px;border:1px solid #C5CCD3;background:#fff;font-size:13px;font-weight:700;color:#191F28;cursor:pointer;transition:all 100ms ease-out;}
+  .btn:hover{background:#F2F4F6;}
+  .btn.primary{background:#1B64DA;border-color:#1B64DA;color:#fff;}
+  .btn.primary:hover{background:#163E80;border-color:#163E80;}
+  .btn.success{background:#00834C;border-color:#00834C;color:#fff;}
+  .btn.success:hover{background:#006B3E;border-color:#006B3E;}
+  .btn.outline-danger{background:#fff;border-color:#C0303B;color:#C0303B;}
+  .btn.outline-danger:hover{background:#FDE7E9;}
+  .btn.ghost{background:transparent;border:0;color:#8B95A1;}
+
+  /* 검토 체크리스트 */
+  .checklist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .checklist li{position:relative;padding:8px 12px 8px 30px;background:#F9FAFB;border:1px solid #E5E8EB;border-radius:4px;font-size:12px;color:#4E5968;line-height:1.5;}
+  .checklist li::before{content:"";position:absolute;left:11px;top:13px;width:10px;height:10px;border-radius:2px;border:1.5px solid #1B64DA;background:#fff;}
+  .checklist li b{color:#191F28;font-weight:700;}
+
+  /* placeholder 페이지 */
+  .placeholder-page{display:flex;flex-direction:column;align-items:center;justify-content:center;height:600px;text-align:center;color:#8B95A1;gap:8px;}
+  .placeholder-page [data-lucide]{width:36px;height:36px;color:#B0B8C1;}
+
+  /* 페이지 토글 */
+  .page{display:none;}
+  .page.active{display:block;}
+
+  /* disclaimer */
+  .disclaimer{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px 18px;border-radius:12px;background:#FFFBF1;border:1px solid #FFD380;color:#7a5400;font-size:11px;font-weight:600;}
+  .disclaimer b{color:#5a3c00;}
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- ========== 글로벌 4탭 ========== -->
+<nav class="global-tabs" role="tablist">
+  <a href="./index.html" class="global-tab" role="tab">인덱스</a>
+  <a href="./app.html" class="global-tab" role="tab">앱</a>
+  <a href="./institution-kr.html" class="global-tab active" role="tab" aria-current="page">국내 발급 기관</a>
+  <a href="./institution-translator.html" class="global-tab" role="tab">번역·공증사</a>
+  <a href="./institution-apostille.html" class="global-tab" role="tab">아포스티유</a>
+  <a href="./institution-overseas.html" class="global-tab" role="tab">해외 수령 기관</a>
+  <a href="./console.html" class="global-tab" role="tab">콘솔</a>
+</nav>
+
+<header class="max-w-[1440px] mx-auto px-8 pt-8 pb-5">
+  <div class="flex items-end justify-between">
+    <div>
+      <div class="text-[10px] font-bold text-muted uppercase tracking-[0.06em] mb-1">법무부 출입국·외국인정책본부 / Ministry of Justice — Korea Immigration Service</div>
+      <h1 class="text-[22px] font-extrabold text-ink" style="letter-spacing:-0.01em;">외국인등록사실증명 발급 처리 시스템</h1>
+      <div class="text-[13px] text-sub mt-1">본인 확인을 마친 신청 건에 대해 외국인등록사실증명을 발급한다.</div>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="badge-testnet">Testnet</span>
+      <span class="badge-mock">Mock</span>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-[1440px] mx-auto px-4 pb-16">
+
+<div class="desktop mx-auto">
+  <div class="winbar">
+    <span class="dot bg-danger"></span><span class="dot bg-warning"></span><span class="dot bg-success"></span>
+    <span class="ml-3 text-[11px] mono" style="color:#8B95A1;">immigration.go.kr/issue/foreign-registration</span>
+    <span class="ml-auto flex items-center gap-2"><span class="badge-testnet">Testnet</span><span class="badge-mock">Mock</span></span>
+  </div>
+
+  <div class="flex" style="min-height:900px;">
+    <!-- ========== 사이드바 ========== -->
+    <aside class="side p-3">
+      <div class="px-3 pt-3 pb-3 mb-2 border-b border-border">
+        <div class="text-[12px] font-bold text-ink">법무부 출입국·외국인정책본부</div>
+        <div class="text-[10px] mt-0.5" style="color:#8B95A1;">외국인등록사실증명 발급</div>
+      </div>
+      <a class="side-link active" data-page="queue"><i data-lucide="inbox"></i>발급 신청 처리</a>
+      <a class="side-link" data-page="history"><i data-lucide="folder"></i>발급 이력 조회</a>
+      <a class="side-link" data-page="health"><i data-lucide="activity"></i>외부 연동 상태</a>
+
+      <div class="mt-auto px-3 pb-3 pt-6 border-t border-border mt-4">
+        <div class="text-[10px]" style="color:#8B95A1;">v1.0 · 2026-05-08</div>
+      </div>
+    </aside>
+
+    <div class="flex-1 overflow-auto" style="background:#F9FAFB;">
+
+      <!-- ========== 발급 요청 큐 ========== -->
+      <section class="page active" data-page="queue">
+        <div class="p-8">
+
+          <!-- 헤드라인 -->
+          <div class="flex items-start justify-between mb-6 gap-4">
+            <div>
+              <h2 class="text-[18px] font-extrabold text-ink" style="letter-spacing:-0.01em;">발급 신청 처리</h2>
+              <div class="text-[13px] text-sub mt-1">접수 일자 기준 신청 건. 본인 확인 절차를 거친 신청만 표시된다.</div>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <span class="last-tick">2026-05-08 11:42 · 갱신</span>
+            </div>
+          </div>
+
+          <!-- KPI 4 -->
+          <div class="grid gap-3 mb-6" style="grid-template-columns:repeat(4,minmax(0,1fr));">
+            <div class="stat">
+              <div class="h"><span class="lbl">금일 접수</span><span class="ic"><i data-lucide="file-plus"></i></span></div>
+              <div class="v"><span class="n">38</span><span class="u">건</span></div>
+              <div class="foot">전일 31 · 7일 평균 34</div>
+            </div>
+            <div class="stat warning">
+              <div class="h"><span class="lbl">검토 중</span><span class="ic"><i data-lucide="clock"></i></span></div>
+              <div class="v"><span class="n">5</span><span class="u">건</span></div>
+              <div class="foot">평균 대기 12분</div>
+            </div>
+            <div class="stat success">
+              <div class="h"><span class="lbl">금일 발급</span><span class="ic"><i data-lucide="file-check"></i></span></div>
+              <div class="v"><span class="n">31</span><span class="u">건</span></div>
+              <div class="foot">처리율 81.6%</div>
+            </div>
+            <div class="stat danger">
+              <div class="h"><span class="lbl">반려</span><span class="ic"><i data-lucide="file-x"></i></span></div>
+              <div class="v"><span class="n">1</span><span class="u">건</span></div>
+              <div class="foot">금일 1건</div>
+            </div>
+          </div>
+
+          <!-- 테이블 -->
+          <div class="tbl">
+            <div class="tbl-head">
+              <div>접수번호</div>
+              <div>신청자</div>
+              <div>신청 문서</div>
+              <div>처리 상태</div>
+              <div>처리</div>
+            </div>
+
+            <!-- ROW 1 — 처리 대기 (담당자 검토 진행) -->
+            <div class="row-wrap" data-row="1">
+              <div class="tbl-row">
+                <div class="req">2026-05-FR-00419</div>
+                <div class="applicant"><b>응웬 반 투안</b><span>외국인등록 Q12-XXXXXXX</span></div>
+                <div class="doc">외국인등록사실증명</div>
+                <div><span class="vpill review">검토 중</span></div>
+                <div><i data-lucide="chevron-down" style="color:#8B95A1;"></i></div>
+              </div>
+              <div class="row-expand">
+                <div class="grid gap-5" style="grid-template-columns:1fr 320px;">
+                  <div class="space-y-5">
+
+                    <div class="panel">
+                      <h4>신청자 신원</h4>
+                      <dl class="kv">
+                        <dt>성명</dt><dd>응웬 반 투안 (NGUYEN VAN TUAN)</dd>
+                        <dt>외국인등록번호</dt><dd class="mono">Q12-XXXXXXX (마스킹)</dd>
+                        <dt>국적</dt><dd>베트남</dd>
+                        <dt>체류자격</dt><dd>F-2-7</dd>
+                        <dt>본인 확인</dt><dd>완료 · 2026-05-08 11:42 KST · 전자서명법 §6에 의한 공인전자서명 인증</dd>
+                      </dl>
+                    </div>
+
+                    <div class="panel">
+                      <h4>신청 내용</h4>
+                      <dl class="kv">
+                        <dt>접수번호</dt><dd class="mono">2026-05-FR-00419</dd>
+                        <dt>접수 일시</dt><dd class="mono">2026-05-08 11:42:18 KST</dd>
+                        <dt>신청 문서</dt><dd>외국인등록사실증명 (한글본)</dd>
+                        <dt>발급 사유</dt><dd>해외 제출용</dd>
+                        <dt>적용 법령</dt><dd>출입국관리법 §88 · 동법 시행규칙 §75</dd>
+                      </dl>
+                    </div>
+
+                    <div class="panel">
+                      <h4>담당자 검토 사항</h4>
+                      <ul class="checklist">
+                        <li><b>외국인등록 정보</b>와 신청자 신원 일치 확인</li>
+                        <li><b>체류 자격</b> 유효 여부 확인 (F-2-7, 만료일 2027-03-15)</li>
+                        <li><b>발급 제한 사유</b> 없음 (출국 명령·강제퇴거 이력 없음)</li>
+                      </ul>
+                    </div>
+
+                  </div>
+
+                  <div class="space-y-3">
+                    <button class="btn primary w-full" id="issue-btn-1">
+                      <i data-lucide="file-check"></i>발급
+                    </button>
+                    <button class="btn outline-danger w-full">
+                      <i data-lucide="file-x"></i>반려
+                    </button>
+                    <div class="text-[11px] text-muted mt-3 leading-relaxed">반려 시 사유 입력란이 표시되며, 사유는 신청자에게 서면 통지된다 (행정절차법 §23).</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ROW 3 — 발급 완료 -->
+            <div class="row-wrap" data-row="3">
+              <div class="tbl-row">
+                <div class="req">2026-05-FR-00417</div>
+                <div class="applicant"><b>김지훈</b><span>대한민국 국적</span></div>
+                <div class="doc">출입국사실증명</div>
+                <div><span class="vpill done">발급 완료</span></div>
+                <div><i data-lucide="chevron-down" style="color:#8B95A1;"></i></div>
+              </div>
+              <div class="row-expand">
+                <div class="panel">
+                  <h4>발급 정보</h4>
+                  <dl class="kv">
+                    <dt>발급 일시</dt><dd class="mono">2026-05-08 11:18:03 KST</dd>
+                    <dt>발급번호</dt><dd class="mono">FR-2026-05-08-0417</dd>
+                    <dt>유효기간</dt><dd class="mono">2026-05-08 ~ 2026-08-08 (3개월)</dd>
+                    <dt>처리자</dt><dd>김OO 사무관 (출입국심사과)</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+
+            <!-- ROW 4 — 반려 (영문 성명 불일치) -->
+            <div class="row-wrap" data-row="4">
+              <div class="tbl-row">
+                <div class="req">2026-05-FR-00416</div>
+                <div class="applicant"><b>응웬 티 마이</b><span>외국인등록 Q14-XXXXXXX</span></div>
+                <div class="doc">외국인등록사실증명</div>
+                <div><span class="vpill reject">반려</span></div>
+                <div><i data-lucide="chevron-down" style="color:#8B95A1;"></i></div>
+              </div>
+              <div class="row-expand">
+                <div class="panel" style="border-color:#F8B8BE;background:#FEF4F5;">
+                  <h4 style="color:#C0303B;">반려 사유</h4>
+                  <dl class="kv">
+                    <dt>반려 일시</dt><dd class="mono">2026-05-08 10:55:12 KST</dd>
+                    <dt>사유</dt><dd>신청서 영문 성명과 외국인등록 정보 불일치 — 신청서 영문 성명 <span class="mono">NGUYEN T M</span>, 외국인등록상 영문 성명 <span class="mono">NGUYEN THI MAI</span>. 해외 제출용 증명서는 외국인등록과 동일한 영문 표기로만 발급함.</dd>
+                    <dt>안내</dt><dd>외국인등록 영문 성명과 일치하도록 정정 후 재신청 필요. 본인 영문 성명을 변경하려면 외국인등록 사항 변경 신청 절차를 별도로 진행할 것.</dd>
+                    <dt>처리자</dt><dd>김OO 사무관 (출입국심사과)</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- disclaimer -->
+          <div class="disclaimer mt-6">
+            <i data-lucide="info" style="width:14px;height:14px;"></i>
+            <span><b>WIREFRAME DEMO · TESTNET · MOCK DATA</b> · 본 화면은 KFIP 2026 출품작 와이어프레임으로, 실제 정부 시스템과 연동되지 않는다. 신청자 정보는 모두 가상이며 실 주민등록번호·여권번호·외국인등록번호는 표시되지 않는다.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== 발급 이력 조회 (placeholder) ========== -->
+      <section class="page" data-page="history">
+        <div class="placeholder-page">
+          <i data-lucide="folder"></i>
+          <div class="text-[16px] font-bold text-ink">발급 이력 조회</div>
+          <div class="text-[13px]">처리 완료된 발급 건의 검색·통계·내보내기 (개발 예정).</div>
+          <div class="text-[11px] mono" style="color:#B0B8C1;">/issue/history</div>
+        </div>
+      </section>
+
+      <!-- ========== 외부 연동 상태 (placeholder) ========== -->
+      <section class="page" data-page="health">
+        <div class="placeholder-page">
+          <i data-lucide="activity"></i>
+          <div class="text-[16px] font-bold text-ink">외부 연동 상태</div>
+          <div class="text-[13px]">본인확인 게이트웨이 · 외부 인쇄 시스템 등 연동 점검 (개발 예정).</div>
+          <div class="text-[11px] mono" style="color:#B0B8C1;">/system/health</div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+</main>
+
+<script>
+  // 사이드바 페이지 토글
+  document.querySelectorAll('.side-link[data-page]').forEach(link => {
+    link.addEventListener('click', () => {
+      document.querySelectorAll('.side-link[data-page]').forEach(l => l.classList.remove('active'));
+      link.classList.add('active');
+      const page = link.dataset.page;
+      document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.dataset.page === page));
+    });
+  });
+
+  // 행 클릭 → expand
+  document.querySelectorAll('.row-wrap').forEach(wrap => {
+    wrap.querySelector('.tbl-row').addEventListener('click', () => {
+      wrap.classList.toggle('open');
+    });
+  });
+
+  // ROW 1 발급 버튼 — 데모 진행 시뮬레이션
+  const issueBtn = document.getElementById('issue-btn-1');
+  if (issueBtn) {
+    issueBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      issueBtn.innerHTML = '<i data-lucide="loader-2" class="animate-spin"></i>처리 중';
+      issueBtn.disabled = true;
+      setTimeout(() => {
+        issueBtn.innerHTML = '<i data-lucide="check"></i>발급 완료';
+        issueBtn.classList.remove('primary');
+        issueBtn.classList.add('success');
+        if (window.lucide) lucide.createIcons();
+      }, 1400);
+    });
+  }
+
+  if (window.lucide) lucide.createIcons();
+</script>
+</body>
+</html>

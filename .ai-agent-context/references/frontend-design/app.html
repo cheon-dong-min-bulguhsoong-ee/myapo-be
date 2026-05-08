@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MyApo · 사용자 앱 (시연)</title>
+
+  <!-- CDN 4종 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    :root {
+      --color-primary: #3182F6;
+      --color-primary-deep: #1B64DA;
+      --color-primary-soft: #E8F2FE;
+      --color-success: #00C48C;
+      --color-warning: #FFB020;
+      --color-danger: #F04452;
+      --color-info: #18BFFF;
+      --color-bg-base: #F9FAFB;
+      --color-bg-card: #FFFFFF;
+      --color-border: #E5E8EB;
+      --color-text-primary: #191F28;
+      --color-text-secondary: #4E5968;
+      --color-text-muted: #8B95A1;
+      --shadow-card: 0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.06);
+      --radius-sm: 12px;
+      --radius-md: 16px;
+      --radius-pill: 999px;
+    }
+
+    html, body {
+      font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      background: var(--color-bg-base);
+      color: var(--color-text-primary);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .wrapper-header {
+      position: sticky;
+      top: 49px; /* 글로벌 탭 높이만큼 내려야 누적 sticky 정상 작동 */
+      z-index: 100;
+      background: var(--color-bg-card);
+      border-bottom: 1px solid var(--color-border);
+      box-shadow: var(--shadow-card);
+    }
+
+    /* 글로벌 탭 (모든 v3 페이지 공통) */
+    .global-tabs {
+      position: sticky; top: 0; z-index: 200;
+      display: flex; gap: 0;
+      background: var(--color-bg-card);
+      border-bottom: 1px solid var(--color-border);
+      padding: 0 32px;
+      overflow-x: auto;
+    }
+    .global-tab {
+      padding: 14px 20px;
+      font-size: 14px; font-weight: 600;
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      border-bottom: 2px solid transparent;
+      transition: all 150ms ease-out;
+      white-space: nowrap;
+    }
+    .global-tab:hover { color: var(--color-text-primary); }
+    .global-tab.active {
+      color: var(--color-primary);
+      border-bottom-color: var(--color-primary);
+    }
+    @media (max-width: 768px) {
+      .global-tabs { padding: 0 12px; }
+      .global-tab { padding: 12px 14px; font-size: 13px; }
+    }
+
+    .wrapper-inner {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .wrapper-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      letter-spacing: -0.01em;
+    }
+
+    .badge-group { display: flex; gap: 6px; }
+    .badge {
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .badge-info { background: rgba(24, 191, 255, 0.12); color: #0B91C9; }
+    .badge-warning { background: rgba(255, 176, 32, 0.12); color: #B47008; }
+    .badge-primary { background: var(--color-primary-soft); color: var(--color-primary); }
+
+    .persona-toggle {
+      margin-left: auto;
+      display: flex;
+      gap: 4px;
+      background: var(--color-bg-base);
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid var(--color-border);
+    }
+    .persona-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: all 150ms ease-out;
+    }
+    .persona-btn:hover { background: rgba(49, 130, 246, 0.06); }
+    .persona-btn.active {
+      background: var(--color-primary);
+      color: white;
+    }
+
+    .toggle-caption {
+      font-size: 12px;
+      color: var(--color-text-muted);
+      margin-left: 8px;
+    }
+
+    .frame-area {
+      width: 100%;
+      height: calc(100vh - 130px); /* 글로벌 탭 49 + wrapper-header ~80 */
+      border: none;
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      .wrapper-inner { padding: 12px 20px; gap: 12px; }
+      .wrapper-title { font-size: 15px; }
+      .toggle-caption { display: none; }
+      .frame-area { height: calc(100vh - 170px); }
+    }
+  </style>
+</head>
+<body data-persona="korean">
+  <nav class="global-tabs" role="tablist" aria-label="MyApo 페이지 네비게이션">
+    <a href="./index.html" class="global-tab" role="tab">인덱스</a>
+    <a href="./app.html" class="global-tab active" role="tab" aria-current="page">앱</a>
+    <a href="./institution-kr.html" class="global-tab" role="tab">국내 발급 기관</a>
+    <a href="./institution-translator.html" class="global-tab" role="tab">번역·공증사</a>
+    <a href="./institution-apostille.html" class="global-tab" role="tab">아포스티유</a>
+    <a href="./institution-overseas.html" class="global-tab" role="tab">해외 수령 기관</a>
+    <a href="./console.html" class="global-tab" role="tab">콘솔</a>
+  </nav>
+  <header class="wrapper-header">
+    <div class="wrapper-inner">
+      <span class="wrapper-title">MyApo · 사용자 앱</span>
+      <div class="badge-group">
+        <span class="badge badge-info">Testnet</span>
+        <span class="badge badge-warning">Mock</span>
+        <span class="badge badge-primary">Pre-Check Only</span>
+      </div>
+      <div class="persona-toggle" role="tablist" aria-label="시연용 페르소나 토글">
+        <button class="persona-btn active" data-persona-target="korean" role="tab" aria-selected="true">한국인</button>
+        <button class="persona-btn" data-persona-target="foreigner" role="tab" aria-selected="false">재한 외국인</button>
+      </div>
+      <span class="toggle-caption">시연용 토글이에요. 실제 앱에서는 회원가입 시 자동으로 결정돼요.</span>
+    </div>
+  </header>
+
+  <iframe id="persona-frame" class="frame-area" src="./app-korean.html" title="페르소나별 앱 화면"></iframe>
+
+  <script>
+    const frame = document.getElementById('persona-frame');
+    const buttons = document.querySelectorAll('.persona-btn');
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.personaTarget;
+        if (target === document.body.dataset.persona) return;
+        document.body.dataset.persona = target;
+        buttons.forEach(b => {
+          const active = b.dataset.personaTarget === target;
+          b.classList.toggle('active', active);
+          b.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        frame.src = target === 'korean' ? './app-korean.html' : './app-foreigner.html';
+      });
+    });
+
+    if (window.lucide) lucide.createIcons();
+  </script>
+</body>
+</html>

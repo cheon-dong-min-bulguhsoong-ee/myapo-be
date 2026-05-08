@@ -1,0 +1,1602 @@
+<!doctype html>
+<!-- 시연 라벨: MyApo 랜딩 (v4, 8 섹션 IX-01~IX-08, 4 인계 + 4 협업 파트너 모델, 반응형) -->
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MyApo — 4 협업 파트너 위에서 작동하는 정부 발급 서류 풀-스택 대행 (v4 와이어프레임)</title>
+
+  <!-- CDN 4종 (deliverable-08 §2 + research §5.3) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary:         '#3182F6',
+            'primary-deep':  '#1B64DA',
+            'primary-soft':  '#E8F2FE',
+            success:         '#00C48C',
+            'success-soft':  '#E6FAF3',
+            warning:         '#FFB020',
+            'warning-soft':  '#FFF4DE',
+            danger:          '#F04452',
+            'danger-soft':   '#FDE7E9',
+            info:            '#18BFFF',
+            'info-soft':     '#E2F7FF',
+            base:            '#F9FAFB',
+            card:            '#FFFFFF',
+            surface:         '#FFFFFF',
+            border:          '#E5E8EB',
+            ink:             '#191F28',
+            sub:             '#4E5968',
+            muted:           '#8B95A1',
+            code:            '#11181C',
+          },
+          fontFamily: {
+            sans: ['Pretendard Variable', 'Pretendard', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Apple SD Gothic Neo', 'Malgun Gothic', 'sans-serif'],
+            mono: ['JetBrains Mono', 'IBM Plex Mono', 'SFMono-Regular', 'Menlo', 'monospace'],
+          },
+          boxShadow: {
+            card:  '0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.06)',
+            sheet: '0 -8px 24px rgba(0,0,0,.08)',
+          },
+          borderRadius: {
+            xs:   '8px',
+            sm:   '12px',
+            md:   '16px',
+            pill: '999px',
+          },
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* ── CSS 변수 (rules/11 §2, 변경 금지) ── */
+    :root {
+      --color-primary:        #3182F6;
+      --color-primary-deep:   #1B64DA;
+      --color-primary-soft:   #E8F2FE;
+      --color-success:        #00C48C;
+      --color-warning:        #FFB020;
+      --color-danger:         #F04452;
+      --color-info:           #18BFFF;
+      --color-bg-base:        #F9FAFB;
+      --color-bg-card:        #FFFFFF;
+      --color-bg-code:        #11181C;
+      --color-border:         #E5E8EB;
+      --color-text-primary:   #191F28;
+      --color-text-secondary: #4E5968;
+      --color-text-muted:     #8B95A1;
+      --shadow-card:  0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.06);
+      --shadow-sheet: 0 -8px 24px rgba(0,0,0,.08);
+      --radius-xs:   8px;
+      --radius-sm:   12px;
+      --radius-md:   16px;
+      --radius-pill: 999px;
+      --space-edge:        20px;
+      --space-card-gap:    16px;
+      --space-section-gap: 32px;
+    }
+
+    html, body { background: #F9FAFB; }
+    body {
+      font-family: 'Pretendard Variable', Pretendard, ui-sans-serif, system-ui, sans-serif;
+      color: #191F28;
+      -webkit-font-smoothing: antialiased;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', 'IBM Plex Mono', SFMono-Regular, Menlo, monospace;
+    }
+
+    /* ── 애니메이션 ── */
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .animate-enter { animation: fadeSlideUp 160ms ease-out both; }
+    .animate-enter-delay-1 { animation-delay: 40ms; }
+    .animate-enter-delay-2 { animation-delay: 80ms; }
+    .animate-enter-delay-3 { animation-delay: 120ms; }
+    .animate-enter-delay-4 { animation-delay: 160ms; }
+    .animate-enter-delay-5 { animation-delay: 200ms; }
+    .animate-enter-delay-6 { animation-delay: 240ms; }
+    .animate-enter-delay-7 { animation-delay: 280ms; }
+
+    @keyframes pulse-border {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: .4; }
+    }
+    .pulse-border { animation: pulse-border 1.5s ease-in-out infinite; }
+
+    @keyframes pulse-scale {
+      0%, 100% { transform: scale(1); }
+      50%       { transform: scale(1.04); }
+    }
+    .pulse-scale { animation: pulse-scale 1.5s ease-in-out infinite; }
+
+    /* ── 공통 카드 ── */
+    .card {
+      background: #FFFFFF;
+      border: 1px solid #E5E8EB;
+      border-radius: 12px;
+      box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.06);
+    }
+
+    /* ── badge / pill ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .badge-testnet  { background: #E2F7FF; color: #0A7B9E; }
+    .badge-mock     { background: #FFF4DE; color: #9A6500; }
+    .badge-precheck { background: #E8F2FE; color: #1B64DA; }
+
+    /* ── screen-label ── */
+    .screen-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      color: #8B95A1;
+      padding: 2px 6px;
+      border: 1px solid #E5E8EB;
+      border-radius: 4px;
+      background: #fff;
+    }
+
+    /* ── variant label pills ── */
+    .variant-label {
+      display: inline-block;
+      margin-bottom: 6px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      border: 1px solid transparent;
+    }
+    .variant-active   { background: #E8F2FE; color: #1B64DA; border-color: #B8D8FF; }
+    .variant-loading  { background: #E2F7FF; color: #0A7B9E; border-color: #A8E1F5; }
+    .variant-empty    { background: #F9FAFB; color: #4E5968; border-color: #E5E8EB; }
+    .variant-error    { background: #FDE7E9; color: #9F2A37; border-color: #F5BFC4; }
+
+    /* ── primary button ── */
+    .btn-primary {
+      height: 56px;
+      padding: 0 24px;
+      background: #3182F6;
+      color: #FFFFFF;
+      border-radius: 12px;
+      font-size: 17px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: background 0.1s, transform 0.05s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-primary:hover  { background: #1B64DA; }
+    .btn-primary:active { transform: scale(0.96); }
+
+    /* ── section title ── */
+    .section-title { font-size: 20px; font-weight: 700; color: #191F28; }
+
+    /* ── Before step boxes ── */
+    .before-step {
+      background: #fff8f8;
+      border: 1px solid #fbd5d8;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 13px;
+      color: #4E5968;
+      flex: 1;
+      min-width: 120px;
+    }
+
+    /* ── cycle step ── */
+    .cycle-step {
+      background: #FFFFFF;
+      border: 1px solid #E5E8EB;
+      border-radius: 8px;
+      padding: 14px;
+      flex: 1;
+      min-width: 0;
+      font-size: 13px;
+    }
+
+    /* ── TX chain ── */
+    .tx-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      min-width: 70px;
+    }
+    .tx-step-dot {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700;
+    }
+    .tx-step-line {
+      flex: 1; height: 2px;
+      align-self: flex-start;
+      margin-top: 14px;
+      min-width: 10px;
+    }
+
+    /* ── dispute step ── */
+    .dispute-step {
+      flex: 1;
+      background: #FFFFFF;
+      border: 1px solid #E5E8EB;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 11px;
+      min-width: 0;
+    }
+
+    /* ── nav card (IX-07) ── */
+    .nav-card {
+      background: #1a2236;
+      border: 1px solid #2d3748;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      text-decoration: none;
+      color: #FFFFFF;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .nav-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,.2);
+    }
+
+    /* ── hash / ipfs badge ── */
+    .hash-badge, .ipfs-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 500;
+      background: #E8F2FE;
+      color: #3182F6;
+    }
+
+    /* ── skeleton / loading shimmer ── */
+    .skeleton {
+      background: linear-gradient(90deg, #E5E8EB 25%, #F9FAFB 50%, #E5E8EB 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 4px;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ── site header ── */
+    .site-header {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid #E5E8EB;
+      display: flex; align-items: center;
+      padding: 0 32px; height: 56px;
+      gap: 20px;
+    }
+    .site-header .logo {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px; font-weight: 700;
+      color: #3182F6; letter-spacing: .06em;
+    }
+    .site-header nav { display: flex; gap: 4px; margin-left: 8px; }
+    .site-header nav a {
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 13px; font-weight: 600;
+      color: #4E5968; text-decoration: none;
+      transition: background .1s, color .1s;
+    }
+    .site-header nav a:hover { background: #E8F2FE; color: #3182F6; }
+    .site-header .badges { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+
+    /* ── escrow row ── */
+    .escrow-row {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 7px 0;
+      border-bottom: 1px solid #E5E8EB;
+      font-size: 13px;
+    }
+    .escrow-row:last-child { border-bottom: none; }
+
+    /* ── mini variant block ── */
+    .mini-variant {
+      border: 1px solid #E5E8EB;
+      border-radius: 10px;
+      padding: 16px;
+      background: #FFFFFF;
+    }
+    .mini-variant.mv-loading { border-color: #A8E1F5; background: #F0FBFF; }
+    .mini-variant.mv-empty   { background: #F9FAFB; }
+    .mini-variant.mv-error   { border-color: #F5BFC4; background: #FDE7E9; }
+    .mini-variant.mv-active  { border-color: #B8D8FF; background: #FBFEFF; }
+
+    /* ── inventory list ── */
+    .inventory-list {
+      list-style: none; padding: 0; margin: 0;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .inventory-list li {
+      font-size: 10px; color: #8B95A1;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.06);
+    }
+
+    /* ── footnote ── */
+    .footnote-item {
+      font-size: 11px;
+      color: #8B95A1;
+      line-height: 1.6;
+      padding: 5px 0;
+      border-bottom: 1px solid #2d3748;
+    }
+    .footnote-item:last-child { border-bottom: none; }
+
+    /* ── section wrapper ── */
+    .section-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 72px 32px;
+    }
+    @media (max-width: 768px) {
+      .site-header { padding: 0 16px; }
+      .site-header nav { display: none; }
+      .section-inner { padding: 48px 20px; }
+    }
+    /* 글로벌 탭 (모든 v3 페이지 공통) */
+    .global-tabs {
+      position: sticky; top: 0; z-index: 200;
+      display: flex; gap: 0;
+      background: var(--color-bg-card, #FFFFFF);
+      border-bottom: 1px solid var(--color-border, #E5E8EB);
+      padding: 0 32px;
+      overflow-x: auto;
+    }
+    .global-tab {
+      padding: 14px 20px;
+      font-size: 14px; font-weight: 600;
+      color: var(--color-text-secondary, #4E5968);
+      text-decoration: none;
+      border-bottom: 2px solid transparent;
+      transition: all 150ms ease-out;
+      white-space: nowrap;
+    }
+    .global-tab:hover { color: var(--color-text-primary, #191F28); }
+    .global-tab.active {
+      color: var(--color-primary, #3182F6);
+      border-bottom-color: var(--color-primary, #3182F6);
+    }
+    @media (max-width: 768px) {
+      .global-tabs { padding: 0 12px; }
+      .global-tab { padding: 12px 14px; font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="global-tabs" role="tablist" aria-label="MyApo 페이지 네비게이션">
+  <a href="./index.html" class="global-tab active" role="tab" aria-current="page">인덱스</a>
+  <a href="./app.html" class="global-tab" role="tab">앱</a>
+  <a href="./institution-kr.html" class="global-tab" role="tab">국내 발급 기관</a>
+  <a href="./institution-translator.html" class="global-tab" role="tab">번역·공증사</a>
+  <a href="./institution-apostille.html" class="global-tab" role="tab">아포스티유</a>
+  <a href="./institution-overseas.html" class="global-tab" role="tab">해외 수령 기관</a>
+  <a href="./console.html" class="global-tab" role="tab">콘솔</a>
+</nav>
+
+<!-- ── 상단 헤더 (MYAPO 로고 + 네비 + 3 뱃지) ── -->
+<header class="site-header">
+  <span class="logo">MYAPO</span>
+  <nav>
+    <a href="./app.html">App</a>
+    <a href="./institution-kr.html">Institution KR</a>
+    <a href="./institution-overseas.html">Institution Overseas</a>
+    <a href="./console.html">Console</a>
+  </nav>
+  <div class="badges">
+    <span class="badge badge-testnet" style="font-size:11px;">
+      <i data-lucide="zap" style="width:10px;height:10px;"></i>Testnet
+    </span>
+    <span class="badge badge-mock" style="font-size:11px;">
+      <i data-lucide="flask-conical" style="width:10px;height:10px;"></i>Mock
+    </span>
+    <span class="badge badge-precheck" style="font-size:11px;">
+      <i data-lucide="shield-check" style="width:10px;height:10px;"></i>Pre-Check Only
+    </span>
+  </div>
+</header>
+
+<!--
+  Screen ID:     IX-01
+  Name:          Hero
+  Purpose:       랜딩 진입 — MyApo 가치 제안 첫 노출 (4 인계 + 사용자 서명 4 회 모델)
+  Interactions:  CTA 버튼 → app.html
+  Data bindings: 없음
+  States:        Active (단일 정적)
+-->
+<section id="IX-01" class="animate-enter" style="background:linear-gradient(160deg,#F0F6FF 0%,#FFFFFF 60%);">
+  <div class="section-inner">
+    <div style="display:flex; flex-wrap:wrap; gap:32px; align-items:flex-start;">
+
+      <!-- 좌측 카피 -->
+      <div style="flex:1; min-width:280px;">
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:20px;">
+          <span class="screen-label">IX-01</span>
+          <span class="badge badge-testnet" style="font-size:11px;"><i data-lucide="zap" style="width:10px;height:10px;"></i>Testnet</span>
+          <span class="badge badge-mock" style="font-size:11px;"><i data-lucide="flask-conical" style="width:10px;height:10px;"></i>Mock</span>
+          <span class="badge badge-precheck" style="font-size:11px;"><i data-lucide="shield-check" style="width:10px;height:10px;"></i>Pre-Check Only</span>
+        </div>
+
+        <!-- Hero Title 28px 700 -->
+        <h1 style="font-size:28px; font-weight:700; letter-spacing:-0.01em; line-height:1.25; color:#191F28; margin-bottom:12px;">
+          정부 발급 서류<br>국경 넘는 풀-스택 대행
+        </h1>
+
+        <!-- Hero 숫자 40px 700 -->
+        <div style="font-size:40px; font-weight:700; letter-spacing:-0.02em; color:#3182F6; line-height:1.1; margin-bottom:12px;">
+          30분
+        </div>
+
+        <p style="font-size:15px; font-weight:500; color:#4E5968; max-width:520px; line-height:1.65; margin-bottom:10px;">
+          재한 외국인의 <b>본국 → 한국</b> 제출, 한국인의 <b>한국 → 해외</b> 제출 — 양방향 모두 지원해요.<br>
+          본국·해외 방문 없이 빠르면 30분에 시작, 유효기간 안에서 재사용해요.
+        </p>
+        <p style="font-size:13px; color:#8B95A1; margin-bottom:24px;">
+          신청 한 번 + 4 인계마다 본인 서명 한 번 = 발급·번역·공증·아포스티유 모두 끝나요.
+        </p>
+
+        <!-- 양방향 흐름 뱃지 -->
+        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:28px;">
+          <span class="badge" style="background:#E8F2FE; color:#3182F6; font-size:12px; border:1px solid #B8D8FF;">
+            <i data-lucide="arrow-right" style="width:10px;height:10px;"></i>외국인 본국 → 한국
+          </span>
+          <span class="badge" style="background:#E6FAF3; color:#00C48C; font-size:12px; border:1px solid #b3e8d7;">
+            <i data-lucide="arrow-right" style="width:10px;height:10px;"></i>한국인 한국 → 해외
+          </span>
+          <span class="badge" style="background:#F9FAFB; color:#8B95A1; font-size:12px; border:1px solid #E5E8EB;">
+            VN · PH · CN · US · JP 다국가 확장 예정
+          </span>
+        </div>
+
+        <!-- CTA -->
+        <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
+          <a href="./app.html" class="btn-primary" style="text-decoration:none; font-size:15px; height:48px; padding:0 20px;">
+            <i data-lucide="smartphone" style="width:16px;height:16px;"></i>
+            지금 첫 서류 발급해보기
+          </a>
+          <a href="#IX-07" style="font-size:13px; color:#3182F6; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
+            직접 시연해볼까요? <i data-lucide="arrow-down" style="width:13px;height:13px;"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- 우측 스탯 카드 -->
+      <div class="card" style="padding:24px; min-width:240px; flex-shrink:0;">
+        <div style="font-size:11px; font-weight:700; color:#8B95A1; margin-bottom:14px; font-family:'JetBrains Mono',monospace; letter-spacing:.06em;">MYAPO 핵심 수치</div>
+        <!-- TODO: RLUSD 정산·에스크로 UI 후속 삽입 -->
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:13px; color:#4E5968;">기존 처리 기간</span>
+            <span style="font-size:15px; font-weight:700; color:#F04452;">8주+</span>
+          </div>
+          <div style="height:1px; background:#E5E8EB;"></div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:13px; color:#4E5968;">MyApo 처리</span>
+            <span style="font-size:15px; font-weight:700; color:#00C48C;">30분~24시간</span>
+          </div>
+        </div>
+        <div style="margin-top:14px; padding:8px 10px; border-radius:8px; background:#E8F2FE; font-size:11px; color:#3182F6; text-align:center; font-family:'JetBrains Mono',monospace;">
+          Testnet · Pre-Check Only
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!--
+  Screen ID:     IX-02
+  Name:          Before — P3 페인포인트
+  Purpose:       기존 5단계 직접 처리 Pain point (8주+, 30만원+, 본국방문/번역사/아포스티유/우편)
+  Interactions:  없음 (정적)
+  Data bindings: 없음
+  States:        Active (단일 정적)
+-->
+<section id="IX-02" class="animate-enter animate-enter-delay-1" style="background:#FEECEE; border-top:1px solid #fbd5d8; border-bottom:1px solid #fbd5d8;">
+  <div class="section-inner" style="padding-top:56px; padding-bottom:56px;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+      <span class="screen-label">IX-02</span>
+      <span class="badge" style="background:#FEECEE; color:#F04452; font-size:12px;">
+        <i data-lucide="x-circle" style="width:11px;height:11px;"></i>Before
+      </span>
+    </div>
+    <h2 class="section-title" style="margin-bottom:6px;">이전에는 수개월이 걸렸어요</h2>
+    <p style="font-size:15px; color:#4E5968; margin-bottom:24px; max-width:640px; line-height:1.6;">
+      서류 한 장을 제출하려면 5개 단계를 직접 처리해야 했어요.
+      비용 ₩300,000 이상, 기간 8주 이상, 본국·영사관 방문 + 번역사 + 아포스티유 + 우편 4중 부담이에요.
+    </p>
+
+    <!-- 5단계 흐름 -->
+    <div style="display:flex; align-items:stretch; gap:0; overflow-x:auto; padding-bottom:8px;">
+
+      <div class="before-step">
+        <div style="font-size:10px; font-weight:700; color:#F04452; margin-bottom:4px; font-family:'JetBrains Mono',monospace;">STEP 1</div>
+        <div style="font-size:13px; font-weight:700; color:#191F28; margin-bottom:4px;">서류 요청</div>
+        <div style="font-size:12px; color:#4E5968; line-height:1.5;">본국 기관에 직접 연락 또는 방문 신청</div>
+        <div style="font-size:11px; color:#F04452; margin-top:8px; font-weight:600;">1~2주</div>
+      </div>
+      <div style="display:flex; align-items:center; padding:0 4px; flex-shrink:0;">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M12 6l4 4-4 4" stroke="#F04452" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+
+      <div class="before-step">
+        <div style="font-size:10px; font-weight:700; color:#F04452; margin-bottom:4px; font-family:'JetBrains Mono',monospace;">STEP 2</div>
+        <div style="font-size:13px; font-weight:700; color:#191F28; margin-bottom:4px;">발급</div>
+        <div style="font-size:12px; color:#4E5968; line-height:1.5;">원본 문서 수령 (우편·직접 수령)</div>
+        <div style="font-size:11px; color:#F04452; margin-top:8px; font-weight:600;">1~3주</div>
+      </div>
+      <div style="display:flex; align-items:center; padding:0 4px; flex-shrink:0;">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M12 6l4 4-4 4" stroke="#F04452" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+
+      <div class="before-step">
+        <div style="font-size:10px; font-weight:700; color:#F04452; margin-bottom:4px; font-family:'JetBrains Mono',monospace;">STEP 3</div>
+        <div style="font-size:13px; font-weight:700; color:#191F28; margin-bottom:4px;">번역·공증</div>
+        <div style="font-size:12px; color:#4E5968; line-height:1.5;">공인 번역사 의뢰 + 공증</div>
+        <div style="font-size:11px; color:#F04452; margin-top:8px; font-weight:600;">1~2주 + ₩80,000~</div>
+      </div>
+      <div style="display:flex; align-items:center; padding:0 4px; flex-shrink:0;">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M12 6l4 4-4 4" stroke="#F04452" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+
+      <div class="before-step">
+        <div style="font-size:10px; font-weight:700; color:#F04452; margin-bottom:4px; font-family:'JetBrains Mono',monospace;">STEP 4</div>
+        <div style="font-size:13px; font-weight:700; color:#191F28; margin-bottom:4px;">아포스티유</div>
+        <div style="font-size:12px; color:#4E5968; line-height:1.5;">본국 외교부 아포스티유 청 인증 (헤이그 협약)</div>
+        <div style="font-size:11px; color:#F04452; margin-top:8px; font-weight:600;">1~2주 + ₩50,000~</div>
+      </div>
+      <div style="display:flex; align-items:center; padding:0 4px; flex-shrink:0;">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M12 6l4 4-4 4" stroke="#F04452" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+
+      <div class="before-step">
+        <div style="font-size:10px; font-weight:700; color:#F04452; margin-bottom:4px; font-family:'JetBrains Mono',monospace;">STEP 5</div>
+        <div style="font-size:13px; font-weight:700; color:#191F28; margin-bottom:4px;">한국 기관 제출</div>
+        <div style="font-size:12px; color:#4E5968; line-height:1.5;">직접 방문·우편 제출</div>
+        <div style="font-size:11px; color:#F04452; margin-top:8px; font-weight:600;">수일 + 재방문 위험</div>
+      </div>
+    </div>
+
+    <!-- 합산 -->
+    <div style="display:flex; gap:12px; margin-top:16px; flex-wrap:wrap;">
+      <div class="card" style="padding:10px 16px; display:flex; align-items:center; gap:8px;">
+        <i data-lucide="clock" style="width:14px;height:14px;color:#F04452;"></i>
+        <span style="font-size:13px; color:#4E5968;">총 기간</span>
+        <span style="font-size:15px; font-weight:700; color:#F04452;">8주 이상</span>
+      </div>
+      <div class="card" style="padding:10px 16px; display:flex; align-items:center; gap:8px;">
+        <i data-lucide="credit-card" style="width:14px;height:14px;color:#F04452;"></i>
+        <span style="font-size:13px; color:#4E5968;">예상 비용</span>
+        <span style="font-size:15px; font-weight:700; color:#F04452;">₩300,000 이상</span>
+      </div>
+      <div class="card" style="padding:10px 16px; display:flex; align-items:center; gap:8px;">
+        <i data-lucide="alert-triangle" style="width:14px;height:14px;color:#F04452;"></i>
+        <span style="font-size:13px; color:#4E5968;">본국 방문</span>
+        <span style="font-size:15px; font-weight:700; color:#F04452;">필수</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!--
+  Screen ID:     IX-03
+  Name:          Solution (After) — MyApo 4 인계 사슬
+  Purpose:       4 단계 인계 + 사용자 서명 4 회 모델 시각화 (정부→MyApo→번역공증→아포스티유→사용자 지갑)
+  Interactions:  없음 (정적)
+  Data bindings: 없음
+  States:        Active (단일 정적)
+-->
+<section id="IX-03" class="animate-enter animate-enter-delay-2" style="background:#E6FAF3; border-top:1px solid #b3e8d7; border-bottom:1px solid #b3e8d7;">
+  <div class="section-inner" style="padding-top:56px; padding-bottom:56px;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+      <span class="screen-label">IX-03</span>
+      <span class="badge" style="background:#E6FAF3; color:#00C48C; font-size:12px;">
+        <i data-lucide="check-circle" style="width:11px;height:11px;"></i>After
+      </span>
+    </div>
+    <h2 class="section-title" style="margin-bottom:6px;">신청 한 번. 4 인계마다 본인 서명.</h2>
+    <p style="font-size:15px; color:#4E5968; margin-bottom:8px; max-width:680px; line-height:1.6;">
+      문서가 사용자 지갑에 도착할 때까지 거치는 4 번의 인계, 매 인계마다 본인 키로 서명해야 다음 단계로 넘어가요.
+      위조가 끼어들면 그 단계의 서명이 비어 있어 즉시 식별돼요.
+    </p>
+    <p style="font-size:13px; color:#8B95A1; margin-bottom:24px; max-width:680px; line-height:1.6;">
+      MyApo 는 중개자, 정부·번역공증사·아포스티유 기관·해외 수령 기관은 <b style="color:#3182F6;">4 협업 파트너</b>로 동등한 협력 관계예요.
+    </p>
+
+    <!-- TxChainStepCard — 4 인계 가로 그리드 -->
+    <div class="card" style="padding:24px; overflow-x:auto;">
+      <div style="font-size:10px; font-weight:700; color:#8B95A1; margin-bottom:14px; font-family:'JetBrains Mono',monospace; letter-spacing:.06em;">HANDOVER CHAIN · 4 STEPS</div>
+      <div style="display:flex; align-items:flex-start; gap:0; min-width:680px;">
+
+        <!-- 시작점: 정부 -->
+        <div class="tx-step">
+          <div class="tx-step-dot" style="background:#F9FAFB; color:#4E5968; border:2px solid #E5E8EB;">
+            <i data-lucide="landmark" style="width:13px;height:13px;"></i>
+          </div>
+          <div style="font-size:9px; font-weight:700; font-family:'JetBrains Mono',monospace; color:#8B95A1; text-align:center;">출처</div>
+          <div style="font-size:11px; font-weight:700; color:#191F28; text-align:center; line-height:1.3;">정부</div>
+          <div style="font-size:9px; color:#8B95A1; text-align:center;">발급기관</div>
+        </div>
+        <div class="tx-step-line" style="background:#00C48C;"></div>
+
+        <!-- 인계 1 -->
+        <div class="tx-step">
+          <div class="tx-step-dot" style="background:#E6FAF3; color:#00C48C; border:2px solid #00C48C;">
+            <i data-lucide="pen-line" style="width:13px;height:13px;"></i>
+          </div>
+          <div style="font-size:9px; font-weight:700; font-family:'JetBrains Mono',monospace; color:#00C48C; text-align:center;">인계 1 · 서명</div>
+          <div style="font-size:11px; font-weight:700; color:#191F28; text-align:center; line-height:1.3;">정부 → <br>MyApo</div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:#3182F6; text-align:center;">3C1D···8A9F</div>
+          <div style="font-size:9px; color:#8B95A1; text-align:center;">발급 Cred</div>
+        </div>
+        <div class="tx-step-line" style="background:#00C48C;"></div>
+
+        <!-- 중간: MyApo -->
+        <div class="tx-step">
+          <div class="tx-step-dot" style="background:#F9FAFB; color:#4E5968; border:2px solid #E5E8EB;">
+            <i data-lucide="building" style="width:13px;height:13px;"></i>
+          </div>
+          <div style="font-size:9px; font-weight:700; font-family:'JetBrains Mono',monospace; color:#8B95A1; text-align:center;">중개</div>
+          <div style="font-size:11px; font-weight:700; color:#191F28; text-align:center; line-height:1.3;">MyApo</div>
+          <div style="font-size:9px; color:#8B95A1; text-align:center;">대행사</div>
+        </div>
+        <div class="tx-step-line" style="background:#00C48C;"></div>
+
+        <!-- 인계 2 -->
+        <div class="tx-step">
+          <div class="tx-step-dot" style="background:#E6FAF3; color:#00C48C; border:2px solid #00C48C;">
+            <i data-lucide="pen-line" style="width:13px;height:13px;"></i>
+          </div>
+          <div style="font-size:9px; font-weight:700; font-family:'JetBrains Mono',monospace; color:#00C48C; text-align:center;">인계 2 · 서명</div>
+          <div style="font-size:11px; font-weight:700; color:#191F28; text-align:center; line-height:1.3;">MyApo → <br>번역·공증</div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:#3182F6; text-align:center;">B5E7···2C3D</div>
+          <div style="font-size:9px; color:#8B95A1; text-align:center;">처리위임 Cred</div>
+        </div>
+        <div class="tx-step-line" style="background:#00C48C;"></div>
+
+        <!-- 중간: 번역·공증사 -->
+        <div class="tx-step">
+          <div class="tx-step-dot" style="background:#F9FAFB; color:#4E5968; border:2px solid #E5E8EB;">
+            <i data-lucide="languages" style="width:13px;height:13px;"></i>
+          </div>
+          <div style="font-size:9px; font-weight:700; font-family:'JetBrains Mono',monospace; color:#8B95A1; text-align:center;">처리</div>
+          <div style="font-size:11px; font-weight:700; color:#191F28; text-align:center; line-height:1.3;">번역 ·<br>공증사</div>
+          <div style="font-size:9px; color:#8B95A1; text-align:center;">공인 처리</div>
+        </div>
+        <div class="tx-step-line" style="background:#00C48C;"></div>
+
+        <!-- 인계 3 -->
+        <div class="tx-step">
+          <div class="tx-step-dot" style="background:#E6FAF3; color:#00C48C; border:2px solid #00C48C;">
+            <i data-lucide="pen-line" style="width:13px;height:13px;"></i>
+          </div>
+          <div style="font-size:9px; font-weight:700; font-family:'JetBrains Mono',monospace; color:#00C48C; text-align:center;">인계 3 · 서명</div>
+          <div style="font-size:11px; font-weight:700; color:#191F28; text-align:center; line-height:1.3;">번역·공증 →<br>아포스티유</div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:#3182F6; text-align:center;">F4D2···6E1A</div>
+          <div style="font-size:9px; color:#8B95A1; text-align:center;">인증의뢰 Cred</div>
+        </div>
+        <div class="tx-step-line" style="background:#00C48C;"></div>
+
+        <!-- 중간: 아포스티유 -->
+        <div class="tx-step">
+          <div class="tx-step-dot" style="background:#F9FAFB; color:#4E5968; border:2px solid #E5E8EB;">
+            <i data-lucide="stamp" style="width:13px;height:13px;"></i>
+          </div>
+          <div style="font-size:9px; font-weight:700; font-family:'JetBrains Mono',monospace; color:#8B95A1; text-align:center;">인증</div>
+          <div style="font-size:11px; font-weight:700; color:#191F28; text-align:center; line-height:1.3;">아포스티유<br>기관</div>
+          <div style="font-size:9px; color:#8B95A1; text-align:center;">외교부</div>
+        </div>
+        <div class="tx-step-line" style="background:#00C48C;"></div>
+
+        <!-- 인계 4 (최종) -->
+        <div class="tx-step">
+          <div class="tx-step-dot" style="background:#E8F2FE; color:#3182F6; border:2px solid #3182F6;">
+            <i data-lucide="award" style="width:13px;height:13px;"></i>
+          </div>
+          <div style="font-size:9px; font-weight:700; font-family:'JetBrains Mono',monospace; color:#3182F6; text-align:center;">인계 4 · 서명</div>
+          <div style="font-size:11px; font-weight:700; color:#191F28; text-align:center; line-height:1.3;">아포스티유 →<br>사용자 지갑</div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:#3182F6; text-align:center;">7C4F···5E2B</div>
+          <div style="font-size:9px; color:#8B95A1; text-align:center;">최종 Cred · XLS-70</div>
+        </div>
+
+      </div>
+      <div style="margin-top:16px; display:flex; flex-wrap:wrap; gap:8px;">
+        <div style="padding:10px 14px; background:#E8F2FE; border-radius:8px; font-size:13px; color:#3182F6; display:flex; align-items:center; gap:8px;">
+          <i data-lucide="key" style="width:14px;height:14px;"></i>
+          각 Credential 의 <code style="font-family:'JetBrains Mono',monospace;">uri</code> 필드에 암호화 원본 링크 — 사용자 개인키로만 복호화돼요
+        </div>
+        <div style="padding:10px 14px; background:#FEECEE; border-radius:8px; font-size:13px; color:#9F2A37; display:flex; align-items:center; gap:8px;">
+          <i data-lucide="timer" style="width:14px;height:14px;"></i>
+          유효기간 만료 시 Credential 폐기 + 원본 삭제 + 키 파기 자동 발동 (PIPA §39 의 5)
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!--
+  Screen ID:     IX-04
+  Name:          프라이버시 모델 — uri 암호화 + 사용자 키 복호화 + 만료 자동 파기
+  Purpose:       Credential.uri 필드의 분산 스토리지 링크가 사용자 개인키로만 복호화되는 모델 + 유효기간 만료 시 자동 파기
+  Interactions:  없음 (정적)
+  Data bindings: 없음
+  States:        Active (단일 정적)
+-->
+<section id="IX-04" class="animate-enter animate-enter-delay-3" style="background:#F9FAFB; border-top:1px solid #E5E8EB;">
+  <div class="section-inner" style="padding-top:56px; padding-bottom:56px;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+      <span class="screen-label">IX-04</span>
+      <span class="badge" style="background:#E2F7FF; color:#0A7B9E; font-size:12px;">
+        <i data-lucide="shield" style="width:11px;height:11px;"></i>프라이버시 모델
+      </span>
+    </div>
+    <h2 class="section-title" style="margin-bottom:6px;">본인 키로만 열려요. 만료되면 자동으로 사라져요.</h2>
+    <p style="font-size:15px; color:#4E5968; margin-bottom:6px; max-width:680px; line-height:1.6;">
+      온체인에 올라가는 건 단순 해시가 아니에요. <b>Credential 의 <code style="font-family:'JetBrains Mono',monospace;">uri</code> 필드</b>에 분산 스토리지 링크가 박혀 있고, 그 링크의 원본은 <b>사용자 개인키로만 복호화</b>돼요. MyApo 는 물론 4 협업 파트너 (정부·번역공증사·아포스티유 기관·해외 수령 기관) 어느 쪽도 평문은 못 봐요.
+    </p>
+    <div style="font-size:11px; color:#8B95A1; margin-bottom:20px; font-family:'JetBrains Mono',monospace;">
+      PIPA §15·§17 동의 · 분산 스토리지 암호화 보관 · PIPA §39 의 5 만료 자동 파기 합법
+    </div>
+
+    <!-- Credential 라이프사이클 5 단계 -->
+    <div style="display:flex; align-items:stretch; gap:0; overflow-x:auto; padding-bottom:8px; margin-bottom:20px;">
+
+      <div class="cycle-step">
+        <div style="width:30px; height:30px; background:#E8F2FE; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-bottom:8px;">
+          <i data-lucide="eye-off" style="width:14px;height:14px;color:#3182F6;"></i>
+        </div>
+        <div style="font-size:10px; font-weight:700; color:#3182F6; font-family:'JetBrains Mono',monospace; margin-bottom:4px;">단계 1</div>
+        <div style="font-size:13px; font-weight:700; color:#191F28; margin-bottom:4px;">마스킹</div>
+        <div style="font-size:11px; color:#4E5968; line-height:1.5;">불필요한 개인식별 정보 마스킹</div>
+        <div style="margin-top:8px; padding:3px 6px; background:#FFF4DE; border-radius:4px; font-size:10px; color:#9A6500; font-family:'JetBrains Mono',monospace;">Mock</div>
+      </div>
+      <div style="display:flex; align-items:center; padding:0 4px; flex-shrink:0;">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M12 6l4 4-4 4" stroke="#3182F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+
+      <div class="cycle-step">
+        <div style="width:30px; height:30px; background:#E8F2FE; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-bottom:8px;">
+          <i data-lucide="lock" style="width:14px;height:14px;color:#3182F6;"></i>
+        </div>
+        <div style="font-size:10px; font-weight:700; color:#3182F6; font-family:'JetBrains Mono',monospace; margin-bottom:4px;">단계 2</div>
+        <div style="font-size:13px; font-weight:700; color:#191F28; margin-bottom:4px;">사용자 키 암호화</div>
+        <div style="font-size:11px; color:#4E5968; line-height:1.5;">AES-256-GCM<br>사용자 공개키 봉투 암호화</div>
+        <div style="margin-top:8px; padding:3px 6px; background:#E2F7FF; border-radius:4px; font-size:10px; color:#0A7B9E; font-family:'JetBrains Mono',monospace;">본인 키로만 복호화</div>
+      </div>
+      <div style="display:flex; align-items:center; padding:0 4px; flex-shrink:0;">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M12 6l4 4-4 4" stroke="#3182F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+
+      <div class="cycle-step">
+        <div style="width:30px; height:30px; background:#E8F2FE; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-bottom:8px;">
+          <i data-lucide="cloud-upload" style="width:14px;height:14px;color:#3182F6;"></i>
+        </div>
+        <div style="font-size:10px; font-weight:700; color:#3182F6; font-family:'JetBrains Mono',monospace; margin-bottom:4px;">단계 3</div>
+        <div style="font-size:13px; font-weight:700; color:#191F28; margin-bottom:4px;">분산 스토리지 업로드</div>
+        <div style="font-size:11px; color:#4E5968; line-height:1.5;">암호화 원본만 보관<br>링크(URI) 회수</div>
+        <div style="margin-top:6px; padding:3px 6px; background:#E8F2FE; border-radius:4px; font-family:'JetBrains Mono',monospace; font-size:9px; color:#3182F6; display:flex; align-items:center; gap:3px;">
+          ipfs://bafy···k2x4 <i data-lucide="external-link" style="width:8px;height:8px;"></i>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; padding:0 4px; flex-shrink:0;">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M12 6l4 4-4 4" stroke="#3182F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+
+      <div class="cycle-step" style="border-color:#3182F6; background:#E8F2FE;">
+        <div style="width:30px; height:30px; background:#FFFFFF; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-bottom:8px;">
+          <i data-lucide="file-badge" style="width:14px;height:14px;color:#3182F6;"></i>
+        </div>
+        <div style="font-size:10px; font-weight:700; color:#3182F6; font-family:'JetBrains Mono',monospace; margin-bottom:4px;">단계 4</div>
+        <div style="font-size:13px; font-weight:700; color:#191F28; margin-bottom:4px;">Credential 발행 (XLS-70)</div>
+        <div style="font-size:11px; color:#4E5968; line-height:1.5;"><code style="font-family:'JetBrains Mono',monospace;">uri</code> 필드에 암호화 링크 박아 온체인 발행</div>
+        <div style="margin-top:8px; padding:3px 6px; background:#FFFFFF; border-radius:4px; font-size:10px; color:#3182F6; font-family:'JetBrains Mono',monospace;">사용자 서명</div>
+      </div>
+      <div style="display:flex; align-items:center; padding:0 4px; flex-shrink:0;">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M12 6l4 4-4 4" stroke="#3182F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+
+      <div class="cycle-step" style="border-color:#F04452; background:#FEECEE;">
+        <div style="width:30px; height:30px; background:#FEECEE; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-bottom:8px; border:1px solid #fbd5d8;">
+          <i data-lucide="trash-2" style="width:14px;height:14px;color:#F04452;"></i>
+        </div>
+        <div style="font-size:10px; font-weight:700; color:#F04452; font-family:'JetBrains Mono',monospace; margin-bottom:4px;">단계 5</div>
+        <div style="font-size:13px; font-weight:700; color:#191F28; margin-bottom:4px;">만료 자동 파기</div>
+        <div style="font-size:11px; color:#4E5968; line-height:1.5;">Credential 폐기 +<br>원본 삭제 + 키 파기 동시 발동</div>
+        <div style="margin-top:8px; padding:3px 6px; background:#E6FAF3; border-radius:4px; font-size:10px; color:#00C48C; font-family:'JetBrains Mono',monospace;">PIPA §39 의 5 합법</div>
+      </div>
+    </div>
+
+    <!-- 4 인계 미니 표 (각 인계마다 위 5단계 라이프사이클 1회) -->
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px;">
+      <div style="padding:10px 12px; background:#FFFFFF; border:1px solid #E5E8EB; border-radius:8px; font-size:11px; text-align:center;">
+        <div style="font-weight:700; color:#191F28; margin-bottom:2px;">인계 1</div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:#3182F6;">정부 → MyApo</div>
+        <div style="margin-top:4px; font-size:10px; color:#8B95A1;">발급 Credential</div>
+      </div>
+      <div style="padding:10px 12px; background:#FFFFFF; border:1px solid #E5E8EB; border-radius:8px; font-size:11px; text-align:center;">
+        <div style="font-weight:700; color:#191F28; margin-bottom:2px;">인계 2</div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:#3182F6;">MyApo → 번역·공증</div>
+        <div style="margin-top:4px; font-size:10px; color:#8B95A1;">처리위임 Credential</div>
+      </div>
+      <div style="padding:10px 12px; background:#FFFFFF; border:1px solid #E5E8EB; border-radius:8px; font-size:11px; text-align:center;">
+        <div style="font-weight:700; color:#191F28; margin-bottom:2px;">인계 3</div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:#3182F6;">번역·공증 → 아포스티유</div>
+        <div style="margin-top:4px; font-size:10px; color:#8B95A1;">인증의뢰 Credential</div>
+      </div>
+      <div style="padding:10px 12px; background:#E8F2FE; border:1px solid #B8D8FF; border-radius:8px; font-size:11px; text-align:center;">
+        <div style="font-weight:700; color:#3182F6; margin-bottom:2px;">인계 4</div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:#3182F6;">아포스티유 → 지갑</div>
+        <div style="margin-top:4px; font-size:10px; color:#3182F6;">최종 Credential</div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <div style="padding:8px 14px; background:#E8F2FE; border-radius:8px; font-size:13px; color:#3182F6; display:flex; align-items:center; gap:6px;">
+        <i data-lucide="key" style="width:13px;height:13px;"></i>
+        5 단계 라이프사이클이 4 인계마다 반복돼요 — 매번 사용자 본인 서명
+      </div>
+      <div style="padding:8px 14px; background:#FEECEE; border-radius:8px; font-size:13px; color:#F04452; display:flex; align-items:center; gap:6px;">
+        <i data-lucide="timer" style="width:13px;height:13px;"></i>
+        평생 재사용이 아니라 유효기간 내 재사용 — 만료되면 자동 파기
+      </div>
+    </div>
+  </div>
+</section>
+
+<!--
+  Screen ID:     IX-05
+  Name:          사용자 시나리오 (4 인계 통과 후 지갑 도착)
+  Purpose:       A-01~A-04 미니 mock — 신청 → 4 인계 + 사용자 서명 4회 → 최종 Credential 도착
+  Interactions:  없음 (정적)
+  Data bindings: GET /api/issue/progress
+  States:        Loading · Empty · Active · Error 4 variant 표시
+-->
+<section id="IX-05" class="animate-enter animate-enter-delay-4" style="background:#FFFFFF; border-top:1px solid #E5E8EB;">
+  <div class="section-inner" style="padding-top:56px; padding-bottom:56px;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+      <span class="screen-label">IX-05</span>
+      <span class="badge" style="background:#E8F2FE; color:#3182F6; font-size:12px;">
+        <i data-lucide="wallet" style="width:11px;height:11px;"></i>사용자 시나리오
+      </span>
+    </div>
+    <h2 class="section-title" style="margin-bottom:6px;">지갑에 Credential 이 도착했어요</h2>
+    <p style="font-size:15px; color:#4E5968; margin-bottom:24px; max-width:680px; line-height:1.6;">
+      앱에서 신청 → 4 인계마다 본인 서명 → 최종 Credential 이 사용자 지갑에 도착해요.
+      유효기간 안에서만 재사용 가능, 만료 시 자동 파기돼요.
+    </p>
+
+    <!-- 4 variant 미니 시각 -->
+    <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:16px; max-width:900px;">
+
+      <!-- Active 지갑 발급 완료 -->
+      <div>
+        <span class="variant-label variant-active">Active — 4 인계 통과, 지갑 도착</span>
+        <div class="mini-variant mv-active">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+            <div style="font-size:13px; font-weight:700; color:#191F28;">납세증명서 (영문)</div>
+            <span class="badge badge-testnet" style="font-size:10px;">XLS-70 · Active</span>
+          </div>
+          <div style="font-size:11px; color:#4E5968; margin-bottom:4px;">유효기간 2026-11-02 (+183일 · 만료 시 자동 파기)</div>
+          <div style="font-size:11px; color:#8B95A1; margin-bottom:6px; font-family:'JetBrains Mono',monospace;">apob···v1 · 사용자 서명 4 / 4</div>
+          <div class="hash-badge" style="font-size:10px; margin-bottom:10px;">7C4F···5E2B <i data-lucide="external-link" style="width:9px;height:9px;"></i></div>
+          <div style="padding:10px 12px; background:#E8F2FE; border:1px solid #B8D8FF; border-radius:8px;">
+            <div style="font-size:10px; color:#3182F6; font-family:'JetBrains Mono',monospace; margin-bottom:4px;">uri (암호화 원본 링크)</div>
+            <div style="font-size:11px; color:#191F28; font-family:'JetBrains Mono',monospace;">ipfs://bafy···k2x4</div>
+            <div style="font-size:10px; color:#4E5968; margin-top:4px;">본인 키로만 복호화돼요</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading 인계 진행 중 -->
+      <div>
+        <span class="variant-label variant-loading">Loading — 인계 3 사용자 서명 대기</span>
+        <div class="mini-variant mv-loading">
+          <div style="font-size:13px; font-weight:700; color:#191F28; margin-bottom:8px;">
+            번역·공증사가 아포스티유 기관에 인계해요. 본인 서명이 필요해요.
+          </div>
+          <div style="font-size:11px; color:#0A7B9E; margin-bottom:12px; font-family:'JetBrains Mono',monospace;">
+            request_id: 7c4a1f23-···-9e2d
+          </div>
+          <!-- StepProgress 4 인계 -->
+          <div style="display:flex; align-items:center; gap:4px; margin-bottom:10px;">
+            <div style="width:20px;height:20px;border-radius:50%;background:#00C48C;display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="인계 1: 정부 → MyApo">
+              <i data-lucide="check" style="width:10px;height:10px;color:#fff;"></i>
+            </div>
+            <div style="flex:1;height:2px;background:#00C48C;"></div>
+            <div style="width:20px;height:20px;border-radius:50%;background:#00C48C;display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="인계 2: MyApo → 번역·공증">
+              <i data-lucide="check" style="width:10px;height:10px;color:#fff;"></i>
+            </div>
+            <div style="flex:1;height:2px;background:#3182F6;"></div>
+            <div style="width:20px;height:20px;border-radius:50%;background:#3182F6;display:flex;align-items:center;justify-content:center;flex-shrink:0;" class="pulse-scale" title="인계 3: 번역·공증 → 아포스티유">
+              <i data-lucide="pen-line" style="width:10px;height:10px;color:#fff;"></i>
+            </div>
+            <div style="flex:1;height:2px;background:#E5E8EB;"></div>
+            <div style="width:20px;height:20px;border-radius:50%;background:#E5E8EB;display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="인계 4: 아포스티유 → 사용자 지갑">
+              <span style="font-size:9px;color:#8B95A1;">4</span>
+            </div>
+          </div>
+          <div class="skeleton" style="height:12px; width:80%; margin-bottom:6px;"></div>
+          <div class="skeleton" style="height:12px; width:60%; margin-bottom:6px;"></div>
+          <div class="skeleton" style="height:12px; width:70%; margin-bottom:10px;"></div>
+          <div style="font-size:11px; color:#0A7B9E;">인계 3 서명 대기 · F4D2···6E1A</div>
+        </div>
+      </div>
+
+      <!-- Empty 미발급 -->
+      <div>
+        <span class="variant-label variant-empty">Empty — Credential 미발급</span>
+        <div class="mini-variant mv-empty">
+          <div style="text-align:center; padding:24px 12px;">
+            <div style="width:40px;height:40px;border-radius:50%;background:#E8F2FE;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+              <i data-lucide="inbox" style="width:20px;height:20px;color:#3182F6;"></i>
+            </div>
+            <div style="font-size:14px; font-weight:700; color:#191F28; margin-bottom:6px;">아직 발급된 서류가 없어요</div>
+            <div style="font-size:12px; color:#8B95A1; margin-bottom:16px;">지금 첫 서류를 발급해볼까요?</div>
+            <div style="padding:10px 20px; background:#3182F6; border-radius:12px; display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
+              <i data-lucide="plus" style="width:13px;height:13px;color:#fff;"></i>
+              <span style="font-size:13px; font-weight:700; color:#fff;">발급 신청할게요</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error 결제 실패 -->
+      <div>
+        <span class="variant-label variant-error">Error — 결제 실패</span>
+        <div class="mini-variant mv-error">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+            <i data-lucide="alert-circle" style="width:18px;height:18px;color:#F04452;flex-shrink:0;"></i>
+            <div style="font-size:13px; font-weight:700; color:#9F2A37;">다시 시도할 수 있어요</div>
+          </div>
+          <div style="font-size:12px; color:#9F2A37; margin-bottom:10px;">신청 결제가 거절됐어요. 지갑 잔액을 확인해볼까요?</div>
+          <div style="font-size:10px; color:#8B95A1; margin-bottom:12px; font-family:'JetBrains Mono',monospace;">
+            request_id: 7c4a1f23-···-9e2d<br>
+            error_code: INSUFFICIENT_FUNDS
+          </div>
+          <div style="display:flex; gap:8px;">
+            <div style="flex:1; padding:8px; background:#F04452; border-radius:8px; text-align:center; cursor:pointer;">
+              <span style="font-size:12px; font-weight:700; color:#fff;">다시 시도할게요</span>
+            </div>
+            <div style="flex:1; padding:8px; background:#FFFFFF; border:1px solid #E5E8EB; border-radius:8px; text-align:center; cursor:pointer;">
+              <span style="font-size:12px; color:#4E5968;">다음에 할게요</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!--
+  Screen ID:     IX-06
+  Name:          분쟁 시나리오 (4 인계 + 사용자 서명 사슬 추적)
+  Purpose:       4 인계 그리드 + 인계 2 (번역·공증) 단계의 오역 책임 매핑 + SLA 7일/30일/60일
+  Interactions:  없음 (정적)
+  Data bindings: GET /api/dispute/:id
+  States:        Loading · Empty · Active · Error 4 variant 표시
+-->
+<section id="IX-06" class="animate-enter animate-enter-delay-5" style="background:#F9FAFB; border-top:1px solid #E5E8EB;">
+  <div class="section-inner" style="padding-top:56px; padding-bottom:56px;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+      <span class="screen-label">IX-06</span>
+      <span class="badge" style="background:#FDE7E9; color:#F04452; font-size:12px;">
+        <i data-lucide="alert-octagon" style="width:11px;height:11px;"></i>분쟁 시나리오
+      </span>
+    </div>
+    <h2 class="section-title" style="margin-bottom:6px;">분쟁이 생겨도 4 인계 사슬로 책임 추적 가능해요</h2>
+    <p style="font-size:15px; color:#4E5968; margin-bottom:8px; max-width:680px; line-height:1.6;">
+      오역이 의심된다면 신고할 수 있어요. 인계 1~4 각 단계의 사용자 서명 + 처리 주체가 매핑돼요.
+      서명이 빠졌거나 어긋난 단계가 즉시 식별돼요.
+    </p>
+    <p style="font-size:13px; color:#8B95A1; margin-bottom:24px; max-width:680px; line-height:1.6;">
+      이슈 출처는 <b>4 협업 파트너 + 사용자 본인</b> 5 카테고리로 분류돼요. MyApo 콘솔이 *관제* 가 아닌 *협업 추적* 도구로 작동해요.
+    </p>
+
+    <!-- 4 variant 미니 시각 -->
+    <!-- 신규 #21 DisputeChainViz (rules/11 §9 미등록, spec v3 §4.2 임시) -->
+    <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:16px; max-width:900px; margin-bottom:24px;">
+
+      <!-- Active 정상종결 -->
+      <div>
+        <span class="variant-label variant-active">Active — 정상종결</span>
+        <div class="mini-variant mv-active">
+          <div style="font-size:13px; font-weight:700; color:#191F28; margin-bottom:8px;">분쟁 추적 — 인계 2 (번역·공증) 오역</div>
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:10px;">
+            <div style="text-align:center;">
+              <div style="width:22px;height:22px;border-radius:50%;background:#E6FAF3;color:#00C48C;border:1.5px solid #00C48C;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;margin:0 auto;">1</div>
+              <div style="font-size:8px;color:#191F28;margin-top:3px;font-weight:700;">정부 → MyApo</div>
+              <div style="font-size:7px;color:#8B95A1;">서명 OK</div>
+            </div>
+            <div style="text-align:center; background:#FDE7E9; border-radius:6px; padding:3px;">
+              <div style="width:22px;height:22px;border-radius:50%;background:#F04452;color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;margin:0 auto;">2!</div>
+              <div style="font-size:8px;color:#F04452;margin-top:3px;font-weight:700;">MyApo → 번역·공증</div>
+              <div style="font-size:7px;color:#F04452;font-weight:700;">오역 신고</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="width:22px;height:22px;border-radius:50%;background:#FFF4DE;color:#9A6500;border:1.5px solid #FFB020;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;margin:0 auto;">3</div>
+              <div style="font-size:8px;color:#191F28;margin-top:3px;font-weight:700;">번역·공증 → 아포</div>
+              <div style="font-size:7px;color:#9A6500;">조사 보류</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="width:22px;height:22px;border-radius:50%;background:#E5E8EB;color:#8B95A1;border:1.5px solid #C2C9D2;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;margin:0 auto;">4</div>
+              <div style="font-size:8px;color:#8B95A1;margin-top:3px;">아포 → 지갑</div>
+              <div style="font-size:7px;color:#8B95A1;">대기</div>
+            </div>
+          </div>
+          <div style="font-size:11px; color:#4E5968; margin-bottom:8px;">
+            분쟁 해결됐어요. 공인 번역사 책임 확인 → 재처리 완료
+          </div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <span class="hash-badge" style="font-size:10px;">B5E7···2C3D <i data-lucide="external-link" style="width:9px;height:9px;"></i></span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; padding:2px 6px; background:#E6FAF3; color:#00C48C; border-radius:4px;">번역사 책임 확정</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading 조사 중 -->
+      <div>
+        <span class="variant-label variant-loading">Loading — 조사 중</span>
+        <div class="mini-variant mv-loading">
+          <div style="font-size:13px; font-weight:700; color:#191F28; margin-bottom:8px;">분쟁 조사 중이에요. 잠깐만요.</div>
+          <div style="font-size:11px; color:#0A7B9E; margin-bottom:10px; font-family:'JetBrains Mono',monospace;">request_id: 8a7b3c1d-···-2c4d</div>
+          <div class="skeleton" style="height:30px; width:100%; margin-bottom:8px; border-radius:6px;"></div>
+          <div class="skeleton" style="height:12px; width:75%; margin-bottom:6px;"></div>
+          <div class="skeleton" style="height:12px; width:55%; margin-bottom:10px;"></div>
+          <div style="font-size:11px; color:#0A7B9E;">MEDIATOR 검토 중 · SLA 30일 이내 의견 제출 대기</div>
+        </div>
+      </div>
+
+      <!-- Empty 신고 없음 -->
+      <div>
+        <span class="variant-label variant-empty">Empty — 신고 없음</span>
+        <div class="mini-variant mv-empty">
+          <div style="text-align:center; padding:20px 12px;">
+            <div style="width:36px;height:36px;border-radius:50%;background:#E6FAF3;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">
+              <i data-lucide="check-circle" style="width:18px;height:18px;color:#00C48C;"></i>
+            </div>
+            <div style="font-size:13px; font-weight:700; color:#191F28; margin-bottom:4px;">진행 중인 분쟁이 없어요</div>
+            <div style="font-size:11px; color:#8B95A1;">4 인계 사슬 검증 정상 · 이상 없어요</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error 보험풀 부족 -->
+      <div>
+        <span class="variant-label variant-error">Error — 보험 풀 부족</span>
+        <div class="mini-variant mv-error">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+            <i data-lucide="alert-circle" style="width:16px;height:16px;color:#F04452;flex-shrink:0;"></i>
+            <div style="font-size:13px; font-weight:700; color:#9F2A37;">보험 풀이 부족해요</div>
+          </div>
+          <div style="font-size:11px; color:#9F2A37; margin-bottom:8px;">분쟁 보험 풀 잔액이 부족해요. MEDIATOR 직접 중재로 전환돼요.</div>
+          <div style="font-size:10px; color:#8B95A1; font-family:'JetBrains Mono',monospace; margin-bottom:10px;">
+            pool_balance: INSUFFICIENT / required: MINIMUM_RESERVE
+          </div>
+          <div style="padding:8px 12px; background:#F04452; border-radius:8px; text-align:center; cursor:pointer;">
+            <span style="font-size:12px; font-weight:700; color:#fff;">MEDIATOR 에게 직접 연락할게요</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SLA + 보험 풀 + 중재자 카드 -->
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      <div class="card" style="padding:16px 18px; flex:1; min-width:180px;">
+        <div style="font-size:10px; font-weight:700; color:#8B95A1; margin-bottom:8px; font-family:'JetBrains Mono',monospace;">SLA 타임라인</div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <div style="display:flex; justify-content:space-between; font-size:13px;">
+            <span style="color:#4E5968;">신고 기한</span>
+            <span style="font-weight:700; color:#3182F6;">7일 이내</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:13px;">
+            <span style="color:#4E5968;">의견 제출</span>
+            <span style="font-weight:700; color:#191F28;">30일 이내</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:13px;">
+            <span style="color:#4E5968;">최종 해결</span>
+            <span style="font-weight:700; color:#191F28;">60일 이내</span>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="padding:16px 18px; flex:1; min-width:180px;">
+        <div style="font-size:10px; font-weight:700; color:#8B95A1; margin-bottom:8px; font-family:'JetBrains Mono',monospace;">분쟁 보험 풀</div>
+        <!-- TODO: RLUSD 정산·에스크로 UI 후속 삽입 -->
+        <div style="font-size:13px; color:#4E5968; margin-bottom:6px;">/건 적립 · 보상 재원</div>
+        <div style="margin-top:8px; padding:4px 8px; background:#FDE7E9; border-radius:4px; font-size:10px; color:#F04452;">Pre-Check Only · Crypto Insurance Pool</div>
+      </div>
+      <div class="card" style="padding:16px 18px; flex:1; min-width:180px;">
+        <div style="font-size:10px; font-weight:700; color:#8B95A1; margin-bottom:8px; font-family:'JetBrains Mono',monospace;">중재자</div>
+        <div style="padding:8px 10px; background:#F9FAFB; border:1px solid #E5E8EB; border-radius:6px; font-family:'JetBrains Mono',monospace; font-size:13px; color:#191F28; margin-bottom:6px;">MEDIATOR</div>
+        <div style="font-size:11px; color:#4E5968;">독립 법무법인 (파트너 미정)</div>
+        <div style="margin-top:8px; padding:4px 8px; background:#FDE7E9; border-radius:4px; font-size:10px; color:#F04452;">Pre-Check Only</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!--
+  Screen ID:     IX-07
+  Name:          6 HTML 네비게이션
+  Purpose:       app / institution-kr / institution-translator / institution-apostille / institution-overseas / console 6 카드 링크 (앱 7화면 / 한국 발급 큐 / 번역·공증 큐 / 아포스티유 발급 / 해외 수령 큐 / 콘솔 v4 사이드바 6메뉴)
+  Interactions:  카드 클릭 → 각 HTML 열기
+  Data bindings: 없음
+  States:        Active (단일 정적)
+-->
+<section id="IX-07" class="animate-enter animate-enter-delay-6" style="background:#191F28; border-top:1px solid #2d3748;">
+  <div class="section-inner" style="padding-top:64px; padding-bottom:64px;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+      <span style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; color:#4E5968; padding:2px 6px; border:1px solid #2d3748; border-radius:4px;">IX-07</span>
+      <span style="font-size:13px; color:#8B95A1;">전체 화면 네비게이션</span>
+    </div>
+    <h2 style="font-size:20px; font-weight:700; color:#FFFFFF; margin-bottom:6px;">화면을 직접 확인해볼까요?</h2>
+    <p style="font-size:15px; color:#8B95A1; margin-bottom:8px;">사용자 앱 · 4 협업 파트너 (국내 발급 / 번역·공증 / 아포스티유 / 해외 수령) · MyApo 운영 콘솔 — 총 6 화면을 열어볼 수 있어요.</p>
+    <p style="font-size:13px; color:#8B95A1; margin-bottom:32px;">각 협업 파트너는 자기 책임 범위만 보여요. 직원도 결국 사용자라서, 자기 일을 단순하게 처리할 수 있게 만들었어요.</p>
+
+    <!-- 네비게이션 카드 6종 (3열 × 2줄) -->
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:32px;">
+
+      <!-- app.html -->
+      <a href="./app.html" class="nav-card">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+          <div style="width:40px; height:40px; background:#E8F2FE; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <i data-lucide="smartphone" style="width:20px;height:20px;color:#3182F6;"></i>
+          </div>
+          <div>
+            <div style="font-size:10px; font-family:'JetBrains Mono',monospace; color:#8B95A1; margin-bottom:2px;">./app.html</div>
+            <div style="font-size:15px; font-weight:700; color:#FFFFFF;">MyApo 앱</div>
+          </div>
+        </div>
+        <p style="font-size:12px; color:#8B95A1; line-height:1.5; margin-bottom:10px;">사용자 모바일 앱 (외국인·한국인 양방향). 발급·진행·보관·제출·분쟁·재발급 7 화면</p>
+        <ul class="inventory-list">
+          <li>A-01 · 발급 신청 (서류 선택)</li>
+          <li>A-02 · 진행 추적 (4 인계 사슬)</li>
+          <li>A-03 · Credential 보관 (XLS-70)</li>
+          <li>A-04 · 제출 (요청 기관 검증)</li>
+          <li>A-05 · 복호화·전달 (본인 키)</li>
+          <li>A-06 · 분쟁 신고</li>
+          <li>A-07 · 만료·재발급</li>
+        </ul>
+        <div style="display:flex; align-items:center; gap:6px; margin-top:12px;">
+          <span style="font-size:12px; color:#3182F6;">열어보기</span>
+          <i data-lucide="arrow-right" style="width:13px;height:13px;color:#3182F6;"></i>
+        </div>
+      </a>
+
+      <!-- institution-kr.html — 국내 발급 기관 (협업 파트너 1) -->
+      <a href="./institution-kr.html" class="nav-card">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+          <div style="width:40px; height:40px; background:#E6FAF3; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <i data-lucide="file-plus" style="width:20px;height:20px;color:#00C48C;"></i>
+          </div>
+          <div>
+            <div style="font-size:10px; font-family:'JetBrains Mono',monospace; color:#8B95A1; margin-bottom:2px;">./institution-kr.html · 협업 파트너 1</div>
+            <div style="font-size:15px; font-weight:700; color:#FFFFFF;">국내 발급 기관</div>
+          </div>
+        </div>
+        <p style="font-size:12px; color:#8B95A1; line-height:1.5; margin-bottom:10px;">법무부 출입국·외국인정책본부 더미. 자기 책임 범위 (신청자 신원·체류자격 확인 → 발급 처분) 만 본다.</p>
+        <ul class="inventory-list">
+          <li>발급 신청 처리 (default)</li>
+          <li>KPI 4: 접수 / 검토 중 / 금일 발급 / 반려</li>
+          <li>큐 3 상태: 검토 중 · 발급 완료 · 반려</li>
+          <li>액션: 발급 / 반려 (보류 X)</li>
+          <li>발급 이력 · 외부 연동 (준비 중)</li>
+        </ul>
+        <div style="display:flex; align-items:center; gap:6px; margin-top:12px;">
+          <span style="font-size:12px; color:#00C48C;">열어보기</span>
+          <i data-lucide="arrow-right" style="width:13px;height:13px;color:#00C48C;"></i>
+        </div>
+      </a>
+
+      <!-- institution-translator.html — 번역·공증사 (협업 파트너 2) -->
+      <a href="./institution-translator.html" class="nav-card">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+          <div style="width:40px; height:40px; background:#FAF1FE; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <i data-lucide="languages" style="width:20px;height:20px;color:#9333EA;"></i>
+          </div>
+          <div>
+            <div style="font-size:10px; font-family:'JetBrains Mono',monospace; color:#8B95A1; margin-bottom:2px;">./institution-translator.html · 협업 파트너 2</div>
+            <div style="font-size:15px; font-weight:700; color:#FFFFFF;">번역·공증사</div>
+          </div>
+        </div>
+        <p style="font-size:12px; color:#8B95A1; line-height:1.5; margin-bottom:10px;">리갈브리지 번역공증사무소 더미. 사무소 내부 프로세스(번역가·검수·공증인)는 비공개, MyApo 는 산출물 1세트만 받는다.</p>
+        <ul class="inventory-list">
+          <li>처리 큐 (default)</li>
+          <li>KPI 4: 접수 / 처리 중 / 완료 / 평균 처리 시간</li>
+          <li>큐 2 상태: 처리중 · 완료</li>
+          <li>액션: "번역/공증 완료" 1버튼만</li>
+          <li>처리 이력 · 외부 연동 (준비 중)</li>
+        </ul>
+        <div style="display:flex; align-items:center; gap:6px; margin-top:12px;">
+          <span style="font-size:12px; color:#9333EA;">열어보기</span>
+          <i data-lucide="arrow-right" style="width:13px;height:13px;color:#9333EA;"></i>
+        </div>
+      </a>
+
+      <!-- institution-apostille.html — 아포스티유 (협업 파트너 3) -->
+      <a href="./institution-apostille.html" class="nav-card">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+          <div style="width:40px; height:40px; background:#FFF4DE; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <i data-lucide="stamp" style="width:20px;height:20px;color:#B27500;"></i>
+          </div>
+          <div>
+            <div style="font-size:10px; font-family:'JetBrains Mono',monospace; color:#8B95A1; margin-bottom:2px;">./institution-apostille.html · 협업 파트너 3</div>
+            <div style="font-size:15px; font-weight:700; color:#FFFFFF;">아포스티유</div>
+          </div>
+        </div>
+        <p style="font-size:12px; color:#8B95A1; line-height:1.5; margin-bottom:10px;">외교부 영사실 영사서비스과 더미. 번역공증 완료본을 받아 헤이그 협약 1961 인장만 찍고 사용자 지갑으로 인계.</p>
+        <ul class="inventory-list">
+          <li>처리 큐 (default)</li>
+          <li>KPI 4: 접수 / 처리 중 / 완료 / 평균 처리 시간</li>
+          <li>큐 2 상태: 처리중 · 완료</li>
+          <li>액션: "발급" 1버튼 + MOFA seal 시각</li>
+          <li>처리 이력 · 외부 연동 (준비 중)</li>
+        </ul>
+        <div style="display:flex; align-items:center; gap:6px; margin-top:12px;">
+          <span style="font-size:12px; color:#FFB020;">열어보기</span>
+          <i data-lucide="arrow-right" style="width:13px;height:13px;color:#FFB020;"></i>
+        </div>
+      </a>
+
+      <!-- institution-overseas.html — 해외 수령 기관 (협업 파트너 4) -->
+      <a href="./institution-overseas.html" class="nav-card">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+          <div style="width:40px; height:40px; background:#E8F2FE; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <i data-lucide="package-check" style="width:20px;height:20px;color:#3182F6;"></i>
+          </div>
+          <div>
+            <div style="font-size:10px; font-family:'JetBrains Mono',monospace; color:#8B95A1; margin-bottom:2px;">./institution-overseas.html · 협업 파트너 4</div>
+            <div style="font-size:15px; font-weight:700; color:#FFFFFF;">해외 수령 기관</div>
+          </div>
+        </div>
+        <p style="font-size:12px; color:#8B95A1; line-height:1.5; margin-bottom:10px;">U.S. Office of Authentications (LA) 더미. 자기 검증 범위 (아포스티유·서명·만료·양식) 만 확인하고 처분.</p>
+        <ul class="inventory-list">
+          <li>Pending Review (default)</li>
+          <li>Apostille 진본 확인 (Hague 1961)</li>
+          <li>발행 기관 서명·날인 확인</li>
+          <li>유효기간·번역·양식 부합</li>
+          <li>Accept / Reject 2 처분 (Hold X)</li>
+        </ul>
+        <div style="display:flex; align-items:center; gap:6px; margin-top:12px;">
+          <span style="font-size:12px; color:#3182F6;">열어보기</span>
+          <i data-lucide="arrow-right" style="width:13px;height:13px;color:#3182F6;"></i>
+        </div>
+      </a>
+
+      <!-- console.html — MyApo 운영 콘솔 (직원도 사용자) -->
+      <a href="./console.html" class="nav-card">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+          <div style="width:40px; height:40px; background:#FFF4DE; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <i data-lucide="monitor" style="width:20px;height:20px;color:#9A6500;"></i>
+          </div>
+          <div>
+            <div style="font-size:10px; font-family:'JetBrains Mono',monospace; color:#8B95A1; margin-bottom:2px;">./console.html · MyApo 운영자</div>
+            <div style="font-size:15px; font-weight:700; color:#FFFFFF;">운영 콘솔</div>
+          </div>
+        </div>
+        <p style="font-size:12px; color:#8B95A1; line-height:1.5; margin-bottom:10px;">MyApo 직원 작업 화면. 관제가 아닌 협업 결과 모니터링 — 자기 책임 영역만 본다. 사이드바 footer 에서 4 협업 파트너 화면 새 창 진입.</p>
+        <ul class="inventory-list">
+          <li>대시보드 · KPI 8 · 단계별 병목 (MyApo + 협업)</li>
+          <li>문서 관리 6탭 · 인증 로그 · 파일 로그</li>
+          <li>분쟁 추적 · 출처 enum 10종 (4 협업 + 사용자)</li>
+          <li>회원 관리 · 정산 로그 (예정)</li>
+          <li>사이드바 footer · 협업 파트너 4 화면 점프</li>
+        </ul>
+        <div style="display:flex; align-items:center; gap:6px; margin-top:12px;">
+          <span style="font-size:12px; color:#FFB020;">열어보기</span>
+          <i data-lucide="arrow-right" style="width:13px;height:13px;color:#FFB020;"></i>
+        </div>
+      </a>
+
+    </div>
+
+    <!-- LanguageToggle -->
+    <div style="display:flex; align-items:center; gap:6px; margin-bottom:20px;">
+      <span style="font-size:12px; color:#8B95A1;">언어</span>
+      <button id="lang-ko" style="padding:4px 12px; background:#3182F6; color:#fff; border-radius:999px; font-size:12px; border:none; cursor:pointer;">한국어</button>
+      <button id="lang-en" style="padding:4px 12px; background:transparent; color:#8B95A1; border-radius:999px; font-size:12px; border:1px solid #2d3748; cursor:pointer;">English</button>
+      <button id="lang-vn" style="padding:4px 12px; background:transparent; color:#8B95A1; border-radius:999px; font-size:12px; border:1px solid #2d3748; cursor:pointer;">Tiếng Việt</button>
+      <button id="lang-ph" style="padding:4px 12px; background:transparent; color:#8B95A1; border-radius:999px; font-size:12px; border:1px solid #2d3748; cursor:pointer;">Filipino</button>
+    </div>
+  </div>
+</section>
+
+<!--
+  Screen ID:     IX-08
+  Name:          법제·면책 (DisclaimerBanner 풀 + 출처 각주)
+  Purpose:       Testnet · Mock · Pre-Check Only · 가상 인물 · XRPL Credential Mock + 법제 각주
+  Interactions:  없음 (정적)
+  Data bindings: 없음
+  States:        Active (단일 정적)
+-->
+<section id="IX-08" class="animate-enter animate-enter-delay-7" style="background:#0d1117; border-top:1px solid #2d3748;">
+  <div class="section-inner" style="padding-top:56px; padding-bottom:56px;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+      <span style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; color:#4E5968; padding:2px 6px; border:1px solid #2d3748; border-radius:4px;">IX-08</span>
+      <span style="font-size:13px; color:#8B95A1;">법제·면책 고지</span>
+    </div>
+
+    <!-- 3 뱃지 + 추가 뱃지 -->
+    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;">
+      <span class="badge badge-testnet" style="font-size:11px;">
+        <i data-lucide="zap" style="width:10px;height:10px;"></i>Testnet
+      </span>
+      <span class="badge badge-mock" style="font-size:11px;">
+        <i data-lucide="flask-conical" style="width:10px;height:10px;"></i>Mock
+      </span>
+      <span class="badge badge-precheck" style="font-size:11px;">
+        <i data-lucide="shield-check" style="width:10px;height:10px;"></i>Pre-Check Only
+      </span>
+      <span style="display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:500; background:#FDE7E9; color:#F04452; font-family:'JetBrains Mono',monospace;">XRPL Credential Mock</span>
+      <span style="display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:500; background:#1a2236; color:#8B95A1; border:1px solid #2d3748; font-family:'JetBrains Mono',monospace;">배포 미정 · KFIP 데모용</span>
+    </div>
+
+    <!-- DisclaimerBanner 풀 텍스트 -->
+    <div style="padding:20px 24px; background:#0d1117; border:1px solid #2d3748; border-radius:12px; margin-bottom:28px;">
+      <div style="display:flex; align-items:flex-start; gap:10px;">
+        <i data-lucide="info" style="width:16px;height:16px;color:#3182F6;flex-shrink:0;margin-top:2px;"></i>
+        <div>
+          <p style="font-size:13px; color:#8B95A1; line-height:1.75; margin:0;">
+            이 서비스는 KFIP MVP 데모예요. 4 협업 파트너 (정부·번역공증사·아포스티유 기관·해외 수령 기관) 와의 실제 협약·MOU 는 존재하지 않으며, 모든 외부 시스템 연동은 더미예요.<br>
+            가상 인물 — P3 응웬 반 투안 (E-9, 베트남·경기도 안산 / 한국→본국 방향), P5 김민수 (한국 국적·LA 거주 / 한국→해외 방향) — 실존 인물 아님.<br>
+            식별번호 전부 마스킹 처리 (<span style="font-family:'JetBrains Mono',monospace;">Q12-XXXXXXX</span>, <span style="font-family:'JetBrains Mono',monospace;">KR-XXXXXXX</span>).<br>
+            Testnet 전용 시연이에요. 실제 금융 상품·대출 결정 아님 (신용정보법 §22 의 9).<sup style="color:#3182F6; font-size:10px;">[1]</sup><br>
+            PIPA §15·§17 동의 포함 · Credential <code style="font-family:'JetBrains Mono',monospace;">uri</code> 필드 + 사용자 공개키 봉투 암호화 · 본인 개인키만 복호화.<sup style="color:#3182F6; font-size:10px;">[2]</sup><br>
+            PIPA §39 의 5 자동 파기 — Credential 만료 시 XLS-70 CredentialDelete + 분산 스토리지 원본 삭제 + 키 파기 동시 발동.<sup style="color:#3182F6; font-size:10px;">[3]</sup><br>
+            외국환거래법·가상자산이용자보호법 적용 트리거 — Mock 표시.<sup style="color:#3182F6; font-size:10px;">[4]</sup><br>
+            분쟁 SLA 자동 보장 — 7 일 내 인계 이력 · 30 일 내 중재 의견 · 60 일 내 최종 해결 (대법원 2009 다 53031 부동산·상속 표준 참조).<sup style="color:#3182F6; font-size:10px;">[5]</sup>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 법제 출처 각주 -->
+    <div style="margin-bottom:28px;">
+      <div style="font-size:10px; font-weight:700; color:#4E5968; margin-bottom:10px; font-family:'JetBrains Mono',monospace; letter-spacing:.04em;">LEGAL REFERENCES</div>
+      <div class="footnote-item">
+        <span style="color:#3182F6; font-family:'JetBrains Mono',monospace; margin-right:6px;">[1]</span>
+        신용정보법 §22의9 — 개인신용정보 자동화 평가 고지 의무. MyApo 는 문서 제출 대행 서비스, 신용평가·대출 결정 기능 미포함.
+        출처: 법제처 국가법령정보센터 (law.go.kr) 신용정보의 이용 및 보호에 관한 법률 §22의9.
+      </div>
+      <div class="footnote-item">
+        <span style="color:#3182F6; font-family:'JetBrains Mono',monospace; margin-right:6px;">[2]</span>
+        개인정보보호법 §15, §17, §28 의 8 — 수집·제공 동의 및 안전조치. Credential <code style="font-family:'JetBrains Mono',monospace;">uri</code> 필드의 분산 스토리지 원본은 사용자 공개키로 봉투 암호화 보관, 본인 개인키만 복호화. MyApo 와 4 협업 파트너 (정부·번역공증사·아포스티유 기관·해외 수령 기관) 어느 쪽도 평문 접근 불가.
+        출처: law.go.kr 개인정보보호법 §15·§17·§28 의 8.
+      </div>
+      <div class="footnote-item">
+        <span style="color:#3182F6; font-family:'JetBrains Mono',monospace; margin-right:6px;">[3]</span>
+        개인정보보호법 §39 의 5 — 개인정보 파기 의무. 유효기간 만료 시 XLS-70 CredentialDelete + 분산 스토리지 원본 삭제 + 봉투 키 파기 자동 동시 발동. 평생 재사용이 아니라 유효기간 내 재사용 모델.
+        출처: law.go.kr 개인정보보호법 §39 의 5 · XRPL XLS-70 Credential Expiration 스펙.
+      </div>
+      <div class="footnote-item">
+        <span style="color:#3182F6; font-family:'JetBrains Mono',monospace; margin-right:6px;">[4]</span>
+        가상자산이용자보호법 §6 · 특정금융정보법 §7 · 외국환거래법 §15·§16 — 본국 발급기관 협력은 Mock 시연 한정.
+        출처: law.go.kr 가상자산이용자보호법 §6 · 특금법 §7 · 외국환거래법 §15·§16.
+      </div>
+      <div class="footnote-item">
+        <span style="color:#3182F6; font-family:'JetBrains Mono',monospace; margin-right:6px;">[5]</span>
+        대법원 2009 다 53031 — 부동산 등기·상속 거래에서 외국 인감증명서의 아포스티유 사실상 필수 판시. 신뢰 사슬 무너지면 거래 정지·재처리 비용 발생 → 분쟁 SLA (7 일·30 일·60 일) 의 실무적 정당성.
+        출처: 대법원 판례 검색 (court.go.kr) 2009 다 53031.
+      </div>
+    </div>
+
+    <!-- 페르소나 시나리오 보조 카드 -->
+    <div style="margin-bottom:28px;">
+      <div style="font-size:10px; font-weight:700; color:#4E5968; margin-bottom:12px; font-family:'JetBrains Mono',monospace; letter-spacing:.04em;">PERSONA SCENARIOS (가상 인물)</div>
+      <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px; max-width:680px;">
+
+        <div style="padding:16px; background:#0f1629; border:1px solid #2d3748; border-radius:10px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+            <div style="width:34px;height:34px;background:#E8F2FE;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#3182F6;flex-shrink:0;">P3</div>
+            <div>
+              <div style="font-size:14px;font-weight:700;color:#FFFFFF;">응웬 반 투안</div>
+              <div style="font-size:11px;color:#8B95A1;">베트남 · 29세 · E-9 비전문취업</div>
+            </div>
+          </div>
+          <div style="font-size:10px;color:#8B95A1;margin-bottom:6px;font-family:'JetBrains Mono',monospace;">Q12-XXXXXXX · 경기도 안산</div>
+          <div style="font-size:12px;color:#8B95A1;line-height:1.5;">베트남 본가 부동산 명의 변경 → 한국 발급 외국인등록사실증명·납세증명서·건강보험납부확인서·출입국사실증명 4 종 → 베트남어 번역·공증·아포스티유.</div>
+          <div style="margin-top:8px;padding:6px 8px;background:#E8F2FE;border-radius:6px;font-size:11px;color:#3182F6;">After: 4 인계 + 본인 서명 4 회 → 4 주 종결</div>
+        </div>
+
+        <div style="padding:16px; background:#0f1629; border:1px solid #2d3748; border-radius:10px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+            <div style="width:34px;height:34px;background:#E6FAF3;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#00C48C;flex-shrink:0;">P5</div>
+            <div>
+              <div style="font-size:14px;font-weight:700;color:#FFFFFF;">김민수</div>
+              <div style="font-size:11px;color:#8B95A1;">한국 국적 · 41세 · LA 거주 8 년</div>
+            </div>
+          </div>
+          <div style="font-size:10px;color:#8B95A1;margin-bottom:6px;font-family:'JetBrains Mono',monospace;">KR-XXXXXXX · LA 한인타운</div>
+          <div style="font-size:12px;color:#8B95A1;line-height:1.5;">한국 부친 사망 후 상속 부동산 매도 → 한국 발급 부동산 등기·주민등록초본·가족관계증명서·납세증명서 4 종 → 영문 번역·공증·아포스티유 → 미국 카운티 제출.</div>
+          <div style="margin-top:8px;padding:6px 8px;background:#E6FAF3;border-radius:6px;font-size:11px;color:#00C48C;">After: 4 인계 + 본인 서명 4 회 → 3 주 · 인편 0 회</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="border-top:1px solid #2d3748; padding-top:20px;">
+      <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;">
+        <div style="font-size:11px; color:#4E5968; font-family:'JetBrains Mono',monospace;">
+          MYAPO · v4 와이어프레임 · KFIP 2026 데모 · Testnet Only
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <span class="badge badge-testnet" style="font-size:10px;">Testnet</span>
+          <span class="badge badge-mock" style="font-size:10px;">Mock</span>
+          <span class="badge badge-precheck" style="font-size:10px;">Pre-Check Only</span>
+        </div>
+      </div>
+      <div style="margin-top:10px; font-size:11px; color:#4E5968; line-height:1.6;">
+        이 서비스는 KFIP MVP 데모예요. 외부 기관 연동은 모두 더미예요. ·
+        Testnet · 가상 인물 · Pre-Check Only · XRPL Credential Mock
+      </div>
+    </div>
+
+    <!-- 4 인계 레퍼런스 테이블 -->
+    <div style="margin-top:32px;">
+      <div style="font-size:10px; font-weight:700; color:#4E5968; margin-bottom:12px; font-family:'JetBrains Mono',monospace; letter-spacing:.04em;">HANDOVER REFERENCE · 4 STEPS · 사용자 서명 4 회 (시나리오 더미 데이터)</div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:11px;">
+          <thead>
+            <tr style="border-bottom:1px solid #2d3748;">
+              <th style="text-align:left; padding:6px 8px; color:#4E5968; font-family:'JetBrains Mono',monospace; font-weight:700;">인계 #</th>
+              <th style="text-align:left; padding:6px 8px; color:#4E5968; font-family:'JetBrains Mono',monospace; font-weight:700;">HASH (마스킹)</th>
+              <th style="text-align:left; padding:6px 8px; color:#4E5968; font-family:'JetBrains Mono',monospace; font-weight:700;">CREDENTIAL TYPE</th>
+              <th style="text-align:left; padding:6px 8px; color:#4E5968; font-family:'JetBrains Mono',monospace; font-weight:700;">FROM → TO</th>
+              <th style="text-align:left; padding:6px 8px; color:#4E5968; font-family:'JetBrains Mono',monospace; font-weight:700;">사용자 서명</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid #1a2236;">
+              <td style="padding:6px 8px; color:#3182F6; font-family:'JetBrains Mono',monospace; font-weight:700;">인계 1</td>
+              <td style="padding:6px 8px; color:#8B95A1; font-family:'JetBrains Mono',monospace;">3C1D···8A9F</td>
+              <td style="padding:6px 8px; color:#00C48C;">발급 Credential (XLS-70)</td>
+              <td style="padding:6px 8px; color:#8B95A1;">본국 정부 → MyApo</td>
+              <td style="padding:6px 8px; color:#3182F6;">서명 1 / 4</td>
+            </tr>
+            <tr style="border-bottom:1px solid #1a2236;">
+              <td style="padding:6px 8px; color:#3182F6; font-family:'JetBrains Mono',monospace; font-weight:700;">인계 2</td>
+              <td style="padding:6px 8px; color:#8B95A1; font-family:'JetBrains Mono',monospace;">B5E7···2C3D</td>
+              <td style="padding:6px 8px; color:#00C48C;">처리위임 Credential (XLS-70)</td>
+              <td style="padding:6px 8px; color:#8B95A1;">MyApo → 번역·공증사</td>
+              <td style="padding:6px 8px; color:#3182F6;">서명 2 / 4</td>
+            </tr>
+            <tr style="border-bottom:1px solid #1a2236;">
+              <td style="padding:6px 8px; color:#3182F6; font-family:'JetBrains Mono',monospace; font-weight:700;">인계 3</td>
+              <td style="padding:6px 8px; color:#8B95A1; font-family:'JetBrains Mono',monospace;">F4D2···6E1A</td>
+              <td style="padding:6px 8px; color:#00C48C;">인증의뢰 Credential (XLS-70)</td>
+              <td style="padding:6px 8px; color:#8B95A1;">번역·공증사 → 아포스티유 기관</td>
+              <td style="padding:6px 8px; color:#3182F6;">서명 3 / 4</td>
+            </tr>
+            <tr style="border-bottom:1px solid #1a2236;">
+              <td style="padding:6px 8px; color:#3182F6; font-family:'JetBrains Mono',monospace; font-weight:700;">인계 4</td>
+              <td style="padding:6px 8px; color:#3182F6; font-family:'JetBrains Mono',monospace;">7C4F···5E2B</td>
+              <td style="padding:6px 8px; color:#00C48C;">최종 Credential (XLS-70)</td>
+              <td style="padding:6px 8px; color:#8B95A1;">아포스티유 기관 → 사용자 지갑</td>
+              <td style="padding:6px 8px; color:#3182F6;">서명 4 / 4</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 8px; color:#F04452; font-family:'JetBrains Mono',monospace; font-weight:700;">만료</td>
+              <td style="padding:6px 8px; color:#8B95A1; font-family:'JetBrains Mono',monospace;">D2E5···8F3A</td>
+              <td style="padding:6px 8px; color:#F04452;">CredentialDelete + 원본 삭제 + 키 파기</td>
+              <td style="padding:6px 8px; color:#8B95A1;">자동 (유효기간 종료)</td>
+              <td style="padding:6px 8px; color:#8B95A1;">PIPA §39 의 5</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Credential.uri 레퍼런스 -->
+    <div style="margin-top:20px;">
+      <div style="font-size:10px; font-weight:700; color:#4E5968; margin-bottom:10px; font-family:'JetBrains Mono',monospace; letter-spacing:.04em;">CREDENTIAL.URI REFERENCE — 사용자 개인키만 복호화</div>
+      <div style="display:flex; flex-wrap:wrap; gap:8px;">
+        <div style="padding:8px 12px; background:#0f1629; border:1px solid #2d3748; border-radius:6px;">
+          <div style="font-size:9px; color:#4E5968; font-family:'JetBrains Mono',monospace; margin-bottom:3px;">인계 1 · 발급 원본</div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#3182F6; display:flex; align-items:center; gap:4px;">
+            ipfs://bafy···k2x4 <i data-lucide="external-link" style="width:9px;height:9px;"></i>
+          </div>
+        </div>
+        <div style="padding:8px 12px; background:#0f1629; border:1px solid #2d3748; border-radius:6px;">
+          <div style="font-size:9px; color:#4E5968; font-family:'JetBrains Mono',monospace; margin-bottom:3px;">인계 2 · 번역·공증본</div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#3182F6; display:flex; align-items:center; gap:4px;">
+            ipfs://bafz···m3y1 <i data-lucide="external-link" style="width:9px;height:9px;"></i>
+          </div>
+        </div>
+        <div style="padding:8px 12px; background:#0f1629; border:1px solid #2d3748; border-radius:6px;">
+          <div style="font-size:9px; color:#4E5968; font-family:'JetBrains Mono',monospace; margin-bottom:3px;">인계 3 · 아포스티유 본</div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#3182F6; display:flex; align-items:center; gap:4px;">
+            ipfs://bafq···n5w7 <i data-lucide="external-link" style="width:9px;height:9px;"></i>
+          </div>
+        </div>
+        <div style="padding:8px 12px; background:#0f1629; border:1px solid #2d3748; border-radius:6px;">
+          <div style="font-size:9px; color:#4E5968; font-family:'JetBrains Mono',monospace; margin-bottom:3px;">인계 4 · 최종본</div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#00C48C; display:flex; align-items:center; gap:4px;">
+            ipfs://bafr···p8v2 <i data-lucide="external-link" style="width:9px;height:9px;"></i>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:10px; font-size:11px; color:#4E5968; font-family:'JetBrains Mono',monospace;">
+        ※ 모든 링크의 원본은 사용자 공개키로 봉투 암호화돼 분산 스토리지에 보관. 본인 개인키 없이는 평문 추출 불가.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- lucide 초기화 + Vanilla JS -->
+<script>
+  lucide.createIcons();
+
+  // LanguageToggle
+  const langIds = ['lang-ko', 'lang-en', 'lang-vn', 'lang-ph'];
+  langIds.forEach(id => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      langIds.forEach(lid => {
+        const b = document.getElementById(lid);
+        if (!b) return;
+        b.style.background = 'transparent';
+        b.style.color = '#8B95A1';
+        b.style.border = '1px solid #2d3748';
+      });
+      btn.style.background = '#3182F6';
+      btn.style.color = '#FFFFFF';
+      btn.style.border = 'none';
+    });
+  });
+
+  // Smooth scroll for anchor links
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
+    });
+  });
+</script>
+</body>
+</html>

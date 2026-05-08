@@ -1,0 +1,1049 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>분쟁 상세 — MYAPO OPS</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { theme: { extend: { colors:{
+    primary:'#3182F6','primary-deep':'#1B64DA','primary-soft':'#E8F2FE',
+    success:'#00C48C','success-soft':'#E6FAF3',
+    warning:'#FFB020','warning-soft':'#FFF4DE',
+    danger:'#F04452','danger-soft':'#FDE7E9',
+    info:'#18BFFF','info-soft':'#E2F7FF',
+    base:'#F9FAFB',border:'#E5E8EB',ink:'#191F28',sub:'#4E5968',muted:'#8B95A1',surface:'#FFFFFF'
+  }, fontFamily:{
+    sans:['Pretendard Variable','Pretendard','-apple-system','system-ui','sans-serif'],
+    mono:['JetBrains Mono','monospace']
+  }, borderRadius:{xs:'8px',sm:'12px',md:'16px',pill:'999px'} } } }
+</script>
+<style>
+  body{font-family:'Pretendard Variable',Pretendard,sans-serif;background:#F2F4F6;color:#191F28;-webkit-font-smoothing:antialiased;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  .num{font-feature-settings:"tnum" 1;letter-spacing:-0.01em;}
+
+  /* 공통 */
+  .vpill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;}
+  .badge-testnet{background:#E2F7FF;color:#0594BF;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;}
+  .badge-mock{background:#FFF4DE;color:#7a5400;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;}
+  .panel{background:#fff;border:1px solid #E5E8EB;border-radius:12px;box-shadow:0 1px 2px rgba(0,0,0,.04),0 1px 3px rgba(0,0,0,.06);}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #F2F4F6;}
+  .panel-head h3{font-size:13px;font-weight:800;color:#191F28;letter-spacing:-0.01em;display:inline-flex;align-items:center;gap:8px;}
+  .panel-head h3 .ico{width:24px;height:24px;border-radius:8px;background:#F4F9FF;color:#3182F6;display:flex;align-items:center;justify-content:center;}
+  .panel-head h3 .ico svg{width:13px;height:13px;}
+  .panel-head .meta{font-size:11px;color:#8B95A1;font-weight:600;}
+  .panel-body{padding:16px 18px;}
+
+  /* 버튼 */
+  .btn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:8px;border:1px solid #E5E8EB;background:#fff;font-size:12px;font-weight:700;color:#4E5968;cursor:pointer;font-family:inherit;transition:all 120ms;}
+  .btn:hover{background:#F9FAFB;color:#191F28;}
+  .btn.primary{background:#3182F6;border-color:#3182F6;color:#fff;}
+  .btn.primary:hover{background:#1B64DA;border-color:#1B64DA;}
+  .btn.danger{background:#F04452;border-color:#F04452;color:#fff;}
+  .btn.danger:hover{background:#D93544;border-color:#D93544;}
+  .btn.success{background:#00C48C;border-color:#00C48C;color:#fff;}
+  .btn.success:hover{background:#00A57A;border-color:#00A57A;}
+  .btn.sm{height:26px;padding:0 9px;font-size:11px;}
+  .btn.lg{height:38px;padding:0 16px;font-size:13px;}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+  .btn svg{width:13px;height:13px;}
+
+  /* 키-값 */
+  .kv{display:grid;grid-template-columns:96px 1fr;gap:9px 14px;font-size:13px;align-items:start;}
+  .kv dt{color:#8B95A1;font-weight:600;line-height:1.4;}
+  .kv dd{margin:0;color:#191F28;font-weight:600;line-height:1.4;}
+  .kv dd a{color:#1B64DA;text-decoration:underline;text-underline-offset:2px;}
+
+  /* 회원번호 칩 */
+  .midpill{display:inline-flex;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;background:#F4F9FF;color:#1B64DA;padding:2px 8px;border-radius:6px;letter-spacing:.02em;white-space:nowrap;}
+
+  /* 상태 뱃지 */
+  .st{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap;}
+  .st-recv{background:#E8F2FE;color:#1B64DA;}
+  .st-rev {background:#FFF4DE;color:#7a5400;}
+  .st-info{background:#E2F7FF;color:#0594BF;}
+  .st-redo{background:#F4F0FF;color:#7341D6;}
+  .st-ok  {background:#E6FAF3;color:#00A57A;}
+  .st-rej {background:#FDE7E9;color:#C0303B;}
+  .st .d{width:6px;height:6px;border-radius:999px;background:currentColor;}
+
+  /* 헤더 영역 */
+  .header-bar{background:#fff;border-bottom:1px solid #E5E8EB;}
+  .crumbs{font-size:11px;font-weight:700;color:#8B95A1;letter-spacing:.04em;}
+  .crumbs a{color:#4E5968;}
+  .crumbs a:hover{color:#1B64DA;}
+
+  /* SLA 카운트다운 */
+  .sla-card{display:inline-flex;align-items:center;gap:10px;padding:7px 14px;border-radius:10px;border:1px solid #E5E8EB;background:#FAFBFC;}
+  .sla-card.urgent{background:#FDE7E9;border-color:#F8B8BE;}
+  .sla-card.warn  {background:#FFF4DE;border-color:#FFD380;}
+  .sla-card.paused{background:#F2F4F6;border-color:#E5E8EB;}
+  .sla-card .lbl{font-size:10px;font-weight:800;color:#8B95A1;text-transform:uppercase;letter-spacing:.06em;}
+  .sla-card .val{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:800;color:#191F28;font-feature-settings:"tnum" 1;letter-spacing:-0.01em;}
+  .sla-card.urgent .val{color:#C0303B;}
+  .sla-card.warn   .val{color:#B27500;}
+  .sla-card.paused .val{color:#4E5968;}
+  .sla-card .ic{width:32px;height:32px;border-radius:8px;background:#fff;color:#4E5968;display:flex;align-items:center;justify-content:center;}
+  .sla-card.urgent .ic{background:#fff;color:#C0303B;}
+  .sla-card.warn   .ic{background:#fff;color:#B27500;}
+  .sla-card .ic svg{width:15px;height:15px;}
+
+  /* 발급 5단계 파이프라인 (소형) */
+  .pipe-mini{display:flex;align-items:flex-start;gap:0;width:100%;}
+  .pipe-stage{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:90px;}
+  .pipe-stage .dot{width:26px;height:26px;border-radius:999px;background:#fff;border:2px solid #E5E8EB;color:#8B95A1;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;}
+  .pipe-stage.done .dot{background:#00C48C;border-color:#00C48C;color:#fff;}
+  .pipe-stage.active .dot{border-color:#3182F6;color:#3182F6;background:#fff;box-shadow:0 0 0 4px rgba(49,130,246,.15);}
+  .pipe-stage .lbl{margin-top:6px;font-size:10px;font-weight:700;color:#191F28;text-align:center;line-height:1.2;}
+  .pipe-stage.done  .lbl{color:#4E5968;}
+  .pipe-stage:not(.done):not(.active) .lbl{color:#8B95A1;}
+  .pipe-conn{flex:1;min-width:24px;height:2px;background:#E5E8EB;margin:13px 4px 0;}
+  .pipe-conn.done{background:#00C48C;}
+  .pipe-conn.active{background:#3182F6;}
+
+  /* 첨부 카드 */
+  .file-card{display:flex;gap:10px;padding:10px;border:1px solid #E5E8EB;border-radius:10px;background:#fff;align-items:flex-start;}
+  .file-card.from-user{background:#F4F9FF;border-color:#C9DFFC;}
+  .file-card .fic{width:38px;height:46px;border-radius:6px;background:#FDE7E9;color:#C0303B;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:800;font-size:11px;flex-shrink:0;}
+  .file-card .fic.json{background:#FFF4DE;color:#B27500;}
+  .file-card .fic.img{background:#E6FAF3;color:#00A57A;}
+  .file-card .fb{flex:1;min-width:0;}
+  .file-card .fn{font-size:12px;font-weight:700;color:#191F28;font-family:'JetBrains Mono',monospace;word-break:break-all;}
+  .file-card .ft{font-size:10px;color:#8B95A1;margin-top:2px;display:flex;flex-wrap:wrap;gap:8px;font-family:'JetBrains Mono',monospace;}
+  .file-card .fa{display:flex;gap:4px;align-items:center;flex-shrink:0;margin-top:2px;}
+  .file-card .fa button{width:26px;height:26px;border-radius:6px;border:1px solid #E5E8EB;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#4E5968;}
+  .file-card .fa button:hover{background:#F4F9FF;color:#1B64DA;border-color:#3182F6;}
+  .from-user-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:999px;background:#3182F6;color:#fff;font-size:10px;font-weight:800;letter-spacing:.04em;}
+
+  /* 타임라인 */
+  .tl{position:relative;padding-left:24px;}
+  .tl::before{content:"";position:absolute;left:9px;top:6px;bottom:6px;width:2px;background:#E5E8EB;}
+  .tl-item{position:relative;padding:6px 0 14px 0;}
+  .tl-item:last-child{padding-bottom:0;}
+  .tl-item .tl-dot{position:absolute;left:-21px;top:9px;width:14px;height:14px;border-radius:999px;background:#fff;border:2px solid #E5E8EB;}
+  .tl-item.recv  .tl-dot{background:#3182F6;border-color:#3182F6;}
+  .tl-item.assign .tl-dot{background:#18BFFF;border-color:#18BFFF;}
+  .tl-item.review .tl-dot{background:#FFB020;border-color:#FFB020;}
+  .tl-item.memo  .tl-dot{background:#8B95A1;border-color:#8B95A1;}
+  .tl-item.member .tl-dot{background:#7341D6;border-color:#7341D6;}
+  .tl-item.info  .tl-dot{background:#FFB020;border-color:#FFB020;}
+  .tl-item.action .tl-dot{background:#1B64DA;border-color:#1B64DA;}
+  .tl-item.ok    .tl-dot{background:#00C48C;border-color:#00C48C;}
+  .tl-item.rej   .tl-dot{background:#F04452;border-color:#F04452;}
+  .tl-item.reopen .tl-dot{background:#7341D6;border-color:#7341D6;}
+  .tl-item .tl-h{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
+  .tl-item .tl-h b{font-size:13px;font-weight:800;color:#191F28;}
+  .tl-item .tl-h .tl-by{font-size:11px;font-weight:600;color:#1B64DA;font-family:'JetBrains Mono',monospace;}
+  .tl-item .tl-h .tl-time{font-size:11px;color:#8B95A1;font-family:'JetBrains Mono',monospace;font-feature-settings:"tnum" 1;margin-left:auto;}
+  .tl-item .tl-d{font-size:12px;color:#4E5968;line-height:1.5;margin-top:3px;}
+  .tl-item .tl-attach{margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;}
+
+  /* 메모 입력 */
+  .memo-box{border:1px solid #E5E8EB;border-radius:10px;padding:10px 12px;background:#fff;}
+  .memo-box:focus-within{border-color:#3182F6;box-shadow:0 0 0 3px rgba(49,130,246,.1);}
+  .memo-box textarea{width:100%;border:0;outline:none;resize:none;font-size:13px;font-family:inherit;color:#191F28;min-height:42px;}
+  .memo-box .row{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:6px;}
+  .memo-box .row .hint{font-size:10px;color:#8B95A1;font-weight:600;}
+
+  /* 우측 — 판단 사이드바 카드 */
+  .side-panel{background:#fff;border:1px solid #E5E8EB;border-radius:12px;padding:16px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+  .side-section + .side-section{margin-top:18px;padding-top:18px;border-top:1px solid #F2F4F6;}
+  .side-h{font-size:11px;font-weight:800;color:#8B95A1;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
+
+  /* 상태 변경 segmented */
+  .seg{display:flex;flex-wrap:wrap;gap:6px;}
+  .seg-btn{flex:1;min-width:90px;padding:7px 10px;border-radius:8px;border:1px solid #E5E8EB;background:#fff;font-size:12px;font-weight:700;color:#4E5968;cursor:pointer;font-family:inherit;text-align:center;transition:all 120ms;}
+  .seg-btn:hover{background:#F4F9FF;color:#1B64DA;border-color:#9DC4FA;}
+  .seg-btn.active{background:#3182F6;border-color:#3182F6;color:#fff;}
+  .seg-btn.disabled{opacity:.35;cursor:not-allowed;}
+  .seg-btn.disabled:hover{background:#fff;color:#4E5968;border-color:#E5E8EB;}
+
+  /* 태그 (사유 분류) */
+  .tag{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;font-size:11px;font-weight:700;border:1px solid #E5E8EB;background:#fff;color:#4E5968;cursor:pointer;font-family:inherit;}
+  .tag:hover{border-color:#3182F6;color:#1B64DA;background:#F4F9FF;}
+  .tag.active{background:#1B64DA;border-color:#1B64DA;color:#fff;}
+  .tag-row{display:flex;flex-wrap:wrap;gap:6px;}
+
+  /* 액션 리스트 */
+  .act-list{display:flex;flex-direction:column;gap:6px;}
+  .act{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #E5E8EB;border-radius:10px;background:#fff;cursor:pointer;font-family:inherit;text-align:left;width:100%;transition:all 120ms;}
+  .act:hover{border-color:#3182F6;background:#F4F9FF;}
+  .act .ai{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .act.danger  .ai{background:#FDE7E9;color:#C0303B;}
+  .act.primary .ai{background:#E8F2FE;color:#1B64DA;}
+  .act.info    .ai{background:#E2F7FF;color:#0594BF;}
+  .act.warning .ai{background:#FFF4DE;color:#B27500;}
+  .act .ai svg{width:14px;height:14px;}
+  .act .at{font-size:12px;font-weight:700;color:#191F28;}
+  .act .as{font-size:10px;color:#8B95A1;margin-top:1px;font-weight:500;}
+  .act .right{margin-left:auto;flex-shrink:0;color:#8B95A1;}
+
+  /* 권한 라벨 */
+  .role-lock{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:800;color:#7341D6;background:#F4F0FF;padding:1px 6px;border-radius:999px;letter-spacing:.04em;text-transform:uppercase;margin-left:6px;}
+
+  /* 처리 결과 박스 */
+  .resolve-box{border:1px solid #E5E8EB;border-radius:12px;padding:14px 16px;background:#FAFBFC;}
+  .resolve-box .field-label{font-size:11px;font-weight:800;color:#4E5968;margin-bottom:5px;display:block;}
+  .resolve-box .req{color:#F04452;}
+  .resolve-box textarea, .resolve-box input{width:100%;border:1px solid #E5E8EB;border-radius:8px;padding:9px 11px;font-size:12px;font-family:inherit;outline:none;background:#fff;color:#191F28;resize:vertical;}
+  .resolve-box textarea:focus, .resolve-box input:focus{border-color:#3182F6;box-shadow:0 0 0 3px rgba(49,130,246,.1);}
+
+  /* 다이얼로그 */
+  .dlg-back{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(4px);}
+  .dlg-back.open{display:flex;}
+  .dlg{background:#fff;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.25);max-width:480px;width:calc(100% - 32px);overflow:hidden;}
+  .dlg .h{padding:18px 20px 6px;}
+  .dlg .h .t{font-size:16px;font-weight:800;color:#191F28;}
+  .dlg .h .s{font-size:12px;color:#4E5968;margin-top:4px;line-height:1.55;}
+  .dlg .b{padding:10px 20px 16px;}
+  .dlg .b textarea{width:100%;border:1px solid #E5E8EB;border-radius:8px;padding:9px 11px;font-size:12px;font-family:inherit;outline:none;resize:vertical;min-height:80px;}
+  .dlg .b textarea:focus{border-color:#3182F6;box-shadow:0 0 0 3px rgba(49,130,246,.1);}
+  .dlg .f{padding:12px 20px;border-top:1px solid #F2F4F6;display:flex;gap:8px;justify-content:flex-end;background:#FAFBFC;}
+
+  /* 토스트 */
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);background:#191F28;color:#fff;padding:11px 18px;border-radius:999px;font-size:12px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.15);opacity:0;pointer-events:none;transition:all 250ms;z-index:200;display:inline-flex;align-items:center;gap:8px;}
+  .toast.open{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* 글로벌 탭바 */
+  .global-tabs{position:sticky;top:0;z-index:200;display:flex;gap:0;background:#fff;border-bottom:1px solid #E5E8EB;padding:0 32px;}
+  .global-tab{padding:14px 20px;font-size:14px;font-weight:600;color:#4E5968;text-decoration:none;border-bottom:2px solid transparent;}
+  .global-tab.active{color:#3182F6;border-bottom-color:#3182F6;}
+
+  /* 읽기 전용 모드 */
+  body.readonly .write-only{display:none !important;}
+  .ro-banner{background:#F2F4F6;border:1px solid #E5E8EB;border-radius:10px;padding:10px 14px;font-size:12px;font-weight:700;color:#4E5968;display:flex;align-items:center;gap:8px;}
+  .ro-banner.ok{background:#E6FAF3;border-color:#7BE3BD;color:#00A57A;}
+  .ro-banner.rej{background:#FDE7E9;border-color:#F8B8BE;color:#C0303B;}
+</style>
+</head>
+<body class="min-h-screen">
+
+<nav class="global-tabs" role="tablist">
+  <a href="../index.html" class="global-tab" role="tab">인덱스</a>
+  <a href="../app.html" class="global-tab" role="tab">앱</a>
+  <a href="../institution-kr.html" class="global-tab" role="tab">국내 발급 기관</a>
+  <a href="../institution-overseas.html" class="global-tab" role="tab">해외 수령 기관</a>
+  <a href="../console.html" class="global-tab active" role="tab" aria-current="page">콘솔</a>
+</nav>
+
+<!-- ============ 헤더 ============ -->
+<header class="header-bar">
+  <div class="max-w-[1360px] mx-auto px-8 pt-5 pb-4">
+    <div class="crumbs flex items-center gap-2 mb-2">
+      <a href="../console.html" onclick="window.opener && !window.opener.closed && window.close(); return true;">콘솔</a>
+      <span>/</span>
+      <a href="../console.html">분쟁 추적</a>
+      <span>/</span>
+      <span class="text-ink">분쟁 상세</span>
+    </div>
+
+    <div class="flex items-start justify-between gap-6 flex-wrap">
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center gap-3 flex-wrap mb-2">
+          <h1 class="text-[24px] font-extrabold text-ink num" style="letter-spacing:-0.02em;">분쟁 <span class="mono text-primary-deep" id="dsp-id">DSP-038</span></h1>
+          <span class="st" id="dsp-state-badge"><span class="d"></span><span id="dsp-state-label">검토 중</span></span>
+        </div>
+        <div class="text-[15px] text-sub leading-relaxed mb-3" id="dsp-headline">번역 항목 누락 의심 — 회원 본인이 발급 결과 검토 후 분쟁 접수</div>
+        <div class="flex items-center gap-4 text-[12px] text-muted flex-wrap">
+          <span class="flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>접수 <b class="mono num text-ink" id="dsp-at">2026-05-02 09:14</b></span>
+          <span class="flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>경과 <b class="mono num text-ink" id="dsp-age">1일 5시간</b></span>
+          <span class="flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>담당 <b class="text-ink" id="dsp-owner">운영자 A</b></span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 flex-wrap">
+        <div class="sla-card warn" id="sla-card">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+          <div>
+            <div class="lbl" id="sla-lbl">응답 SLA 남은 시간</div>
+            <div class="val" id="sla-val">18시간 42분</div>
+          </div>
+        </div>
+        <button class="btn" onclick="window.print()" title="인쇄"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>인쇄</button>
+        <button class="btn" id="copy-link" title="링크 복사"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>링크 복사</button>
+        <button class="btn" onclick="location.reload()" title="새로고침"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-[1360px] mx-auto px-8 py-6 pb-16">
+  <div class="grid gap-5" style="grid-template-columns:minmax(0,1fr) 380px;">
+
+    <!-- ============ 좌측 — 사실 정보 ============ -->
+    <div class="space-y-4 min-w-0">
+
+      <!-- A. 분쟁 개요 -->
+      <div class="panel">
+        <div class="panel-head">
+          <h3><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span>분쟁 개요</h3>
+        </div>
+        <div class="panel-body space-y-5">
+          <div class="grid grid-cols-2 gap-x-6 gap-y-3">
+            <dl class="kv">
+              <dt>분쟁 ID</dt><dd class="mono text-[12px]" id="dsp-id-2">DSP-038</dd>
+              <dt>접수 시각</dt><dd class="mono text-[12px] num" id="dsp-at-2">2026-05-02 09:14</dd>
+              <dt>경과 시간</dt><dd id="dsp-age-2">1일 5시간 경과</dd>
+            </dl>
+            <dl class="kv">
+              <dt>현재 상태</dt><dd><span class="st" id="dsp-state-badge-2"><span class="d"></span><span id="dsp-state-label-2">검토 중</span></span></dd>
+              <dt>담당 운영자</dt><dd id="dsp-owner-2">운영자 A</dd>
+              <dt>이의 출처</dt><dd id="dsp-source"><span class="vpill" style="background:#FFF4DE;color:#7a5400;">KR-BANK 거절</span> <span class="text-muted text-[11px] ml-1">(회원이 입력)</span></dd>
+            </dl>
+          </div>
+
+          <div>
+            <div class="text-[11px] font-extrabold text-muted uppercase mb-2" style="letter-spacing:.06em;">신고 사유 전문</div>
+            <div class="rounded-xs bg-base border border-border p-3.5 text-[13px] text-ink leading-relaxed" id="dsp-reason-full">
+              발급받은 범죄경력증명서 번역본을 KR-BANK에 제출했더니 "원본 3페이지 중간 단락(이전 형사 처분 관련 항목)이 번역본에 누락되어 있다"는 사유로 접수가 거절되었습니다. 제가 직접 원본과 비교해보니 해당 단락이 실제로 번역본에 포함되어 있지 않은 것으로 보입니다. 정정된 번역본 재발급을 요청드립니다.
+            </div>
+          </div>
+
+          <!-- 회원 첨부 -->
+          <div>
+            <div class="text-[11px] font-extrabold text-muted uppercase mb-2 flex items-center gap-2" style="letter-spacing:.06em;">
+              회원 첨부 증빙
+              <span class="from-user-tag">회원 본인이 올린 자료</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2" id="member-files"><!-- JS --></div>
+          </div>
+
+          <!-- 운영자 첨부 -->
+          <div>
+            <div class="text-[11px] font-extrabold text-muted uppercase mb-2 flex items-center justify-between" style="letter-spacing:.06em;">
+              <span>운영자 추가 증빙</span>
+              <button class="btn sm write-only"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>증빙 추가</button>
+            </div>
+            <div class="grid grid-cols-2 gap-2" id="ops-files"><!-- JS --></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- B. 연관 발급 요청 -->
+      <div class="panel">
+        <div class="panel-head">
+          <h3><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>연관 발급 요청</h3>
+          <a class="text-primary-deep text-[12px] font-bold flex items-center gap-1" id="req-link" target="_blank" rel="noopener">
+            발급 요청 상세 보기
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </a>
+        </div>
+        <div class="panel-body space-y-4">
+          <!-- 5단계 미니 파이프라인 -->
+          <div>
+            <div class="text-[11px] font-extrabold text-muted uppercase mb-3 flex items-center justify-between" style="letter-spacing:.06em;">
+              <span>발급 진행 상황</span>
+              <span class="text-[10px] font-bold" id="req-stage-summary" style="color:#00A57A;">발급 완료 (5/5)</span>
+            </div>
+            <div class="pipe-mini" id="req-pipeline"></div>
+          </div>
+
+          <!-- 메타 -->
+          <div class="grid grid-cols-2 gap-x-6 gap-y-2 pt-3 border-t border-border" style="border-color:#F2F4F6;">
+            <dl class="kv">
+              <dt>요청 번호</dt><dd><a class="mono text-[12px]" id="req-id-link" target="_blank" rel="noopener">REQ-2026-0419</a></dd>
+              <dt>요청자</dt><dd id="req-user">Tran Van Minh</dd>
+              <dt>국가</dt><dd id="req-country">베트남</dd>
+            </dl>
+            <dl class="kv">
+              <dt>문서 유형</dt><dd id="req-doc">범죄경력증명서</dd>
+              <dt>발급일</dt><dd class="mono text-[12px]" id="req-issued">2026-04-30</dd>
+              <dt>크리덴셜</dt><dd class="mono text-[12px]" id="req-cred">CRD-A1F8-7K</dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+
+      <!-- D. 타임라인 -->
+      <div class="panel">
+        <div class="panel-head">
+          <h3><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>처리 타임라인</h3>
+          <span class="meta" id="tl-count">7건</span>
+        </div>
+        <div class="panel-body">
+          <div class="tl" id="dsp-timeline"></div>
+
+          <!-- 메모 입력 -->
+          <div class="mt-5 write-only">
+            <div class="text-[11px] font-extrabold text-muted uppercase mb-2" style="letter-spacing:.06em;">운영자 메모 추가</div>
+            <div class="memo-box">
+              <textarea id="memo-input" placeholder="검토 내용 · 외부 통신 기록 · 결정 근거를 남겨주세요"></textarea>
+              <div class="row">
+                <div class="hint">메모는 즉시 타임라인에 누적되고 모든 운영자가 볼 수 있어요</div>
+                <div class="flex gap-2">
+                  <button class="btn sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>파일</button>
+                  <button class="btn primary sm" id="memo-add">메모 추가</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 우측 — 판단·액션 ============ -->
+    <div class="space-y-4 min-w-0">
+
+      <!-- 종료 후: 결과 배너 -->
+      <div id="resolved-banner" class="hidden">
+        <div class="ro-banner ok" id="resolved-ok">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>이 분쟁은 <b id="resolved-state">해결</b> 처리되었어요</span>
+        </div>
+      </div>
+
+      <!-- C. 회원(=신고자) -->
+      <div class="side-panel">
+        <div class="side-h">신고자 (회원 본인)</div>
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-11 h-11 rounded-pill bg-primary-soft flex items-center justify-center text-primary-deep font-extrabold text-[15px]" id="m-avatar">T</div>
+          <div class="min-w-0 flex-1">
+            <div class="font-extrabold text-ink text-[14px]" id="m-name">Tran Van Minh</div>
+            <div class="text-[11px] text-muted mono" id="m-email">tvminh@hotmail.com</div>
+          </div>
+          <span class="midpill" id="m-mid">MA-2026-00010</span>
+        </div>
+        <dl class="kv">
+          <dt>국가</dt><dd id="m-country">베트남</dd>
+          <dt>가입일</dt><dd class="mono text-[12px]" id="m-joined">2026-01-12</dd>
+          <dt>최근 로그인</dt><dd id="m-last">5분 전</dd>
+          <dt>누적 분쟁</dt><dd>
+            <a class="text-primary-deep underline-offset-2 hover:underline" id="m-disputes" target="_blank" rel="noopener">2건 보기</a>
+          </dd>
+        </dl>
+        <div class="mt-3 pt-3 border-t border-border" style="border-color:#F2F4F6;">
+          <a class="btn sm w-full justify-center" id="m-detail-link" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            회원 상세 보기
+          </a>
+        </div>
+      </div>
+
+      <!-- E. 판단 사이드바 -->
+      <div class="side-panel write-only">
+        <!-- 상태 변경 -->
+        <div class="side-section">
+          <div class="side-h">현재 상태 변경</div>
+          <div class="seg" id="state-seg">
+            <button class="seg-btn" data-st="접수">접수</button>
+            <button class="seg-btn active" data-st="검토 중">검토 중</button>
+            <button class="seg-btn" data-st="추가 정보 요청">추가 정보 요청</button>
+            <button class="seg-btn" data-st="재처리 중">재처리 중</button>
+          </div>
+          <div class="text-[10px] text-muted mt-2 leading-relaxed" id="state-hint">
+            "추가 정보 요청" 상태에서는 SLA 카운트다운이 일시 정지돼요.
+          </div>
+        </div>
+
+        <!-- 사유 분류 태그 -->
+        <div class="side-section">
+          <div class="side-h">사유 분류 <span class="text-[10px] text-muted">통계 집계용</span></div>
+          <div class="tag-row" id="tag-row">
+            <button class="tag" data-tag="번역 오류">번역 오류</button>
+            <button class="tag" data-tag="인장 불선명">인장 불선명</button>
+            <button class="tag" data-tag="발급일자 불일치">발급일자 불일치</button>
+            <button class="tag" data-tag="파일 손상">파일 손상</button>
+            <button class="tag" data-tag="이름 표기 오류">이름 표기 오류</button>
+            <button class="tag" data-tag="기관 정책 변경">기관 정책 변경</button>
+            <button class="tag" data-tag="기타">기타</button>
+          </div>
+        </div>
+
+        <!-- 연계 액션 -->
+        <div class="side-section">
+          <div class="side-h">연계 액션 <span class="text-[10px] text-muted">실행 시 확인 필요</span></div>
+          <div class="act-list">
+            <button class="act primary" data-action="reissue">
+              <span class="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><polyline points="21 3 21 9 15 9"/></svg></span>
+              <div><div class="at">발급 요청 재처리</div><div class="as">번역 재의뢰 · 아포스티유 재발급</div></div>
+              <svg class="right" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <button class="act danger" data-action="revoke">
+              <span class="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></span>
+              <div><div class="at">크리덴셜 폐기</div><div class="as">현재 크리덴셜 즉시 무효화</div></div>
+              <svg class="right" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <button class="act info" data-action="notify">
+              <span class="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
+              <div><div class="at">회원에게 알림 발송</div><div class="as">앱 푸시 · 이메일</div></div>
+              <svg class="right" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <button class="act warning" data-action="refund">
+              <span class="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+              <div><div class="at">환불 / 정산 차감 신청<span class="role-lock">관리자 승인</span></div><div class="as">정산 메뉴 활성화 시 실연계</div></div>
+              <svg class="right" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- F. 처리 결과 작성 -->
+      <div class="side-panel write-only">
+        <div class="side-h">처리 결과 작성 <span class="text-[10px] text-muted">종료 시 입력</span></div>
+        <div class="resolve-box space-y-3">
+          <div>
+            <label class="field-label">처리 사유 <span class="req">*</span></label>
+            <textarea rows="3" id="resolution-reason" placeholder="번역사에게 정정 요청하여 새 크리덴셜을 발급했어요. 회원에게 알림을 발송했어요."></textarea>
+          </div>
+          <div>
+            <label class="field-label">회원 통보 메시지 <span class="text-muted text-[10px] font-normal">(선택, 미입력 시 기본 문구)</span></label>
+            <textarea rows="2" id="resolution-msg" placeholder="기본 문구가 자동으로 발송돼요"></textarea>
+          </div>
+          <div class="flex items-center gap-2 pt-1">
+            <button class="btn sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>첨부 추가</button>
+          </div>
+          <div class="grid grid-cols-2 gap-2 pt-3 border-t border-border" style="border-color:#F2F4F6;">
+            <button class="btn danger lg" id="btn-reject">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              기각으로 종료
+            </button>
+            <button class="btn success lg" id="btn-resolve">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              해결로 종료
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- G. 재오픈 (관리자 권한) -->
+      <div class="side-panel hidden" id="reopen-card">
+        <div class="side-h">재오픈 <span class="role-lock">관리자 전용</span></div>
+        <div class="text-[12px] text-sub leading-relaxed mb-3">
+          이 분쟁은 이미 종료되었어요. 추가 정보가 확인되어 다시 검토가 필요한 경우, 관리자 권한으로 재오픈할 수 있어요. 재오픈 사유는 타임라인에 기록돼요.
+        </div>
+        <button class="btn w-full justify-center" id="btn-reopen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          분쟁 재오픈
+        </button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ============ 다이얼로그 ============ -->
+<div class="dlg-back" id="dlg-back">
+  <div class="dlg" id="dlg">
+    <div class="h">
+      <div class="t" id="dlg-title">정말 실행할까요?</div>
+      <div class="s" id="dlg-sub">실행자 · 시각 · 사유가 자동으로 기록되고 타임라인에 남아요.</div>
+    </div>
+    <div class="b">
+      <textarea id="dlg-reason" placeholder="사유를 적어주세요"></textarea>
+    </div>
+    <div class="f">
+      <button class="btn" id="dlg-cancel">취소</button>
+      <button class="btn primary" id="dlg-confirm">실행</button>
+    </div>
+  </div>
+</div>
+
+<!-- 토스트 -->
+<div class="toast" id="toast"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span id="toast-msg">처리되었어요</span></div>
+
+<footer class="max-w-[1360px] mx-auto px-8 pb-12 pt-2">
+  <div class="rounded-sm bg-surface border border-border px-6 py-4 flex items-center gap-4 text-[12px] text-muted flex-wrap">
+    <span class="badge-testnet">Testnet</span>
+    <span class="badge-mock">Mock</span>
+    <span>모든 데이터는 가상 인물입니다</span>
+    <span class="ml-auto mono text-[11px]">MYAPO OPS · v3.2 · 2026-05-03</span>
+  </div>
+</footer>
+
+<script>
+// ===================== Mock data =====================
+const params = new URLSearchParams(location.search);
+const dspId  = params.get('id') || 'DSP-038';
+
+// 분쟁별 시드 데이터 (DISPUTES 보강 필드 포함)
+const SEED = {
+  'DSP-038': {
+    id:'DSP-038',
+    state:'검토 중',
+    headline:'번역 항목 누락 의심 — 회원 본인이 발급 결과 검토 후 분쟁 접수',
+    at:'2026-05-02 09:14',
+    age:'1일 5시간',
+    owner:'운영자 A',
+    sourceCode:'KR-LB-NOTARY', // 이의 출처 (INSTITUTION_ENUM 코드, 회원 입력 후 운영자 정정 가능 — 번역공증 책임)
+    sla:{ remaining:'18시간 42분', total:'24시간', urgent:false, paused:false },
+    reason:'발급받은 범죄경력증명서 번역본을 KR-BANK에 제출했더니 "원본 3페이지 중간 단락(이전 형사 처분 관련 항목)이 번역본에 누락되어 있다"는 사유로 접수가 거절되었습니다. 제가 직접 원본과 비교해보니 해당 단락이 실제로 번역본에 포함되어 있지 않은 것으로 보입니다. 정정된 번역본 재발급을 요청드립니다.',
+    member:{ name:'Tran Van Minh', mid:'MA-2026-00010', email:'tvminh@hotmail.com', country:'베트남', joined:'2026-01-12', last:'5분 전', disputeCount:2 },
+    request:{ id:'REQ-2026-0419', user:'Tran Van Minh', country:'베트남', doc:'범죄경력증명서', issued:'2026-04-30', cred:'CRD-A1F8-7K', stage:5, sub:null },
+    memberFiles:[
+      { name:'kr-bank-rejection-notice.pdf', size:'1.2 MB', hash:'sha256:7a2b…f10c', uploaded:'2026-05-02 09:14', kind:'pdf' },
+      { name:'screenshot-original-p3.png',   size:'480 KB', hash:'sha256:3c91…ab44', uploaded:'2026-05-02 09:13', kind:'img' },
+    ],
+    opsFiles:[
+      { name:'kr-bank-verify-call-log.txt',  size:'8 KB',  hash:'sha256:b21e…3e09', uploaded:'2026-05-03 11:02', kind:'json' },
+    ],
+    tags:['번역 오류'],
+    timeline:[
+      { k:'recv',   t:'분쟁 접수',     by:'Tran Van Minh', when:'2026-05-02 09:14', d:'회원 본인이 앱 분쟁 페이지에서 신고서 제출 — 첨부 2건' },
+      { k:'assign', t:'운영자 배정',   by:'시스템',         when:'2026-05-02 09:18', d:'운영자 A에게 자동 배정 (담당 사건 수 기준)' },
+      { k:'review', t:'검토 시작',     by:'운영자 A',       when:'2026-05-02 14:32', d:'요청 REQ-2026-0419의 원본/번역본 대조 시작' },
+      { k:'memo',   t:'운영자 메모',   by:'운영자 A',       when:'2026-05-02 16:08', d:'원본 PDF 3페이지 중 두 번째 단락이 실제로 번역본에 누락된 것으로 보임. 번역사 김민지에게 재의뢰 검토 중.' },
+      { k:'info',   t:'추가 정보 요청', by:'운영자 A',       when:'2026-05-03 10:08', d:'회원에게 거절 통보서 원본 송부 요청 → SLA 일시 정지' },
+      { k:'member', t:'회원 추가 답변', by:'Tran Van Minh', when:'2026-05-03 11:42', d:'KR-BANK 거절 통보서 PDF 첨부 — 운영자 검토 재개' },
+      { k:'review', t:'검토 재개',     by:'운영자 A',       when:'2026-05-03 11:45', d:'추가 자료 확인 후 SLA 재개 — 번역 재의뢰 결정 예정' },
+    ],
+  },
+  'DSP-037': {
+    id:'DSP-037',
+    state:'접수',
+    headline:'아포스티유 인장 불선명 — 회원이 인쇄 출력 시점에 발견',
+    at:'2026-04-29 14:22',
+    age:'4일 5시간',
+    owner:'미배정',
+    sourceCode:'KR-MOFA-APO',
+    sla:{ remaining:'2시간 18분', total:'24시간', urgent:true, paused:false },
+    reason:'발급된 범죄경력증명서를 출력했을 때 아포스티유 인장이 흐릿하게 나와서 한국이주노동자센터에서 접수가 어려울 것 같다고 안내받았어요. 다시 발급해주실 수 있을까요?',
+    member:{ name:'Le Van Duc', mid:'MA-2026-00015', email:'levanduc@gmail.com', country:'베트남', joined:'2026-02-08', last:'어제', disputeCount:1 },
+    request:{ id:'REQ-2026-0405', user:'Le Van Duc', country:'베트남', doc:'범죄경력증명서', issued:'2026-04-22', cred:'CRD-A1F0-2P', stage:5, sub:null },
+    memberFiles:[
+      { name:'apostille-print-blurry.jpg', size:'620 KB', hash:'sha256:9d31…aa07', uploaded:'2026-04-29 14:21', kind:'img' },
+    ],
+    opsFiles:[],
+    tags:[],
+    timeline:[
+      { k:'recv',   t:'분쟁 접수', by:'Le Van Duc', when:'2026-04-29 14:22', d:'회원 본인이 앱 분쟁 페이지에서 신고서 제출 — 첨부 1건' },
+    ],
+  },
+  'DSP-036': {
+    id:'DSP-036',
+    state:'해결',
+    headline:'발급일자 불일치 — 재발급 처리 완료',
+    at:'2026-04-21 10:00',
+    age:'12일',
+    owner:'운영자 B',
+    sourceCode:'KR-NTS',
+    sla:{ remaining:'완료', total:'24시간', urgent:false, paused:false, done:true },
+    reason:'국세청에서 발급한 소득증명서의 발급일자가 신청 시점과 맞지 않다는 이유로 후속 처리가 거절되었습니다.',
+    member:{ name:'Nguyen Hoa', mid:'MA-2026-00013', email:'hoa.nguyen@gmail.com', country:'베트남', joined:'2025-09-22', last:'15분 전', disputeCount:1 },
+    request:{ id:'REQ-2026-0388', user:'Nguyen Hoa', country:'베트남', doc:'소득증명서', issued:'2026-03-12', cred:'CRD-A1EE-1Q', stage:5, sub:null },
+    memberFiles:[
+      { name:'kr-imm-rejection.pdf', size:'940 KB', hash:'sha256:5f12…ec88', uploaded:'2026-04-21 10:00', kind:'pdf' },
+    ],
+    opsFiles:[
+      { name:'reissue-confirmation.pdf', size:'1.1 MB', hash:'sha256:11aa…99cd', uploaded:'2026-04-22 16:30', kind:'pdf' },
+    ],
+    tags:['발급일자 불일치'],
+    timeline:[
+      { k:'recv',   t:'분쟁 접수',   by:'Nguyen Hoa', when:'2026-04-21 10:00', d:'회원 본인이 신고서 제출' },
+      { k:'assign', t:'담당 배정',   by:'시스템',     when:'2026-04-21 10:05', d:'운영자 B에게 배정' },
+      { k:'review', t:'검토 시작',   by:'운영자 B',   when:'2026-04-21 14:00', d:'발급 일자 정정 후 재발급 결정' },
+      { k:'action', t:'재처리 실행', by:'운영자 B',   when:'2026-04-22 09:30', d:'크리덴셜 폐기 → 재발급 요청 생성' },
+      { k:'ok',     t:'해결로 종료', by:'운영자 B',   when:'2026-04-22 16:30', d:'재발급 완료 · 회원 알림 발송 — "발급일자 정정 후 재발급 완료"' },
+    ],
+    resolution:{ state:'해결', reason:'발급일자 정정 후 재발급 완료', msg:'요청하신 분쟁이 해결되었어요. 재발급된 문서를 확인해주세요.', when:'2026-04-22 16:30' },
+    reopens:[],
+  },
+};
+
+const data = SEED[dspId] || SEED['DSP-038'];
+
+// ===================== 상태 → 뱃지 클래스 =====================
+function stClass(s){
+  return ({
+    '접수':'st-recv',
+    '검토 중':'st-rev',
+    '추가 정보 요청':'st-info',
+    '재처리 중':'st-redo',
+    '해결':'st-ok',
+    '기각':'st-rej',
+  })[s] || 'st-rev';
+}
+
+// ===================== 렌더 =====================
+document.getElementById('dsp-id').textContent = data.id;
+document.getElementById('dsp-id-2').textContent = data.id;
+document.getElementById('dsp-headline').textContent = data.headline;
+document.getElementById('dsp-at').textContent = data.at;
+document.getElementById('dsp-at-2').textContent = data.at;
+document.getElementById('dsp-age').textContent = data.age;
+document.getElementById('dsp-age-2').textContent = data.age + ' 경과';
+document.getElementById('dsp-owner').textContent = data.owner;
+document.getElementById('dsp-owner-2').textContent = data.owner;
+// 이의 출처 — INSTITUTION_ENUM 매핑 (단일 진실원: console.html)
+// 4 협업 파트너 + 사용자 본인 — 회원이 분쟁 신고 시 입력 → 운영자가 select 로 정정 가능
+const INSTITUTION_ENUM = [
+  // 협업 파트너 1: 정부 발급
+  { code:'KR-MOJ-IMM',    name:'법무부 출입국·외국인정책본부',   region:'정부 발급' },
+  { code:'KR-NTS',        name:'국세청',                         region:'정부 발급' },
+  { code:'KR-SCOURT-FRM', name:'대법원 전자가족관계등록',        region:'정부 발급' },
+  // 협업 파트너 2: 번역·공증
+  { code:'KR-LB-NOTARY',  name:'리갈브리지 번역공증사무소',      region:'번역·공증' },
+  // 협업 파트너 3: 아포스티유
+  { code:'KR-MOFA-APO',   name:'외교부 영사실 (아포스티유)',     region:'아포스티유' },
+  // 협업 파트너 4: 해외 수령
+  { code:'US-CONSUL',     name:'주미 한국 영사관 (LA)',          region:'해외 수령' },
+  { code:'CA-CONSUL',     name:'주캐나다 한국 영사관',           region:'해외 수령' },
+  { code:'DE-CONSUL',     name:'주독일 한국 영사관',             region:'해외 수령' },
+  { code:'AU-CONSUL',     name:'주호주 한국 영사관',             region:'해외 수령' },
+  // 사용자 본인
+  { code:'USER-SELF',     name:'회원 본인',                      region:'사용자' },
+];
+const INSTITUTION_LABEL = Object.fromEntries(INSTITUTION_ENUM.map(i => [i.code, i.name]));
+function instOptions(selected){
+  return ['<option value="">선택 없음</option>']
+    .concat(INSTITUTION_ENUM.map(i => `<option value="${i.code}" ${i.code === selected ? 'selected' : ''}>${i.code} · ${i.name}</option>`))
+    .join('');
+}
+const srcEl = document.getElementById('dsp-source');
+function renderSource(code){
+  if (!code){
+    srcEl.innerHTML = `<span class="text-muted text-[12px]">없음</span>
+      <select id="dsp-source-select" class="ml-2" style="font-size:11px;padding:2px 6px;border:1px solid #E5E8EB;border-radius:6px;">${instOptions('')}</select>`;
+  } else {
+    const label = INSTITUTION_LABEL[code] || code;
+    srcEl.innerHTML = `<span class="vpill" style="background:#FFF4DE;color:#7a5400;"><span class="mono">${code}</span> · ${label}</span>
+      <select id="dsp-source-select" class="ml-2" title="운영자 정정용" style="font-size:11px;padding:2px 6px;border:1px solid #E5E8EB;border-radius:6px;">${instOptions(code)}</select>
+      <span class="text-muted text-[11px] ml-1">(회원 입력 · 정정 가능)</span>`;
+  }
+  const sel = document.getElementById('dsp-source-select');
+  if (sel) sel.addEventListener('change', () => renderSource(sel.value));
+}
+renderSource(data.sourceCode);
+document.getElementById('dsp-reason-full').textContent = data.reason;
+
+// 상태 뱃지 (헤더 + 개요)
+function paintStateBadge(){
+  const cls = stClass(data.state);
+  ['dsp-state-badge','dsp-state-badge-2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el){ el.className = 'st ' + cls; }
+  });
+  document.getElementById('dsp-state-label').textContent = data.state;
+  document.getElementById('dsp-state-label-2').textContent = data.state;
+}
+paintStateBadge();
+
+// SLA 카드
+function paintSLA(){
+  const c = document.getElementById('sla-card');
+  c.classList.remove('urgent','warn','paused');
+  if (data.sla.done){
+    c.classList.add('paused');
+    document.getElementById('sla-lbl').textContent = '응답 SLA';
+    document.getElementById('sla-val').textContent = '완료됨';
+  } else if (data.sla.paused){
+    c.classList.add('paused');
+    document.getElementById('sla-lbl').textContent = '⏸ SLA 일시 정지';
+    document.getElementById('sla-val').textContent = '회원 회신 대기 중';
+  } else if (data.sla.urgent){
+    c.classList.add('urgent');
+    document.getElementById('sla-lbl').textContent = '⚠ 응답 SLA 임박';
+    document.getElementById('sla-val').textContent = data.sla.remaining + ' 남음';
+  } else {
+    c.classList.add('warn');
+    document.getElementById('sla-lbl').textContent = '응답 SLA 남은 시간';
+    document.getElementById('sla-val').textContent = data.sla.remaining;
+  }
+}
+paintSLA();
+
+// 첨부
+function fileIconKind(k){
+  if (k === 'pdf')  return { cls:'',     label:'PDF' };
+  if (k === 'json') return { cls:'json', label:'TXT' };
+  if (k === 'img')  return { cls:'img',  label:'IMG' };
+  return { cls:'',  label:'FILE' };
+}
+function renderFiles(arr, target, fromUser){
+  const wrap = document.getElementById(target);
+  if (!arr.length){
+    wrap.innerHTML = `<div class="col-span-2 text-[12px] text-muted py-3 text-center border border-dashed border-border rounded-xs">첨부된 자료가 없어요</div>`;
+    return;
+  }
+  wrap.innerHTML = arr.map(f => {
+    const ic = fileIconKind(f.kind);
+    return `<div class="file-card${fromUser ? ' from-user' : ''}">
+      <div class="fic ${ic.cls}">${ic.label}</div>
+      <div class="fb">
+        <div class="fn">${f.name}</div>
+        <div class="ft"><span>${f.size}</span><span>${f.uploaded}</span></div>
+        <div class="ft" style="margin-top:1px;color:#B0B8C1;">${f.hash}</div>
+      </div>
+      <div class="fa">
+        <button title="미리보기"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        <button title="다운로드"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+renderFiles(data.memberFiles, 'member-files', true);
+renderFiles(data.opsFiles,    'ops-files',    false);
+
+// 발급 5단계 미니 파이프라인
+const REQ_STAGES = ['접수','사전 검토','번역 / 검수','공증 서명','발급 완료'];
+function renderPipe(){
+  const w = document.getElementById('req-pipeline');
+  const cur = data.request.stage; // 1..5, 5=완료
+  let html = '';
+  REQ_STAGES.forEach((label, i) => {
+    const idx = i + 1;
+    const cls = idx < cur ? 'done' : (idx === cur ? 'active' : '');
+    html += `<div class="pipe-stage ${cls}"><div class="dot">${cls==='done'?'✓':idx}</div><div class="lbl">${label}</div></div>`;
+    if (i < REQ_STAGES.length - 1){
+      const conn = idx < cur ? 'done' : '';
+      html += `<div class="pipe-conn ${conn}"></div>`;
+    }
+  });
+  w.innerHTML = html;
+
+  const sum = document.getElementById('req-stage-summary');
+  if (cur >= 5){
+    sum.textContent = '발급 완료 (5/5)';
+    sum.style.color = '#00A57A';
+  } else {
+    sum.textContent = `진행 중 — ${cur}/5 단계`;
+    sum.style.color = '#1B64DA';
+  }
+}
+renderPipe();
+
+document.getElementById('req-link').href = `request-detail.html?id=${data.request.id}`;
+document.getElementById('req-id-link').href = `request-detail.html?id=${data.request.id}`;
+document.getElementById('req-id-link').textContent = data.request.id;
+document.getElementById('req-user').textContent = data.request.user;
+document.getElementById('req-country').textContent = data.request.country;
+document.getElementById('req-doc').textContent = data.request.doc;
+document.getElementById('req-issued').textContent = data.request.issued;
+document.getElementById('req-cred').textContent = data.request.cred;
+
+// 회원
+const m = data.member;
+document.getElementById('m-name').textContent = m.name;
+document.getElementById('m-email').textContent = m.email;
+document.getElementById('m-mid').textContent = m.mid;
+document.getElementById('m-country').textContent = m.country;
+document.getElementById('m-joined').textContent = m.joined;
+document.getElementById('m-last').textContent = m.last;
+document.getElementById('m-disputes').textContent = `${m.disputeCount}건 보기`;
+document.getElementById('m-disputes').href = `member-detail.html?id=${m.mid}#disputes`;
+document.getElementById('m-detail-link').href = `member-detail.html?id=${m.mid}`;
+document.getElementById('m-avatar').textContent = m.name.charAt(0).toUpperCase();
+
+// 타임라인
+function renderTimeline(){
+  const wrap = document.getElementById('dsp-timeline');
+  document.getElementById('tl-count').textContent = `${data.timeline.length}건`;
+  wrap.innerHTML = data.timeline.map(it => `
+    <div class="tl-item ${it.k}">
+      <span class="tl-dot"></span>
+      <div class="tl-h">
+        <b>${it.t}</b>
+        <span class="tl-by">${it.by}</span>
+        <span class="tl-time">${it.when}</span>
+      </div>
+      <div class="tl-d">${it.d}</div>
+    </div>
+  `).join('');
+}
+renderTimeline();
+
+// 메모 추가
+document.getElementById('memo-add').addEventListener('click', () => {
+  const txt = document.getElementById('memo-input').value.trim();
+  if (!txt){ toast('메모 내용을 입력해주세요'); return; }
+  const now = new Date();
+  const stamp = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  data.timeline.push({ k:'memo', t:'운영자 메모', by:'운영자 A', when:stamp, d:txt });
+  renderTimeline();
+  document.getElementById('memo-input').value = '';
+  toast('메모가 타임라인에 추가됐어요');
+});
+
+// 상태 변경
+const stateSeg = document.getElementById('state-seg');
+function paintStateSeg(){
+  stateSeg.querySelectorAll('.seg-btn').forEach(b => b.classList.toggle('active', b.dataset.st === data.state));
+  // hint
+  const hint = document.getElementById('state-hint');
+  if (data.state === '추가 정보 요청') hint.textContent = '⏸ "추가 정보 요청" 상태이므로 SLA 카운트다운이 일시 정지돼요.';
+  else if (data.state === '재처리 중') hint.textContent = '재처리 결과가 확정되면 "해결" 또는 "기각"으로 종료해주세요.';
+  else if (data.state === '접수') hint.textContent = '담당 운영자 배정 후 "검토 중"으로 자동 전이될 수 있어요.';
+  else hint.textContent = '"추가 정보 요청" 상태에서는 SLA 카운트다운이 일시 정지돼요.';
+}
+paintStateSeg();
+stateSeg.addEventListener('click', e => {
+  const b = e.target.closest('.seg-btn'); if (!b) return;
+  const next = b.dataset.st;
+  if (next === data.state) return;
+  const prev = data.state;
+  data.state = next;
+  data.sla.paused = (next === '추가 정보 요청');
+  paintStateBadge();
+  paintStateSeg();
+  paintSLA();
+  // 타임라인 기록
+  const now = new Date();
+  const stamp = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  data.timeline.push({ k:'review', t:'상태 변경', by:'운영자 A', when:stamp, d:`${prev} → ${next}` });
+  renderTimeline();
+  toast(`상태가 "${next}"으로 변경됐어요`);
+});
+
+// 태그 분류
+const tagRow = document.getElementById('tag-row');
+function paintTags(){
+  tagRow.querySelectorAll('.tag').forEach(t => t.classList.toggle('active', data.tags.includes(t.dataset.tag)));
+}
+paintTags();
+tagRow.addEventListener('click', e => {
+  const b = e.target.closest('.tag'); if (!b) return;
+  const t = b.dataset.tag;
+  const i = data.tags.indexOf(t);
+  if (i < 0) data.tags.push(t); else data.tags.splice(i, 1);
+  paintTags();
+});
+
+// 연계 액션 — 확인 다이얼로그
+const ACT_CFG = {
+  reissue: { title:'발급 요청을 재처리할까요?',     sub:'번역 재의뢰 + 아포스티유 재발급이 시작되고, 회원에게 알림이 발송돼요.', label:'재처리 시작', tlKey:'action', tlT:'재처리 시작' },
+  revoke:  { title:'기존 크리덴셜을 폐기할까요?',   sub:'사용자 지갑의 크리덴셜이 즉시 무효화되고 검증 시 실패 처리돼요.',     label:'폐기 실행',   tlKey:'action', tlT:'크리덴셜 폐기' },
+  notify:  { title:'회원에게 알림을 보낼까요?',     sub:'앱 푸시와 이메일이 동시에 발송돼요. 메시지는 기본 문구가 사용돼요.',  label:'알림 발송',   tlKey:'action', tlT:'알림 발송' },
+  refund:  { title:'환불 / 정산 차감을 신청할까요?', sub:'관리자 승인 단계로 넘어가요. 정산 메뉴 활성화 시 실연계됩니다.',     label:'신청 보내기', tlKey:'action', tlT:'환불 신청' },
+};
+let pendingAction = null;
+document.querySelectorAll('[data-action]').forEach(b => {
+  b.addEventListener('click', () => {
+    pendingAction = b.dataset.action;
+    const cfg = ACT_CFG[pendingAction];
+    document.getElementById('dlg-title').textContent = cfg.title;
+    document.getElementById('dlg-sub').textContent   = cfg.sub;
+    document.getElementById('dlg-confirm').textContent = cfg.label;
+    document.getElementById('dlg-confirm').className = 'btn primary';
+    document.getElementById('dlg-reason').value = '';
+    document.getElementById('dlg-back').classList.add('open');
+    setTimeout(() => document.getElementById('dlg-reason').focus(), 50);
+  });
+});
+
+// 다이얼로그 — 처리 결과 (해결 / 기각)
+let pendingResolve = null; // 'ok' | 'rej'
+document.getElementById('btn-resolve').addEventListener('click', () => {
+  const reason = document.getElementById('resolution-reason').value.trim();
+  if (!reason){ toast('처리 사유를 입력해주세요'); document.getElementById('resolution-reason').focus(); return; }
+  pendingAction = null; pendingResolve = 'ok';
+  openResolveDialog('해결로 종료할까요?', '회원에게 통보 메시지가 발송되고, 본 페이지가 읽기 전용 모드로 전환돼요.', '해결로 종료');
+});
+document.getElementById('btn-reject').addEventListener('click', () => {
+  const reason = document.getElementById('resolution-reason').value.trim();
+  if (!reason){ toast('기각 사유를 입력해주세요'); document.getElementById('resolution-reason').focus(); return; }
+  pendingAction = null; pendingResolve = 'rej';
+  openResolveDialog('기각으로 종료할까요?', '회원에게 통보 메시지가 발송되고, 본 페이지가 읽기 전용 모드로 전환돼요.', '기각으로 종료');
+});
+function openResolveDialog(title, sub, label){
+  document.getElementById('dlg-title').textContent = title;
+  document.getElementById('dlg-sub').textContent = sub;
+  document.getElementById('dlg-confirm').textContent = label;
+  document.getElementById('dlg-confirm').className = pendingResolve === 'rej' ? 'btn danger' : 'btn success';
+  document.getElementById('dlg-reason').value = document.getElementById('resolution-reason').value;
+  document.getElementById('dlg-reason').placeholder = '처리 결과에 추가할 메모가 있다면 적어주세요 (선택)';
+  document.getElementById('dlg-back').classList.add('open');
+}
+
+document.getElementById('dlg-cancel').addEventListener('click', () => {
+  document.getElementById('dlg-back').classList.remove('open');
+  pendingAction = null; pendingResolve = null;
+});
+document.getElementById('dlg-back').addEventListener('click', e => {
+  if (e.target === e.currentTarget){
+    document.getElementById('dlg-back').classList.remove('open');
+    pendingAction = null; pendingResolve = null;
+  }
+});
+
+document.getElementById('dlg-confirm').addEventListener('click', () => {
+  const reason = document.getElementById('dlg-reason').value.trim();
+  const now = new Date();
+  const stamp = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+  if (pendingResolve){
+    // 처리 결과 종료
+    const isOk = pendingResolve === 'ok';
+    const finalState = isOk ? '해결' : '기각';
+    data.state = finalState;
+    data.sla.done = true; data.sla.paused = false;
+    data.timeline.push({ k:isOk?'ok':'rej', t:`${finalState}으로 종료`, by:'운영자 A', when:stamp, d:reason || document.getElementById('resolution-reason').value });
+    paintStateBadge(); paintSLA();
+    renderTimeline();
+    enterReadonly(finalState);
+    toast(`${finalState} 처리되었어요`);
+  } else if (pendingAction){
+    const cfg = ACT_CFG[pendingAction];
+    data.timeline.push({ k:cfg.tlKey, t:cfg.tlT, by:'운영자 A', when:stamp, d:reason || '사유 미입력' });
+    renderTimeline();
+    toast(`${cfg.tlT} 실행 — 타임라인에 기록됐어요`);
+  }
+  document.getElementById('dlg-back').classList.remove('open');
+  pendingAction = null; pendingResolve = null;
+});
+
+// 읽기 전용 모드 진입
+function enterReadonly(finalState){
+  document.body.classList.add('readonly');
+  const banner = document.getElementById('resolved-banner');
+  const ok = document.getElementById('resolved-ok');
+  banner.classList.remove('hidden');
+  document.getElementById('resolved-state').textContent = finalState;
+  ok.classList.toggle('ok', finalState === '해결');
+  ok.classList.toggle('rej', finalState === '기각');
+  // 관리자라면 재오픈 카드 노출 (모든 사용자에게 모킹)
+  document.getElementById('reopen-card').classList.remove('hidden');
+}
+
+// 종료 상태로 시드된 경우 자동 진입
+if (data.state === '해결' || data.state === '기각'){
+  enterReadonly(data.state);
+}
+
+// 재오픈 (관리자)
+document.getElementById('btn-reopen').addEventListener('click', () => {
+  pendingAction = 'reopen'; pendingResolve = null;
+  document.getElementById('dlg-title').textContent = '분쟁을 재오픈할까요?';
+  document.getElementById('dlg-sub').textContent = '상태가 "검토 중"으로 복귀하고, 재오픈 사유가 타임라인에 기록돼요.';
+  document.getElementById('dlg-confirm').textContent = '재오픈';
+  document.getElementById('dlg-confirm').className = 'btn primary';
+  document.getElementById('dlg-reason').value = '';
+  document.getElementById('dlg-reason').placeholder = '재오픈 사유 (필수)';
+  document.getElementById('dlg-back').classList.add('open');
+  // 일회성 핸들러 교체 — 직접 처리
+  document.getElementById('dlg-confirm').onclick = () => {
+    const reason = document.getElementById('dlg-reason').value.trim();
+    if (!reason){ toast('재오픈 사유를 입력해주세요'); return; }
+    const now = new Date();
+    const stamp = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    data.state = '검토 중';
+    data.sla.done = false;
+    data.timeline.push({ k:'reopen', t:'분쟁 재오픈', by:'관리자 K', when:stamp, d:reason });
+    document.body.classList.remove('readonly');
+    document.getElementById('resolved-banner').classList.add('hidden');
+    document.getElementById('reopen-card').classList.add('hidden');
+    paintStateBadge(); paintStateSeg(); paintSLA();
+    renderTimeline();
+    document.getElementById('dlg-back').classList.remove('open');
+    toast('분쟁이 재오픈되었어요');
+    // 핸들러 원복
+    location.reload();
+  };
+});
+
+// 링크 복사
+document.getElementById('copy-link').addEventListener('click', () => {
+  navigator.clipboard.writeText(location.href).then(() => toast('링크가 복사됐어요')).catch(() => toast('복사할 수 없어요'));
+});
+
+// 토스트
+let toastTimer = null;
+function toast(msg){
+  document.getElementById('toast-msg').textContent = msg;
+  document.getElementById('toast').classList.add('open');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => document.getElementById('toast').classList.remove('open'), 2200);
+}
+</script>
+</body>
+</html>

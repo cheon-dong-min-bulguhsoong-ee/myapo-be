@@ -1,0 +1,2678 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=1440" />
+  <title>MYAPO OPS — 콘솔</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.49.1/dist/apexcharts.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: {
+        colors: {
+          primary:'#3182F6','primary-deep':'#1B64DA','primary-soft':'#E8F2FE',
+          success:'#00C48C','success-soft':'#E6FAF3',
+          warning:'#FFB020','warning-soft':'#FFF4DE',
+          danger:'#F04452','danger-soft':'#FDE7E9',
+          info:'#18BFFF','info-soft':'#E2F7FF',
+          base:'#F9FAFB',border:'#E5E8EB',ink:'#191F28',
+          sub:'#4E5968',muted:'#8B95A1',surface:'#FFFFFF',code:'#11181C',
+        },
+        fontFamily:{
+          sans:['Pretendard Variable','Pretendard','-apple-system','system-ui','sans-serif'],
+          mono:['JetBrains Mono','SFMono-Regular','Menlo','monospace'],
+        },
+        boxShadow:{card:'0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.06)'},
+        borderRadius:{xs:'8px',sm:'12px',md:'16px',pill:'999px'},
+      }}
+    }
+  </script>
+  <style>
+    :root{
+      --color-primary:#3182F6;--color-primary-deep:#1B64DA;--color-primary-soft:#E8F2FE;
+      --color-success:#00C48C;--color-warning:#FFB020;--color-danger:#F04452;--color-info:#18BFFF;
+      --color-bg-base:#F9FAFB;--color-bg-card:#FFFFFF;--color-bg-code:#11181C;
+      --color-border:#E5E8EB;--color-text-primary:#191F28;--color-text-secondary:#4E5968;--color-text-muted:#8B95A1;
+      --shadow-card:0 1px 2px rgba(0,0,0,.04),0 1px 3px rgba(0,0,0,.06);
+    }
+    html,body{background:#EAECEF;}
+    body{font-family:'Pretendard Variable',Pretendard,-apple-system,system-ui,sans-serif;color:#191F28;-webkit-font-smoothing:antialiased;}
+    .mono{font-family:'JetBrains Mono','SFMono-Regular',Menlo,monospace;}
+    .num{font-feature-settings:"tnum" 1;letter-spacing:-0.01em;}
+    .desktop{width:1400px;background:#F9FAFB;border-radius:14px;overflow:hidden;border:1px solid #E5E8EB;box-shadow:0 10px 36px rgba(0,0,0,.10);}
+    .winbar{height:36px;background:#EEF0F3;display:flex;align-items:center;padding:0 12px;gap:6px;border-bottom:1px solid #E5E8EB;flex-shrink:0;}
+    .winbar .dot{width:10px;height:10px;border-radius:999px;}
+    .vpill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;}
+    .side{width:220px;background:#FFFFFF;border-right:1px solid #E5E8EB;flex-shrink:0;display:flex;flex-direction:column;}
+    .side-link{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:600;color:#4E5968;cursor:pointer;margin:1px 6px;text-decoration:none;}
+    .side-link:hover{background:#F9FAFB;}
+    .side-link.active{background:#E8F2FE;color:#3182F6;}
+    .side-link [data-lucide]{width:16px;height:16px;stroke-width:2;flex-shrink:0;}
+    [data-lucide]{width:18px;height:18px;stroke-width:2;}
+    @keyframes pulseBorder{0%,100%{box-shadow:0 0 0 0 rgba(49,130,246,.35);}50%{box-shadow:0 0 0 6px rgba(49,130,246,0);}}
+    .pulse-border{animation:pulseBorder 1.6s ease-in-out infinite;}
+    @keyframes pulseOpacity{0%,100%{opacity:1;}50%{opacity:.45;}}
+    .pulse-opacity{animation:pulseOpacity 1.5s ease-in-out infinite;}
+    .hash-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;background:#E8F2FE;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;color:#1B64DA;}
+    .badge-testnet{background:#E2F7FF;color:#0594BF;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;}
+    .badge-mock{background:#FFF4DE;color:#7a5400;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;}
+
+    /* KPI 카드 */
+    .kpi{background:#fff;border:1px solid #E5E8EB;border-radius:12px;padding:18px 20px;cursor:pointer;transition:all 150ms ease-out;display:flex;flex-direction:column;gap:6px;text-align:left;}
+    .kpi:hover{border-color:#3182F6;box-shadow:0 2px 8px rgba(49,130,246,.08);transform:translateY(-1px);}
+    .kpi.active{border-color:#3182F6;background:#F4F9FF;}
+    .kpi .lbl{font-size:11px;font-weight:700;color:#8B95A1;text-transform:uppercase;letter-spacing:.06em;}
+    .kpi .val{display:flex;align-items:baseline;gap:6px;}
+    .kpi .val .n{font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:800;font-feature-settings:"tnum" 1;letter-spacing:-0.02em;}
+    .kpi .val .u{font-size:12px;font-weight:700;color:#8B95A1;}
+    .kpi.success .n{color:#00C48C;}
+    .kpi.danger  .n{color:#F04452;}
+    .kpi.muted   .n{color:#8B95A1;}
+    .kpi .check{width:16px;height:16px;border-radius:999px;background:#E6FAF3;color:#00C48C;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+    /* 단계 파이프라인 */
+    .pipeline{display:flex;align-items:flex-start;gap:0;width:100%;}
+    .stage{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:120px;}
+    .stage .dot{width:34px;height:34px;border-radius:999px;background:#fff;border:2px solid #E5E8EB;color:#8B95A1;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+    .stage.done .dot{background:#00C48C;border-color:#00C48C;color:#fff;}
+    .stage.active .dot{border-color:#3182F6;color:#3182F6;background:#fff;box-shadow:0 0 0 4px rgba(49,130,246,.15);}
+    .stage .label{margin-top:8px;font-size:11px;font-weight:700;color:#191F28;text-align:center;line-height:1.2;}
+    .stage.done  .label{color:#4E5968;}
+    .stage:not(.done):not(.active) .label{color:#8B95A1;}
+    .connector{flex:1;min-width:64px;display:flex;flex-direction:column;align-items:stretch;padding-top:7px;}
+    .connector .bar{height:2px;background:#E5E8EB;margin:0 4px 8px;}
+    .connector.done .bar{background:#00C48C;}
+    .connector.active .bar{background:#3182F6;}
+    .substeps{display:flex;flex-direction:column;gap:4px;align-items:center;}
+    .substep{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:600;color:#8B95A1;background:#F9FAFB;border:1px solid #E5E8EB;border-radius:999px;padding:2px 8px;white-space:nowrap;}
+    .substep .sd{width:6px;height:6px;border-radius:999px;background:#E5E8EB;}
+    .substep.done{color:#00C48C;background:#E6FAF3;border-color:#00C48C;}
+    .substep.done .sd{background:#00C48C;}
+    .substep.active{color:#3182F6;background:#E8F2FE;border-color:#3182F6;}
+    .substep.active .sd{background:#3182F6;animation:pulseOpacity 1.5s ease-in-out infinite;}
+
+    /* 버튼 */
+    .btn{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:8px;border:1px solid #E5E8EB;background:#fff;font-size:12px;font-weight:600;color:#4E5968;cursor:pointer;transition:all 150ms ease-out;}
+    .btn:hover{background:#F9FAFB;color:#191F28;}
+    .btn.primary{background:#3182F6;border-color:#3182F6;color:#fff;}
+    .btn.primary:hover{background:#1B64DA;border-color:#1B64DA;color:#fff;}
+    .btn.sm{height:28px;padding:0 10px;font-size:11px;}
+
+    /* 입력 */
+    .field{position:relative;display:inline-flex;align-items:center;}
+    .field input,.field select{height:34px;border:1px solid #E5E8EB;border-radius:8px;background:#fff;padding:0 12px;font-size:12px;font-weight:600;color:#191F28;outline:none;font-family:inherit;}
+    .field input{width:280px;padding-left:34px;}
+    .field input:focus,.field select:focus{border-color:#3182F6;box-shadow:0 0 0 3px rgba(49,130,246,.12);}
+    .field svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#8B95A1;pointer-events:none;}
+    .field input::placeholder{color:#B0B8C1;font-weight:500;}
+
+    /* 탭 */
+    .tabs{display:flex;gap:2px;border-bottom:1px solid #E5E8EB;}
+    .tab{padding:10px 16px;font-size:13px;font-weight:700;color:#8B95A1;border-bottom:2px solid transparent;cursor:pointer;background:transparent;border-top:0;border-left:0;border-right:0;font-family:inherit;}
+    .tab:hover{color:#4E5968;}
+    .tab.active{color:#3182F6;border-bottom-color:#3182F6;}
+
+    /* 탭 그룹 — 두 카테고리 (활성 라이프사이클 / 종료된 상태) 시각 분리 */
+    .tab-groups{display:flex;gap:32px;border-bottom:1px solid #E5E8EB;align-items:flex-end;}
+    .tab-group{display:flex;flex-direction:column;}
+    .tg-label{font-size:10px;font-weight:800;color:#8B95A1;text-transform:uppercase;letter-spacing:.06em;padding:0 4px 4px;}
+    .tabs-inner{display:flex;gap:2px;}
+
+    /* 검색 박스 (가변 폭) */
+    .field.search{flex:1;min-width:280px;max-width:520px;}
+    .field.search input{width:100%;}
+
+    /* 활성 필터 칩 */
+    .chips-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;min-height:30px;}
+    .chips-row .meta{font-size:12px;font-weight:600;color:#4E5968;display:inline-flex;align-items:center;gap:6px;}
+    .chips-row .meta b{color:#191F28;font-weight:800;font-family:'JetBrains Mono',monospace;font-feature-settings:"tnum" 1;}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:5px 8px 5px 11px;border-radius:999px;background:#E8F2FE;color:#1B64DA;font-size:12px;font-weight:700;border:1px solid rgba(49,130,246,.12);}
+    .chip .k{color:#4E5968;font-weight:600;}
+    .chip .x{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:999px;background:rgba(27,100,218,.14);cursor:pointer;color:#1B64DA;}
+    .chip .x:hover{background:#1B64DA;color:#fff;}
+    .chip-search{background:#F9FAFB;color:#191F28;border-color:#E5E8EB;}
+    .chip-search .x{background:#E5E8EB;color:#4E5968;}
+    .chip-clear{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:#8B95A1;background:transparent;border:0;padding:5px 8px;cursor:pointer;border-radius:6px;font-family:inherit;}
+    .chip-clear:hover{color:#F04452;background:#FDE7E9;}
+
+    /* 저장된 뷰 드롭다운 */
+    .saved-views{position:relative;}
+    .saved-views .sv-btn{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:8px;border:1px solid #E5E8EB;background:#fff;font-size:12px;font-weight:700;color:#4E5968;cursor:pointer;font-family:inherit;}
+    .saved-views .sv-btn:hover{background:#F9FAFB;color:#191F28;}
+    .saved-views .sv-btn.has-active{background:#E8F2FE;border-color:#3182F6;color:#1B64DA;}
+    .saved-views .sv-menu{position:absolute;top:calc(100% + 6px);left:0;min-width:280px;background:#fff;border:1px solid #E5E8EB;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.08);padding:6px;z-index:30;display:none;}
+    .saved-views.open .sv-menu{display:block;}
+    .sv-section-label{font-size:10px;font-weight:800;color:#8B95A1;text-transform:uppercase;letter-spacing:.06em;padding:8px 10px 4px;}
+    .sv-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;color:#191F28;}
+    .sv-item:hover{background:#F4F9FF;}
+    .sv-item .sv-name{flex:1;}
+    .sv-item .sv-del{opacity:0;color:#8B95A1;cursor:pointer;}
+    .sv-item:hover .sv-del{opacity:1;}
+    .sv-item .sv-del:hover{color:#F04452;}
+    .sv-item.active{background:#E8F2FE;color:#1B64DA;}
+    .sv-divider{height:1px;background:#F2F4F6;margin:4px 6px;}
+    .sv-save{display:flex;align-items:center;gap:6px;padding:8px 10px;font-size:12px;font-weight:700;color:#3182F6;cursor:pointer;border-radius:8px;}
+    .sv-save:hover{background:#F4F9FF;}
+    .sv-save:disabled{opacity:.4;cursor:not-allowed;color:#8B95A1;}
+    .sv-empty{padding:8px 10px;font-size:12px;color:#8B95A1;}
+
+    /* 회원: KPI clickable + 위험 신호 + 다중 계정 카드 + 내보내기 모달 */
+    .kpi-clickable{cursor:pointer;}
+    .kpi-clickable:hover{border-color:#3182F6;}
+    .kpi-clickable.kpi-on{border-color:#3182F6;background:#F4F9FF;box-shadow:inset 0 0 0 1px #3182F6;}
+    .risk-bar{display:block;width:100%;height:100%;border-radius:0;}
+    .risk-icons{display:inline-flex;gap:4px;align-items:center;}
+    .risk-pip{width:18px;height:18px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;}
+    .meta-flag{font-size:14px;line-height:1;}
+    .meta-cnt{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:6px;background:#F2F4F6;color:#4E5968;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;font-feature-settings:"tnum" 1;}
+    .meta-cnt.warn{background:#FDE7E9;color:#F04452;}
+    .meta-cnt svg{width:10px;height:10px;}
+    .multi-card{margin-bottom:14px;background:#FFF8E6;border:1px solid #FFE7A8;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;}
+    .multi-card .ic{width:32px;height:32px;border-radius:8px;background:#FFB020;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .multi-card .body{flex:1;min-width:0;}
+    .multi-card .ttl{font-size:13px;font-weight:800;color:#191F28;}
+    .multi-card .desc{font-size:12px;color:#4E5968;margin-top:2px;}
+    .multi-card .btn{background:#fff;}
+
+    .mexp-overlay{position:fixed;inset:0;background:rgba(17,24,39,.45);display:flex;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(4px);}
+    .mexp-overlay[hidden]{display:none;}
+    .mexp-modal{background:#fff;border-radius:16px;width:520px;max-width:92vw;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.18);}
+    .mexp-head{padding:20px 22px 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;border-bottom:1px solid #F2F4F6;}
+    .mexp-close{width:28px;height:28px;border-radius:8px;border:0;background:transparent;color:#8B95A1;font-size:20px;line-height:1;cursor:pointer;}
+    .mexp-close:hover{background:#F2F4F6;color:#191F28;}
+    .mexp-body{padding:18px 22px;overflow:auto;display:flex;flex-direction:column;gap:18px;}
+    .mexp-section{display:flex;flex-direction:column;gap:8px;}
+    .mexp-label{font-size:12px;font-weight:700;color:#191F28;}
+    .mexp-radio{display:flex;flex-direction:column;gap:6px;}
+    .mexp-radio label, .mexp-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #E5E8EB;border-radius:8px;font-size:13px;color:#4E5968;cursor:pointer;}
+    .mexp-radio label:has(input:checked){border-color:#3182F6;background:#F4F9FF;color:#1B64DA;font-weight:700;}
+    .mexp-body textarea{width:100%;border:1px solid #E5E8EB;border-radius:8px;padding:10px 12px;font-size:13px;font-family:inherit;resize:vertical;}
+    .mexp-body textarea:focus{outline:none;border-color:#3182F6;box-shadow:0 0 0 3px rgba(49,130,246,.12);}
+    .mexp-foot{padding:14px 22px;border-top:1px solid #F2F4F6;display:flex;justify-content:flex-end;gap:8px;}
+    .text-danger{color:#F04452;}
+
+    /* 테이블 */
+    .tbl{background:#fff;border:1px solid #E5E8EB;border-radius:12px;overflow:hidden;box-shadow:var(--shadow-card);}
+    .tbl-head{display:grid;background:#F9FAFB;padding:10px 18px;font-size:11px;font-weight:700;color:#8B95A1;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #E5E8EB;}
+    .tbl-row{display:grid;padding:14px 18px;border-bottom:1px solid #F2F4F6;font-size:13px;align-items:center;cursor:pointer;column-gap:10px;}
+    .tbl-row:last-child{border-bottom:0;}
+    .tbl-row:hover{background:#F9FAFB;}
+    .tbl-row > *{min-width:0;word-break:keep-all;overflow-wrap:anywhere;line-height:1.45;}
+    .tbl-head{column-gap:10px;padding-left:18px;padding-right:18px;}
+    .tbl-head > *{min-width:0;word-break:keep-all;line-height:1.3;}
+
+    .global-nav{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px;padding:10px 14px;border:1px solid #E5E8EB;border-radius:999px;background:rgba(255,255,255,.84);box-shadow:0 1px 2px rgba(0,0,0,.04);}
+    .global-nav__links{display:flex;align-items:center;gap:4px;}
+    .global-nav__link{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 12px;border-radius:999px;color:#4E5968;font-size:13px;font-weight:700;text-decoration:none;}
+    .global-nav__link.active{background:#E8F2FE;color:#1B64DA;}
+    .global-tabs{position:sticky;top:0;z-index:200;display:flex;gap:0;background:#fff;border-bottom:1px solid #E5E8EB;padding:0 32px;}
+    .global-tab{padding:14px 20px;font-size:14px;font-weight:600;color:#4E5968;text-decoration:none;border-bottom:2px solid transparent;}
+    .global-tab.active{color:#3182F6;border-bottom-color:#3182F6;}
+    :focus-visible{outline:2px solid #3182F6;outline-offset:2px;}
+
+    /* 페이지 토글 */
+    .page{display:none;}
+    .page.active{display:block;}
+
+    /* 인라인 펼침 행 */
+    .row-wrap{border-bottom:1px solid #F2F4F6;}
+    .row-wrap:last-child{border-bottom:0;}
+    .row-wrap .tbl-row{border-bottom:0;}
+    .row-wrap.open{background:#F4F9FF;}
+    .row-wrap.open .tbl-row{background:#F4F9FF;}
+    .row-expand{display:none;background:#FAFBFC;border-top:1px solid #E5E8EB;padding:24px 22px;}
+    .row-wrap.open .row-expand{display:block;}
+    .chev{transition:transform 200ms ease-out;color:#8B95A1;}
+    .row-wrap.open .chev{transform:rotate(180deg);color:#3182F6;}
+
+    /* =================== 대시보드 =================== */
+    /* LIVE 인디케이터 */
+    .live-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 10px 5px 8px;border-radius:999px;background:#FDE7E9;color:#C0303B;font-size:11px;font-weight:800;letter-spacing:.04em;}
+    .live-pill .ldot{width:7px;height:7px;border-radius:999px;background:#F04452;animation:livePulse 1.4s ease-in-out infinite;}
+    .live-pill.paused{background:#F2F4F6;color:#4E5968;}
+    .live-pill.paused .ldot{background:#8B95A1;animation:none;}
+    @keyframes livePulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(240,68,82,.55);}50%{transform:scale(1.1);box-shadow:0 0 0 5px rgba(240,68,82,0);}}
+
+    /* 작은 통계 카드 (대시보드 KPI) */
+    .stat{background:#fff;border:1px solid #E5E8EB;border-radius:12px;padding:14px 16px;cursor:pointer;transition:all 150ms ease-out;display:flex;flex-direction:column;gap:6px;text-align:left;}
+    .stat:hover{border-color:#3182F6;box-shadow:0 2px 8px rgba(49,130,246,.08);transform:translateY(-1px);}
+    .stat .h{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+    .stat .lbl{font-size:11px;font-weight:700;color:#8B95A1;display:inline-flex;align-items:center;gap:5px;}
+    .stat .lbl .ck{width:14px;height:14px;border-radius:999px;background:#E6FAF3;color:#00C48C;display:flex;align-items:center;justify-content:center;}
+    .stat .ic{width:24px;height:24px;border-radius:8px;background:#F4F9FF;color:#3182F6;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .stat .ic [data-lucide]{width:13px;height:13px;}
+    .stat.success .ic{background:#E6FAF3;color:#00C48C;}
+    .stat.warning .ic{background:#FFF4DE;color:#B27500;}
+    .stat.danger  .ic{background:#FDE7E9;color:#C0303B;}
+    .stat.info    .ic{background:#E2F7FF;color:#0594BF;}
+    .stat.muted   .ic{background:#F2F4F6;color:#4E5968;}
+    .stat .v{display:flex;align-items:baseline;gap:5px;}
+    .stat .n{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:800;color:#191F28;font-feature-settings:"tnum" 1;letter-spacing:-0.02em;}
+    .stat.success .n{color:#00A57A;}
+    .stat.danger  .n{color:#C0303B;}
+    .stat.warning .n{color:#B27500;}
+    .stat.info    .n{color:#0594BF;}
+    .stat .u{font-size:11px;font-weight:700;color:#8B95A1;}
+    .stat .delta{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;font-feature-settings:"tnum" 1;}
+    .stat .delta.up{color:#00A57A;}
+    .stat .delta.dn{color:#C0303B;}
+    .stat .delta.flat{color:#8B95A1;}
+    .stat .stat-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:#8B95A1;}
+    .stat .stat-foot .avg{font-weight:600;}
+    .stat .spark{height:22px;flex-shrink:0;}
+    .stat.placeholder{background:repeating-linear-gradient(135deg,#fff 0 8px,#FAFBFC 8px 16px);}
+    .stat.placeholder .n{color:#8B95A1;}
+    .stat.placeholder::after{content:"임시";position:absolute;top:8px;right:10px;font-size:9px;font-weight:800;color:#B27500;background:#FFF4DE;padding:1px 6px;border-radius:999px;letter-spacing:.04em;}
+    .stat.placeholder{position:relative;}
+
+    /* 섹션 카드 */
+    .panel{background:#fff;border:1px solid #E5E8EB;border-radius:12px;box-shadow:var(--shadow-card);}
+    .panel-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #F2F4F6;}
+    .panel-head h3{font-size:13px;font-weight:800;color:#191F28;letter-spacing:-0.01em;display:inline-flex;align-items:center;gap:8px;}
+    .panel-head h3 [data-lucide]{width:15px;height:15px;color:#4E5968;}
+    .panel-head .meta{font-size:11px;color:#8B95A1;font-weight:600;}
+    .panel-body{padding:16px 18px;}
+
+    /* 차트 컨테이너 */
+    .chart-box{width:100%;}
+
+    /* 병목 단계 */
+    .bottleneck{display:flex;flex-direction:column;gap:10px;}
+    .bn-row{display:grid;grid-template-columns:28px 1fr 70px 80px;gap:12px;align-items:center;padding:10px 12px;border-radius:8px;background:#FAFBFC;border:1px solid #F2F4F6;transition:all 120ms;}
+    .bn-row.hot{background:#FFF4DE;border-color:#FFD380;}
+    .bn-row .num{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:14px;color:#8B95A1;}
+    .bn-row.hot .num{color:#B27500;}
+    .bn-row .name{font-size:13px;font-weight:700;color:#191F28;}
+    .bn-row .name .sub{display:block;font-size:11px;font-weight:500;color:#8B95A1;margin-top:1px;}
+    .bn-row .count{text-align:right;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:#191F28;font-feature-settings:"tnum" 1;}
+    .bn-row .count .uu{font-size:10px;font-weight:700;color:#8B95A1;margin-left:2px;}
+    .bn-row .dur{text-align:right;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#4E5968;}
+    .bn-row.hot .dur{color:#B27500;}
+
+    /* 행동 패턴 - 도넛 + 리스트 */
+    .donut-card{display:flex;align-items:center;gap:14px;}
+    .donut-card .legend{flex:1;display:flex;flex-direction:column;gap:7px;min-width:0;}
+    .lg-row{display:flex;align-items:center;gap:8px;font-size:12px;}
+    .lg-row .sw{width:9px;height:9px;border-radius:999px;flex-shrink:0;}
+    .lg-row .lg-label{flex:1;font-weight:600;color:#191F28;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .lg-row .lg-val{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#4E5968;font-feature-settings:"tnum" 1;}
+    .lg-row .lg-pct{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#8B95A1;width:38px;text-align:right;}
+
+    /* 단일 수치 (재요청률) */
+    .big-stat{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 12px;text-align:center;gap:4px;}
+    .big-stat .nn{font-family:'JetBrains Mono',monospace;font-size:38px;font-weight:800;color:#191F28;font-feature-settings:"tnum" 1;letter-spacing:-0.02em;}
+    .big-stat .uu{font-size:14px;font-weight:700;color:#8B95A1;margin-left:2px;}
+    .big-stat .desc{font-size:11px;color:#8B95A1;font-weight:600;}
+    .big-stat .delta{margin-top:6px;display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+    .big-stat .delta.dn{color:#00A57A;}
+    .big-stat .delta.up{color:#C0303B;}
+
+    /* 활동 피드 */
+    .feed{display:flex;flex-direction:column;}
+    .feed-row{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid #F2F4F6;}
+    .feed-row:last-child{border-bottom:0;}
+    .feed-row .fi{width:24px;height:24px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .feed-row .fi [data-lucide]{width:13px;height:13px;}
+    .feed-row .fi.success{background:#E6FAF3;color:#00A57A;}
+    .feed-row .fi.danger{background:#FDE7E9;color:#C0303B;}
+    .feed-row .fi.warning{background:#FFF4DE;color:#B27500;}
+    .feed-row .fi.info{background:#E2F7FF;color:#0594BF;}
+    .feed-row .fi.muted{background:#F2F4F6;color:#4E5968;}
+    .feed-row .ft{flex:1;min-width:0;}
+    .feed-row .ft .l1{font-size:12px;font-weight:700;color:#191F28;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px;}
+    .feed-row .ft .l1 .who{color:#1B64DA;font-family:'JetBrains Mono',monospace;font-weight:600;}
+    .feed-row .ft .l2{font-size:11px;color:#8B95A1;margin-top:2px;font-weight:500;}
+    .feed-row .tt{font-size:11px;color:#8B95A1;font-weight:600;flex-shrink:0;font-family:'JetBrains Mono',monospace;font-feature-settings:"tnum" 1;}
+
+    /* 위험 신호 카드 */
+    .alert-card{border:1px solid #E5E8EB;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;cursor:pointer;transition:all 150ms;background:#fff;}
+    .alert-card:hover{transform:translateY(-1px);}
+    .alert-card.danger{border-color:#F8B8BE;background:#FEF4F5;}
+    .alert-card.danger:hover{box-shadow:0 4px 12px rgba(240,68,82,.12);}
+    .alert-card.warning{border-color:#FFD380;background:#FFFBF1;}
+    .alert-card.warning:hover{box-shadow:0 4px 12px rgba(255,176,32,.12);}
+    .alert-card.info{border-color:#9CDFF8;background:#F2FBFF;}
+    .alert-card.info:hover{box-shadow:0 4px 12px rgba(24,191,255,.12);}
+    .alert-card .ah{display:flex;align-items:center;gap:8px;}
+    .alert-card .ah .aic{width:26px;height:26px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .alert-card.danger  .ah .aic{background:#F04452;color:#fff;}
+    .alert-card.warning .ah .aic{background:#FFB020;color:#fff;}
+    .alert-card.info    .ah .aic{background:#18BFFF;color:#fff;}
+    .alert-card .ah .aic [data-lucide]{width:14px;height:14px;}
+    .alert-card .at{font-size:12px;font-weight:800;color:#191F28;flex:1;}
+    .alert-card .av{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:22px;color:#191F28;font-feature-settings:"tnum" 1;letter-spacing:-0.02em;}
+    .alert-card .av .uu{font-size:11px;font-weight:700;color:#8B95A1;margin-left:2px;}
+    .alert-card .ad{font-size:11px;color:#4E5968;font-weight:600;line-height:1.45;}
+    .alert-card .go{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:800;color:#1B64DA;}
+    .alert-card.warning .go{color:#B27500;}
+    .alert-card.danger  .go{color:#C0303B;}
+    .alert-card.info    .go{color:#0594BF;}
+
+    /* 빠른 액션 그리드 */
+    .qa-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+    .qa{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid #E5E8EB;border-radius:10px;background:#fff;cursor:pointer;transition:all 120ms;font-family:inherit;text-align:left;}
+    .qa:hover{border-color:#3182F6;background:#F4F9FF;transform:translateY(-1px);}
+    .qa .qi{width:30px;height:30px;border-radius:8px;background:#F4F9FF;color:#3182F6;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .qa .qi [data-lucide]{width:14px;height:14px;}
+    .qa .qt{font-size:12px;font-weight:700;color:#191F28;}
+    .qa .qs{font-size:10px;color:#8B95A1;font-weight:500;margin-top:1px;}
+
+    /* 일시정지 토글 버튼 */
+    .live-ctrl{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:999px;border:1px solid #E5E8EB;background:#fff;font-size:11px;font-weight:700;color:#4E5968;cursor:pointer;font-family:inherit;}
+    .live-ctrl:hover{background:#F9FAFB;color:#191F28;}
+    .live-ctrl [data-lucide]{width:12px;height:12px;}
+
+    /* 데이터 새로 들어왔을 때 깜빡 */
+    @keyframes flashUpdate{0%{background:#E8F2FE;}100%{background:transparent;}}
+    .flash-update{animation:flashUpdate 1.2s ease-out;}
+
+    /* 마지막 갱신 표시 */
+    .last-tick{font-size:11px;color:#8B95A1;font-weight:600;font-family:'JetBrains Mono',monospace;font-feature-settings:"tnum" 1;}
+  </style>
+</head>
+<body class="min-h-screen">
+
+<nav class="global-tabs" role="tablist">
+  <a href="./index.html" class="global-tab" role="tab">인덱스</a>
+  <a href="./app.html" class="global-tab" role="tab">앱</a>
+  <a href="./institution-kr.html" class="global-tab" role="tab">국내 발급 기관</a>
+  <a href="./institution-translator.html" class="global-tab" role="tab">번역·공증사</a>
+  <a href="./institution-apostille.html" class="global-tab" role="tab">아포스티유</a>
+  <a href="./institution-overseas.html" class="global-tab" role="tab">해외 수령 기관</a>
+  <a href="./console.html" class="global-tab active" role="tab" aria-current="page">콘솔</a>
+</nav>
+
+<header class="max-w-[1440px] mx-auto px-8 pt-8 pb-5">
+  <nav class="global-nav" aria-label="전역 네비게이션">
+    <div class="global-nav__links">
+      <a class="global-nav__link" href="index.html">홈</a>
+      <a class="global-nav__link" href="app.html">MyApo 앱</a>
+      <a class="global-nav__link" href="institution-kr.html">국내 발급 기관</a>
+      <a class="global-nav__link" href="institution-overseas.html">해외 수령 기관</a>
+      <a class="global-nav__link active" href="console.html" aria-current="page">DataOps 콘솔</a>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="badge-testnet">Testnet</span>
+      <span class="badge-mock">Mock</span>
+    </div>
+  </nav>
+</header>
+
+<main class="max-w-[1440px] mx-auto px-4 pb-16">
+
+<div class="desktop mx-auto">
+  <div class="winbar">
+    <span class="dot bg-danger"></span><span class="dot bg-warning"></span><span class="dot bg-success"></span>
+    <span class="ml-3 text-[11px] text-muted mono" id="winbar-url">ops.myapo.demo/console/dashboard</span>
+    <span class="ml-auto flex items-center gap-2"><span class="badge-testnet">Testnet</span><span class="badge-mock">Mock</span></span>
+  </div>
+
+  <div class="flex" style="min-height:900px;">
+    <!-- 사이드바 -->
+    <aside class="side p-3">
+      <div class="px-3 pt-3 pb-3 mb-2 border-b border-border">
+        <div class="text-[12px] font-bold text-ink">MYAPO OPS</div>
+        <div class="text-[10px] text-muted mt-0.5">운영 콘솔</div>
+      </div>
+      <a class="side-link active" data-page="dashboard"><i data-lucide="layout-dashboard"></i>대시보드</a>
+      <a class="side-link" data-page="docs"><i data-lucide="file-check"></i>문서 관리</a>
+      <a class="side-link" data-page="s3"><i data-lucide="database"></i>파일 로그</a>
+      <a class="side-link" data-page="auth"><i data-lucide="shield-check"></i>인증 로그</a>
+      <a class="side-link" data-page="dispute"><i data-lucide="alert-triangle"></i>분쟁 추적</a>
+      <a class="side-link" data-page="members"><i data-lucide="users"></i>회원 관리</a>
+      <a class="side-link opacity-50" style="cursor:default;"><i data-lucide="coins"></i>정산 로그
+        <span class="ml-auto text-[9px] vpill bg-base border border-border text-muted">예정</span>
+      </a>
+
+      <div class="px-3 pt-4 pb-2 mt-3 border-t border-border">
+        <div class="text-[10px] font-bold text-muted uppercase mb-1.5" style="letter-spacing:.06em;">협업 파트너</div>
+        <a class="side-link" href="./institution-kr.html" target="_blank">
+          <i data-lucide="building-2"></i>국내 발급 기관
+          <i data-lucide="external-link" style="margin-left:auto;width:11px;height:11px;color:#8B95A1;"></i>
+        </a>
+        <a class="side-link" href="./institution-translator.html" target="_blank">
+          <i data-lucide="languages"></i>번역·공증사
+          <i data-lucide="external-link" style="margin-left:auto;width:11px;height:11px;color:#8B95A1;"></i>
+        </a>
+        <a class="side-link" href="./institution-apostille.html" target="_blank">
+          <i data-lucide="stamp"></i>아포스티유
+          <i data-lucide="external-link" style="margin-left:auto;width:11px;height:11px;color:#8B95A1;"></i>
+        </a>
+        <a class="side-link" href="./institution-overseas.html" target="_blank">
+          <i data-lucide="package-check"></i>해외 수령 기관
+          <i data-lucide="external-link" style="margin-left:auto;width:11px;height:11px;color:#8B95A1;"></i>
+        </a>
+      </div>
+
+      <div class="mt-auto px-3 pb-3 pt-6 border-t border-border mt-4">
+        <div class="text-[10px] text-muted">v3.2 · 2026-05-03</div>
+      </div>
+    </aside>
+
+    <div class="flex-1 bg-base overflow-auto">
+
+      <!-- ============================== 대시보드 (Placeholder) ============================== -->
+      <section class="page active" data-page="dashboard">
+        <div class="p-8">
+
+          <!-- 상단 헤드라인 -->
+          <div class="flex items-start justify-between mb-6 gap-4">
+            <div>
+              <h1 class="text-[22px] font-extrabold text-ink" style="letter-spacing:-0.02em;">대시보드</h1>
+              <div class="text-[13px] text-muted mt-1">오늘의 운영 현황 · 위험 신호 · 사용자 행동을 한 화면에서 확인할 수 있어요.</div>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <span class="last-tick" id="dash-last-tick">마지막 갱신 · 방금 전</span>
+              <span class="live-pill" id="dash-live"><span class="ldot"></span><span id="dash-live-text">LIVE · 5초</span></span>
+              <button class="live-ctrl" id="dash-pause" title="자동 갱신 일시정지">
+                <i data-lucide="pause" id="dash-pause-icon"></i><span id="dash-pause-text">일시정지</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- ========== 1. 헤드라인 KPI ========== -->
+          <div class="mb-3">
+            <div class="text-[11px] font-extrabold text-muted uppercase tracking-wider mb-2.5" style="letter-spacing:.06em;">운영 지표</div>
+            <div class="grid gap-3" style="grid-template-columns:repeat(4,minmax(0,1fr));">
+              <button class="stat" data-jump-page="docs" data-jump-tab="all">
+                <div class="h">
+                  <span class="lbl">오늘 발급 요청</span>
+                  <span class="ic"><i data-lucide="file-plus"></i></span>
+                </div>
+                <div class="v"><span class="n" id="d-kpi-today">152</span><span class="u">건</span></div>
+                <div class="stat-foot"><span class="delta up" id="d-kpi-today-d"><i data-lucide="trending-up" style="width:10px;height:10px;"></i>+18.7%</span><span class="avg">전일 134건</span></div>
+              </button>
+              <button class="stat success" data-jump-page="docs" data-jump-tab="all">
+                <div class="h">
+                  <span class="lbl"><span class="ck"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>완료율</span>
+                  <span class="ic"><i data-lucide="check-circle-2"></i></span>
+                </div>
+                <div class="v"><span class="n" id="d-kpi-rate">93.4</span><span class="u">%</span></div>
+                <div class="stat-foot"><span class="delta up" id="d-kpi-rate-d"><i data-lucide="trending-up" style="width:10px;height:10px;"></i>+1.2%p</span><span class="avg">7일 92.2%</span></div>
+              </button>
+              <button class="stat info" data-jump-page="docs" data-jump-tab="all">
+                <div class="h">
+                  <span class="lbl">평균 처리 시간</span>
+                  <span class="ic"><i data-lucide="timer"></i></span>
+                </div>
+                <div class="v"><span class="n" id="d-kpi-avg">42.6</span><span class="u">분</span></div>
+                <div class="stat-foot"><span class="delta dn" id="d-kpi-avg-d"><i data-lucide="trending-down" style="width:10px;height:10px;"></i>-3.2분</span><span class="avg">7일 45.8분</span></div>
+              </button>
+              <button class="stat" data-jump-page="docs" data-jump-tab="progress">
+                <div class="h">
+                  <span class="lbl">진행 중</span>
+                  <span class="ic"><i data-lucide="loader"></i></span>
+                </div>
+                <div class="v"><span class="n" id="d-kpi-prog">5</span><span class="u">건</span></div>
+                <div class="stat-foot"><span class="delta flat"><i data-lucide="minus" style="width:10px;height:10px;"></i>±0</span><span class="avg">전일 5건</span></div>
+              </button>
+              <button class="stat" data-jump-page="auth">
+                <div class="h">
+                  <span class="lbl">오늘 인증 시도</span>
+                  <span class="ic"><i data-lucide="shield-check"></i></span>
+                </div>
+                <div class="v"><span class="n" id="d-kpi-auth">187</span><span class="u">건</span></div>
+                <div class="stat-foot"><span class="delta up"><i data-lucide="trending-up" style="width:10px;height:10px;"></i>+12.3%</span><span class="avg">전일 167건</span></div>
+              </button>
+              <button class="stat success" data-jump-page="docs" data-jump-tab="submitted">
+                <div class="h">
+                  <span class="lbl">오늘 기관 제출</span>
+                  <span class="ic"><i data-lucide="send"></i></span>
+                </div>
+                <div class="v"><span class="n" id="d-kpi-sub">12</span><span class="u">건</span></div>
+                <div class="stat-foot"><span class="delta dn"><i data-lucide="trending-down" style="width:10px;height:10px;"></i>-2건</span><span class="avg">반려율 16.7%</span></div>
+              </button>
+              <button class="stat danger" data-jump-page="dispute">
+                <div class="h">
+                  <span class="lbl">미해결 분쟁</span>
+                  <span class="ic"><i data-lucide="alert-triangle"></i></span>
+                </div>
+                <div class="v"><span class="n" id="d-kpi-disp">3</span><span class="u">건</span></div>
+                <div class="stat-foot"><span class="delta up" id="d-kpi-disp-d"><i data-lucide="trending-up" style="width:10px;height:10px;"></i>+1</span><span class="avg">7일 평균 2.1건</span></div>
+              </button>
+              <button class="stat warning" data-jump-page="docs" data-jump-tab="valid">
+                <div class="h">
+                  <span class="lbl">만료 임박 (7일 이내)</span>
+                  <span class="ic"><i data-lucide="hourglass"></i></span>
+                </div>
+                <div class="v"><span class="n" id="d-kpi-exp">14</span><span class="u">건</span></div>
+                <div class="stat-foot"><span class="delta up"><i data-lucide="trending-up" style="width:10px;height:10px;"></i>+2</span><span class="avg">전일 12건</span></div>
+              </button>
+            </div>
+          </div>
+
+          <div class="mb-7">
+            <div class="text-[11px] font-extrabold text-muted uppercase tracking-wider mb-2.5 mt-5 flex items-center gap-2" style="letter-spacing:.06em;">
+              정산 지표
+              <span class="vpill" style="background:#FFF4DE;color:#7a5400;font-size:9px;padding:1px 7px;">임시 · 정산 메뉴 정식 오픈 시 교체 예정</span>
+            </div>
+            <div class="grid grid-cols-5 gap-3">
+              <div class="stat placeholder" style="cursor:default;">
+                <div class="h"><span class="lbl">누적 정산 금액</span><span class="ic"><i data-lucide="coins"></i></span></div>
+                <div class="v"><span class="n">₩ 248.6M</span></div>
+                <div class="stat-foot"><span class="avg">2024.06 ~ 현재</span></div>
+              </div>
+              <div class="stat placeholder" style="cursor:default;">
+                <div class="h"><span class="lbl">이번 달 정산 건수</span><span class="ic"><i data-lucide="receipt"></i></span></div>
+                <div class="v"><span class="n">312</span><span class="u">건</span></div>
+                <div class="stat-foot"><span class="delta up"><i data-lucide="trending-up" style="width:10px;height:10px;"></i>+24%</span><span class="avg">전월 251건</span></div>
+              </div>
+              <div class="stat placeholder" style="cursor:default;">
+                <div class="h"><span class="lbl">이번 달 수수료 수익</span><span class="ic"><i data-lucide="trending-up"></i></span></div>
+                <div class="v"><span class="n">₩ 12.4M</span></div>
+                <div class="stat-foot"><span class="delta up"><i data-lucide="trending-up" style="width:10px;height:10px;"></i>+18%</span><span class="avg">전월 ₩ 10.5M</span></div>
+              </div>
+              <div class="stat placeholder" style="cursor:default;">
+                <div class="h"><span class="lbl">미정산 대기</span><span class="ic"><i data-lucide="clock"></i></span></div>
+                <div class="v"><span class="n">47</span><span class="u">건</span></div>
+                <div class="stat-foot"><span class="avg">합계 ₩ 3.8M</span></div>
+              </div>
+              <div class="stat placeholder" style="cursor:default;">
+                <div class="h"><span class="lbl">번역사 / 공증인 지급 예정</span><span class="ic"><i data-lucide="users"></i></span></div>
+                <div class="v"><span class="n">₩ 8.6M</span></div>
+                <div class="stat-foot"><span class="avg">이번 주 정산 예정</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ========== 2. 시계열 차트 2종 ========== -->
+          <div class="grid grid-cols-2 gap-4 mb-7">
+            <div class="panel">
+              <div class="panel-head">
+                <h3><i data-lucide="bar-chart-3"></i>시간대별 발급량 (오늘)</h3>
+                <span class="meta">00:00 ~ 23:59 · 1시간 단위</span>
+              </div>
+              <div class="panel-body">
+                <div id="chart-hourly" class="chart-box"></div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head">
+                <h3><i data-lucide="line-chart"></i>7일 추이 (발급량 · 완료율 · 실패율)</h3>
+                <span class="meta">최근 7일</span>
+              </div>
+              <div class="panel-body">
+                <div id="chart-weekly" class="chart-box"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ========== 3. 단계별 병목 + 4. 행동 패턴 ========== -->
+          <div class="grid grid-cols-3 gap-4 mb-7">
+
+            <!-- 병목 분석 (1/3) -->
+            <div class="panel" style="grid-column:span 1;">
+              <div class="panel-head">
+                <h3><i data-lucide="git-merge"></i>단계별 병목</h3>
+                <span class="meta">현재 진행 중</span>
+              </div>
+              <div class="panel-body">
+                <div class="bottleneck">
+                  <div class="bn-row">
+                    <span class="num">1</span>
+                    <span class="name">MyApo 접수<span class="sub">요청 수신·검증</span></span>
+                    <span class="count">0<span class="uu">건</span></span>
+                    <span class="dur">2.4분</span>
+                  </div>
+                  <div class="bn-row">
+                    <span class="num">2</span>
+                    <span class="name">정부 발급 대기<span class="sub">협업 파트너</span></span>
+                    <span class="count">1<span class="uu">건</span></span>
+                    <span class="dur">8.1분</span>
+                  </div>
+                  <div class="bn-row hot">
+                    <span class="num">3</span>
+                    <span class="name">번역·공증 대기<span class="sub">협업 파트너</span></span>
+                    <span class="count">3<span class="uu">건</span></span>
+                    <span class="dur">28.7분</span>
+                  </div>
+                  <div class="bn-row">
+                    <span class="num">4</span>
+                    <span class="name">아포스티유 대기<span class="sub">협업 파트너</span></span>
+                    <span class="count">1<span class="uu">건</span></span>
+                    <span class="dur">5.3분</span>
+                  </div>
+                  <div class="bn-row">
+                    <span class="num">5</span>
+                    <span class="name">사용자 지갑 전달<span class="sub">MyApo 마무리</span></span>
+                    <span class="count">0<span class="uu">건</span></span>
+                    <span class="dur">1.8분</span>
+                  </div>
+                </div>
+                <div class="mt-3 text-[11px] text-muted flex items-center gap-1.5"><i data-lucide="info" style="width:11px;height:11px;"></i><span class="font-semibold">번역·공증 협업 단계</span>의 대기 시간이 가장 길어요.</div>
+              </div>
+            </div>
+
+            <!-- 행동 패턴 (2/3) -->
+            <div class="panel" style="grid-column:span 2;">
+              <div class="panel-head">
+                <h3><i data-lucide="users-round"></i>사용자 행동 패턴</h3>
+                <span class="meta">최근 30일</span>
+              </div>
+              <div class="panel-body">
+                <div class="grid grid-cols-3 gap-5 mb-5">
+                  <!-- 국가별 -->
+                  <div>
+                    <div class="text-[11px] font-extrabold text-muted uppercase mb-2.5" style="letter-spacing:.06em;">국가별 분포</div>
+                    <div class="donut-card">
+                      <div id="donut-country" style="width:96px;height:96px;flex-shrink:0;"></div>
+                      <div class="legend">
+                        <div class="lg-row"><span class="sw" style="background:#3182F6;"></span><span class="lg-label">🇺🇸 미국</span><span class="lg-val">214</span><span class="lg-pct">42%</span></div>
+                        <div class="lg-row"><span class="sw" style="background:#00C48C;"></span><span class="lg-label">🇨🇦 캐나다</span><span class="lg-val">132</span><span class="lg-pct">26%</span></div>
+                        <div class="lg-row"><span class="sw" style="background:#FFB020;"></span><span class="lg-label">🇦🇺 호주</span><span class="lg-val">76</span><span class="lg-pct">15%</span></div>
+                        <div class="lg-row"><span class="sw" style="background:#18BFFF;"></span><span class="lg-label">🇩🇪 독일</span><span class="lg-val">42</span><span class="lg-pct">8%</span></div>
+                        <div class="lg-row"><span class="sw" style="background:#8B95A1;"></span><span class="lg-label">기타</span><span class="lg-val">46</span><span class="lg-pct">9%</span></div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- 문서 유형 -->
+                  <div>
+                    <div class="text-[11px] font-extrabold text-muted uppercase mb-2.5" style="letter-spacing:.06em;">문서 유형별 분포</div>
+                    <div class="donut-card">
+                      <div id="donut-doctype" style="width:96px;height:96px;flex-shrink:0;"></div>
+                      <div class="legend">
+                        <div class="lg-row"><span class="sw" style="background:#3182F6;"></span><span class="lg-label">졸업증명서</span><span class="lg-val">186</span><span class="lg-pct">37%</span></div>
+                        <div class="lg-row"><span class="sw" style="background:#00C48C;"></span><span class="lg-label">성적증명서</span><span class="lg-val">154</span><span class="lg-pct">30%</span></div>
+                        <div class="lg-row"><span class="sw" style="background:#FFB020;"></span><span class="lg-label">재학증명서</span><span class="lg-val">94</span><span class="lg-pct">19%</span></div>
+                        <div class="lg-row"><span class="sw" style="background:#18BFFF;"></span><span class="lg-label">학위증</span><span class="lg-val">52</span><span class="lg-pct">10%</span></div>
+                        <div class="lg-row"><span class="sw" style="background:#8B95A1;"></span><span class="lg-label">기타</span><span class="lg-val">24</span><span class="lg-pct">4%</span></div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- 해외 수령 기관별 분포 -->
+                  <div>
+                    <div class="text-[11px] font-extrabold text-muted uppercase mb-2.5" style="letter-spacing:.06em;">해외 수령 기관별 분포</div>
+                    <div class="donut-card">
+                      <div id="donut-inst" style="width:96px;height:96px;flex-shrink:0;"></div>
+                      <div class="legend">
+                        <div class="lg-row"><span class="sw" style="background:#3182F6;"></span><span class="lg-label">🇺🇸 주미 영사관</span><span class="lg-val">98</span><span class="lg-pct">39%</span></div>
+                        <div class="lg-row"><span class="sw" style="background:#00C48C;"></span><span class="lg-label">🇨🇦 주캐나다 영사관</span><span class="lg-val">60</span><span class="lg-pct">24%</span></div>
+                        <div class="lg-row"><span class="sw" style="background:#FFB020;"></span><span class="lg-label">🇦🇺 주호주 영사관</span><span class="lg-val">38</span><span class="lg-pct">15%</span></div>
+                        <div class="lg-row"><span class="sw" style="background:#18BFFF;"></span><span class="lg-label">🇩🇪 주독일 영사관</span><span class="lg-val">28</span><span class="lg-pct">11%</span></div>
+                        <div class="lg-row"><span class="sw" style="background:#8B95A1;"></span><span class="lg-label">기타</span><span class="lg-val">24</span><span class="lg-pct">10%</span></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 gap-5">
+                  <!-- 재요청률 -->
+                  <div>
+                    <div class="text-[11px] font-extrabold text-muted uppercase mb-2.5" style="letter-spacing:.06em;">재요청률</div>
+                    <div class="big-stat" style="border:1px solid #F2F4F6;border-radius:10px;background:#FAFBFC;">
+                      <div><span class="nn">8.4</span><span class="uu">%</span></div>
+                      <div class="desc">동일 사용자가 30일 내 재요청한 비율</div>
+                      <div class="delta dn"><i data-lucide="trending-down" style="width:11px;height:11px;"></i>-1.2%p (전월 9.6%)</div>
+                    </div>
+                  </div>
+                  <!-- 요청→서명 소요 시간 -->
+                  <div>
+                    <div class="text-[11px] font-extrabold text-muted uppercase mb-2.5" style="letter-spacing:.06em;">요청 → 서명 소요 시간</div>
+                    <div id="hist-leadtime" style="width:100%;height:128px;"></div>
+                    <div class="text-[11px] text-muted mt-1 flex items-center justify-between">
+                      <span>중앙값 <b class="mono text-ink font-extrabold">38분</b></span>
+                      <span>P90 <b class="mono text-ink font-extrabold">96분</b></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ========== 5. 활동 피드 + 6. 위험 신호 / 빠른 액션 ========== -->
+          <div class="grid grid-cols-3 gap-4 mb-2">
+            <!-- 활동 피드 -->
+            <div class="panel" style="grid-column:span 2;">
+              <div class="panel-head">
+                <h3><i data-lucide="activity"></i>실시간 활동</h3>
+                <span class="meta">최근 10건</span>
+              </div>
+              <div class="panel-body">
+                <div class="feed" id="dash-feed"><!-- JS --></div>
+              </div>
+            </div>
+
+            <!-- 위험 신호 + 빠른 액션 -->
+            <div class="flex flex-col gap-4">
+              <div class="panel">
+                <div class="panel-head">
+                  <h3><i data-lucide="bell"></i>위험 신호</h3>
+                  <span class="meta">조치 필요</span>
+                </div>
+                <div class="panel-body" style="padding:12px;">
+                  <div class="grid grid-cols-2 gap-2">
+                    <div class="alert-card danger" data-jump-page="dispute">
+                      <div class="ah">
+                        <span class="aic"><i data-lucide="alert-triangle"></i></span>
+                        <span class="at">미해결 분쟁</span>
+                      </div>
+                      <div class="av">3<span class="uu">건</span></div>
+                      <div class="ad">최장 대기 <b class="mono">2일 4시간</b></div>
+                      <div class="go">분쟁 추적으로 이동 <i data-lucide="arrow-right" style="width:11px;height:11px;"></i></div>
+                    </div>
+                    <div class="alert-card warning" data-jump-page="auth" data-jump-view="ci-mismatch-7d">
+                      <div class="ah">
+                        <span class="aic"><i data-lucide="shield-alert"></i></span>
+                        <span class="at">CI 불일치 차단</span>
+                      </div>
+                      <div class="av">3<span class="uu">건</span></div>
+                      <div class="ad">최근 7일 누적 11건</div>
+                      <div class="go">인증 로그 보기 <i data-lucide="arrow-right" style="width:11px;height:11px;"></i></div>
+                    </div>
+                    <div class="alert-card danger" data-jump-page="docs" data-jump-tab="submitted" data-jump-filter-result="rejected">
+                      <div class="ah">
+                        <span class="aic"><i data-lucide="send"></i></span>
+                        <span class="at">기관 반려 누적</span>
+                      </div>
+                      <div class="av">2<span class="uu">건</span></div>
+                      <div class="ad">오늘 반려율 16.7%</div>
+                      <div class="go">기관 제출 보기 <i data-lucide="arrow-right" style="width:11px;height:11px;"></i></div>
+                    </div>
+                    <div class="alert-card warning" data-jump-page="docs" data-jump-tab="valid">
+                      <div class="ah">
+                        <span class="aic"><i data-lucide="hourglass"></i></span>
+                        <span class="at">만료 임박</span>
+                      </div>
+                      <div class="av">14<span class="uu">건</span></div>
+                      <div class="ad">7일 이내 만료 예정</div>
+                      <div class="go">문서 관리로 이동 <i data-lucide="arrow-right" style="width:11px;height:11px;"></i></div>
+                    </div>
+                    <div class="alert-card warning" data-jump-page="docs" data-jump-tab="failed">
+                      <div class="ah">
+                        <span class="aic"><i data-lucide="x-octagon"></i></span>
+                        <span class="at">실패 누적</span>
+                      </div>
+                      <div class="av">5<span class="uu">건</span></div>
+                      <div class="ad">최근 24시간 실패 5회</div>
+                      <div class="go">실패함 보기 <i data-lucide="arrow-right" style="width:11px;height:11px;"></i></div>
+                    </div>
+                    <div class="alert-card info" data-jump-page="s3">
+                      <div class="ah">
+                        <span class="aic"><i data-lucide="database"></i></span>
+                        <span class="at">S3 검증 실패</span>
+                      </div>
+                      <div class="av">1<span class="uu">건</span></div>
+                      <div class="ad">해시 불일치 1회 (오늘)</div>
+                      <div class="go">파일 로그 보기 <i data-lucide="arrow-right" style="width:11px;height:11px;"></i></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="panel">
+                <div class="panel-head">
+                  <h3><i data-lucide="zap"></i>빠른 액션</h3>
+                </div>
+                <div class="panel-body" style="padding:12px;">
+                  <div class="qa-grid">
+                    <button class="qa" data-jump-page="docs"><span class="qi"><i data-lucide="file-check"></i></span><div><div class="qt">문서 관리</div><div class="qs">발급 모니터</div></div></button>
+                    <button class="qa" data-jump-page="dispute"><span class="qi"><i data-lucide="alert-triangle"></i></span><div><div class="qt">분쟁 추적</div><div class="qs">미해결 3건</div></div></button>
+                    <button class="qa" data-jump-page="members"><span class="qi"><i data-lucide="users"></i></span><div><div class="qt">회원</div><div class="qs">전체 검색</div></div></button>
+                    <button class="qa" data-jump-page="s3"><span class="qi"><i data-lucide="database"></i></span><div><div class="qt">파일 로그</div><div class="qs">앵커 / 해시</div></div></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ============================== 문서 관리 (통합) ============================== -->
+      <section class="page" data-page="docs">
+        <div class="p-8">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h1 class="text-[22px] font-extrabold text-ink" style="letter-spacing:-0.02em;">문서 관리</h1>
+              <div class="text-[13px] text-muted mt-1">발급 진행 중인 요청과 발급된 문서를 한 곳에서 관리할 수 있어요.</div>
+            </div>
+            <button class="btn"><i data-lucide="download" style="width:14px;height:14px;"></i>엑셀 다운로드</button>
+          </div>
+
+          <!-- 최상단 KPI 6종 -->
+          <div class="grid gap-3 mb-7" style="grid-template-columns:repeat(6,minmax(0,1fr));">
+            <button class="kpi" data-jump-tab="progress">
+              <span class="lbl">오늘 발급 (총)</span>
+              <span class="val"><span class="n text-ink" id="kpi-total">52</span><span class="u">건</span></span>
+            </button>
+            <button class="kpi" data-jump-tab="progress">
+              <span class="lbl">진행 중</span>
+              <span class="val"><span class="n" style="color:#3182F6;" id="kpi-progress">5</span><span class="u">건</span></span>
+            </button>
+            <button class="kpi success" data-jump-tab="valid">
+              <span class="lbl flex items-center gap-1.5">
+                <span class="check"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+                완료됨
+              </span>
+              <span class="val"><span class="n" id="kpi-done">142</span><span class="u">건</span></span>
+            </button>
+            <button class="kpi" data-jump-tab="submitted">
+              <span class="lbl">기관 제출 (오늘)</span>
+              <span class="val"><span class="n" style="color:#00875A;" id="kpi-submitted">12</span><span class="u">건</span></span>
+              <span class="hint text-muted text-[11px]">반려율 16.7%</span>
+            </button>
+            <button class="kpi danger" data-jump-tab="failed">
+              <span class="lbl">실패함</span>
+              <span class="val"><span class="n" id="kpi-failed">2</span><span class="u">건</span></span>
+            </button>
+            <button class="kpi muted" data-jump-tab="revoked">
+              <span class="lbl">폐기됨</span>
+              <span class="val"><span class="n" id="kpi-revoked">8</span><span class="u">건</span></span>
+            </button>
+          </div>
+
+          <!-- 6 탭 (두 카테고리: 활성 라이프사이클 3 / 종료된 상태 3) -->
+          <div class="tab-groups mb-5">
+            <div class="tab-group">
+              <div class="tg-label">활성 라이프사이클</div>
+              <div class="tabs-inner">
+                <button class="tab active" data-doctab="progress">진행 중 <span class="num ml-1 text-muted" id="cnt-progress">5</span></button>
+                <button class="tab" data-doctab="valid">유효한 문서 <span class="num ml-1 text-muted" id="cnt-valid">142</span></button>
+                <button class="tab" data-doctab="submitted">기관 제출 <span class="num ml-1 text-muted" id="cnt-submitted">12</span></button>
+              </div>
+            </div>
+            <div class="tab-group">
+              <div class="tg-label">종료된 상태</div>
+              <div class="tabs-inner">
+                <button class="tab" data-doctab="expired">만료된 문서 <span class="num ml-1 text-muted" id="cnt-expired">23</span></button>
+                <button class="tab" data-doctab="revoked">폐기된 문서 <span class="num ml-1 text-muted" id="cnt-revoked">8</span></button>
+                <button class="tab" data-doctab="failed">실패한 요청 <span class="num ml-1 text-muted" id="cnt-failed">2</span></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 검색 + 필터 -->
+          <div class="flex items-center gap-2 mb-3 flex-wrap" data-search-bar="docs">
+            <div class="field search">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="search" id="docs-q" placeholder="요청번호 · 크리덴셜 ID · 회원번호 · 이름 · 이메일 (엔터로 검색)" />
+            </div>
+            <button class="btn primary" data-search-go="docs"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>검색</button>
+            <div class="field"><select data-filter="docs" data-key="doc"><option value="">문서 유형 전체</option><option>출생증명서</option><option>혼인증명서</option><option>학력증명서</option><option>범죄경력증명서</option><option>소득증명서</option></select></div>
+            <div class="field"><select data-filter="docs" data-key="country"><option value="">국가 전체</option><option>베트남</option><option>필리핀</option><option>방글라데시</option><option>네팔</option><option>나이지리아</option></select></div>
+            <div class="field"><select data-filter="docs" data-key="date"><option value="">전체 기간</option><option value="today">오늘</option><option value="7">지난 7일</option><option value="30">지난 30일</option><option value="90">지난 90일</option></select></div>
+            <div class="field"><select data-filter="docs" data-key="sort"><option value="latest">최신순</option><option value="oldest">오래된순</option><option value="name">이름순</option></select></div>
+            <div class="saved-views" data-views="docs"></div>
+            <button class="btn ml-auto"><i data-lucide="rotate-ccw" style="width:13px;height:13px;"></i>새로고침</button>
+          </div>
+
+          <!-- 활성 필터 칩 -->
+          <div class="chips-row" data-chips="docs"></div>
+
+          <!-- 통합 테이블 -->
+          <div class="tbl" id="docs-tbl">
+            <div class="tbl-head" id="docs-head"></div>
+            <div id="docs-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================== 파일 로그 ============================== -->
+      <section class="page" data-page="s3">
+        <div class="p-8">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h1 class="text-[22px] font-extrabold text-ink" style="letter-spacing:-0.02em;">파일 로그</h1>
+              <div class="text-[13px] text-muted mt-1">파일 업로드 / 다운로드 이력을 시간순으로 확인할 수 있어요.</div>
+            </div>
+            <button class="btn"><i data-lucide="download" style="width:14px;height:14px;"></i>엑셀 다운로드</button>
+          </div>
+
+          <div class="flex items-center gap-2 mb-3 flex-wrap" data-search-bar="s3">
+            <div class="field search">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="search" id="s3-q" placeholder="파일명 · 요청번호 · 회원번호 · 요청자 · 버킷 (엔터로 검색)" />
+            </div>
+            <button class="btn primary" data-search-go="s3"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>검색</button>
+            <div class="field"><select data-filter="s3" data-key="op"><option value="">전체 동작</option><option>업로드</option><option>다운로드</option></select></div>
+            <div class="field"><select data-filter="s3" data-key="result"><option value="">전체 결과</option><option value="ok">성공</option><option value="fail">실패</option></select></div>
+            <div class="field"><select data-filter="s3" data-key="who"><option value="">요청자 전체</option><option value="system">시스템</option><option value="ops">운영자</option><option value="translator">번역사</option><option value="org">기관 / 법무법인</option><option value="member">일반 회원</option></select></div>
+            <div class="field"><select data-filter="s3" data-key="bucket"><option value="">버킷 전체</option><option>myapo-docs</option></select></div>
+            <div class="field"><select data-filter="s3" data-key="date"><option value="">전체 기간</option><option value="today">오늘</option><option value="7">지난 7일</option><option value="30">지난 30일</option></select></div>
+            <div class="field"><select data-filter="s3" data-key="sort"><option value="latest">최신순</option><option value="oldest">오래된순</option><option value="size">크기 큰 순</option></select></div>
+            <div class="saved-views" data-views="s3"></div>
+            <button class="btn ml-auto"><i data-lucide="rotate-ccw" style="width:13px;height:13px;"></i>새로고침</button>
+          </div>
+          <div class="chips-row" data-chips="s3"></div>
+
+          <div class="tbl">
+            <div class="tbl-head" style="grid-template-columns:130px 80px minmax(220px,1fr) 110px 130px 70px 95px 70px;">
+              <span>시각</span><span>동작</span><span>파일</span><span>회원번호</span><span>요청자</span><span>크기</span><span>버킷</span><span>결과</span>
+            </div>
+            <div id="s3-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================== 인증 로그 ============================== -->
+      <section class="page" data-page="auth">
+        <div class="p-8">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h1 class="text-[22px] font-extrabold text-ink" style="letter-spacing:-0.02em;">인증 로그</h1>
+              <div class="text-[13px] text-muted mt-1">발급 신청·기관 제출·분쟁 신고 시 토스 본인인증 이벤트와 CI 불일치 차단 이력을 확인할 수 있어요. <span class="vpill bg-base border border-border text-muted ml-1">Mock · 30일 자동 파기</span></div>
+            </div>
+            <button class="btn"><i data-lucide="download" style="width:14px;height:14px;"></i>엑셀 다운로드</button>
+          </div>
+
+          <div class="grid gap-3 mb-6" style="grid-template-columns:repeat(4,minmax(0,1fr));">
+            <button class="kpi kpi-clickable" data-auth-kpi="attempt" type="button"><span class="lbl">오늘 인증 시도</span><span class="val"><span class="n text-ink">187</span><span class="u">건</span></span><span class="hint text-muted text-[11px]">전일 대비 +12.3%</span></button>
+            <button class="kpi kpi-clickable success" data-auth-kpi="success" type="button"><span class="lbl">성공</span><span class="val"><span class="n">178</span><span class="u">건</span></span><span class="hint text-muted text-[11px]">사용자 취소 2건은 별도</span></button>
+            <button class="kpi kpi-clickable" data-auth-kpi="failure" style="--c:#FFB020;" type="button"><span class="lbl">실패</span><span class="val"><span class="n" style="color:#FFB020;">7</span><span class="u">건</span></span><span class="hint text-muted text-[11px]">CI 불일치 + 인증서 만료</span></button>
+            <button class="kpi kpi-clickable success" data-auth-kpi="rate" type="button"><span class="lbl">성공률</span><span class="val"><span class="n">96.2</span><span class="u">%</span></span><span class="hint text-muted text-[11px]">7일 평균 95.8%</span></button>
+          </div>
+
+          <div class="flex items-center gap-2 mb-3 flex-wrap" data-search-bar="auth">
+            <div class="field search">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="search" id="auth-q" placeholder="회원번호 · 인증 ID · 연관 객체 ID (엔터로 검색)" />
+            </div>
+            <button class="btn primary" data-search-go="auth"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>검색</button>
+            <div class="field"><select data-filter="auth" data-key="result"><option value="">결과 전체</option><option value="ok">성공</option><option value="ci_mismatch">CI 불일치 차단</option><option value="expired">인증서 만료</option><option value="cancel">사용자 취소</option></select></div>
+            <div class="field"><select data-filter="auth" data-key="trigger"><option value="">트리거 전체</option><option value="issue_request">발급 신청</option><option value="institution_submit">기관 제출</option><option value="dispute_report">분쟁 신고</option></select></div>
+            <div class="field"><select data-filter="auth" data-key="date"><option value="">전체 기간</option><option value="today">오늘</option><option value="7">지난 7일</option><option value="30">지난 30일</option></select></div>
+            <div class="field"><select data-filter="auth" data-key="sort"><option value="latest">최신순</option><option value="oldest">오래된순</option></select></div>
+            <div class="saved-views" data-views="auth"></div>
+            <button class="btn ml-auto"><i data-lucide="rotate-ccw" style="width:13px;height:13px;"></i>새로고침</button>
+          </div>
+          <div class="chips-row" data-chips="auth"></div>
+
+          <div class="tbl">
+            <div class="tbl-head" style="grid-template-columns:170px 150px 130px 150px minmax(180px,1fr);">
+              <span>시각</span><span>회원번호</span><span>트리거</span><span>결과</span><span>연관 객체 ID</span>
+            </div>
+            <div id="auth-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================== 분쟁 추적 ============================== -->
+      <section class="page" data-page="dispute">
+        <div class="p-8">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h1 class="text-[22px] font-extrabold text-ink" style="letter-spacing:-0.02em;">분쟁 추적</h1>
+              <div class="text-[13px] text-muted mt-1">접수된 분쟁을 검토 단계별로 관리할 수 있어요.</div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="vpill bg-warning-soft text-[12px] font-bold" style="color:#7a5400;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                미해결 2건
+              </span>
+              <button class="btn"><i data-lucide="download" style="width:14px;height:14px;"></i>엑셀 다운로드</button>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 mb-3 flex-wrap" data-search-bar="dispute">
+            <div class="field search">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="search" id="dispute-q" placeholder="분쟁 ID · 요청번호 · 회원번호 · 문서요청자 · 신고자 · 사유 (엔터로 검색)" />
+            </div>
+            <button class="btn primary" data-search-go="dispute"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>검색</button>
+            <div class="field"><select data-filter="dispute" data-key="state"><option value="">상태 전체</option><option>접수</option><option>검토 중</option><option>해결</option><option>기각</option></select></div>
+            <div class="field"><select data-filter="dispute" data-key="who"><option value="">신고자 전체</option><option>주미 한국 영사관 (LA)</option><option>주캐나다 한국 영사관</option><option>주독일 한국 영사관</option><option>주호주 한국 영사관</option><option>회원 본인</option></select></div>
+            <div class="field"><select data-filter="dispute" data-key="date"><option value="">전체 기간</option><option value="7">최근 7일</option><option value="30">최근 30일</option><option value="90">최근 90일</option></select></div>
+            <div class="field"><select data-filter="dispute" data-key="sort"><option value="latest">최신순</option><option value="oldest">오래된순</option></select></div>
+            <div class="saved-views" data-views="dispute"></div>
+            <button class="btn ml-auto"><i data-lucide="rotate-ccw" style="width:13px;height:13px;"></i>새로고침</button>
+          </div>
+          <div class="chips-row" data-chips="dispute"></div>
+
+          <div class="tbl">
+            <div class="tbl-head" style="grid-template-columns:100px 130px 105px 130px 130px minmax(180px,1fr) 90px 90px 75px;">
+              <span>분쟁 ID</span><span>요청번호</span><span>회원번호</span><span>문서요청자</span><span>신고자</span><span>사유 요약</span><span>접수일</span><span>경과</span><span>상태</span>
+            </div>
+            <div id="dispute-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================== 회원 관리 ============================== -->
+      <section class="page" data-page="members" data-screen-label="회원 관리">
+        <div class="p-8">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h1 class="text-[22px] font-extrabold text-ink" style="letter-spacing:-0.02em;">회원 관리</h1>
+              <div class="text-[13px] text-muted mt-1">회원의 활동 이력과 신원을 한눈에 확인하고, 필요한 운영 액션을 처리할 수 있어요.</div>
+            </div>
+            <button class="btn" id="members-export-btn" title="관리자 권한이 필요해요"><i data-lucide="download" style="width:14px;height:14px;"></i>내보내기</button>
+          </div>
+
+          <div class="grid gap-3 mb-6" style="grid-template-columns:repeat(7,minmax(0,1fr));">
+            <div class="kpi kpi-clickable" data-mkpi="all"><span class="lbl">전체 회원</span><span class="val"><span class="n text-ink">324</span><span class="u">명</span></span></div>
+            <div class="kpi kpi-clickable success" data-mkpi="active"><span class="lbl">활성</span><span class="val"><span class="n">298</span><span class="u">명</span></span></div>
+            <div class="kpi kpi-clickable" style="--c:#FFB020;" data-mkpi="suspend"><span class="lbl">정지</span><span class="val"><span class="n" style="color:#FFB020;">14</span><span class="u">명</span></span></div>
+            <div class="kpi kpi-clickable muted" data-mkpi="leave"><span class="lbl">탈퇴</span><span class="val"><span class="n">12</span><span class="u">명</span></span></div>
+            <div class="kpi kpi-clickable" data-mkpi="new7"><span class="lbl">이번 주 신규 가입</span><span class="val"><span class="n text-ink">8</span><span class="u">명</span></span></div>
+            <div class="kpi kpi-clickable" data-mkpi="login7"><span class="lbl">이번 주 로그인</span><span class="val"><span class="n text-ink">147</span><span class="u">명</span></span></div>
+            <div class="kpi kpi-clickable" style="--c:#F04452;" data-mkpi="dispute"><span class="lbl">분쟁 이력 보유</span><span class="val"><span class="n" style="color:#F04452;">23</span><span class="u">명</span></span></div>
+          </div>
+
+          <div class="flex items-center gap-2 mb-3 flex-wrap" data-search-bar="members">
+            <div class="field search">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="search" id="members-q" placeholder="회원번호 · 이름 · 이메일로 검색 (엔터)" />
+            </div>
+            <button class="btn primary" data-search-go="members"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>검색</button>
+            <div class="field"><select data-filter="members" data-key="state"><option value="">상태 전체</option><option>활성</option><option>정지</option><option>탈퇴</option></select></div>
+            <div class="field"><select data-filter="members" data-key="country"><option value="">국가 전체</option><option>베트남</option><option>필리핀</option><option>네팔</option><option>방글라데시</option><option>인도</option><option>나이지리아</option><option>인도네시아</option><option>파키스탄</option><option>멕시코</option><option>페루</option><option>아르헨티나</option></select></div>
+            <div class="field"><select data-filter="members" data-key="joined"><option value="">가입기간 전체</option><option value="7">최근 7일</option><option value="30">최근 30일</option><option value="90">최근 90일</option><option value="365+">1년 이상</option></select></div>
+            <div class="field"><select data-filter="members" data-key="dispute"><option value="">분쟁 이력 전체</option><option value="yes">분쟁 보유</option><option value="no">분쟁 없음</option></select></div>
+            <div class="field"><select data-filter="members" data-key="sort"><option value="recent">최근 로그인순</option><option value="new">가입 최신순</option><option value="old">가입 오래된순</option><option value="name">이름순</option><option value="issued">누적 발급 많은순</option><option value="dispute">누적 분쟁 많은순</option></select></div>
+            <div class="saved-views" data-views="members"></div>
+          </div>
+          <div class="chips-row" data-chips="members"></div>
+
+          <!-- 다중 계정 의심 묶음 카드 -->
+          <div id="members-multi-card"></div>
+
+          <div class="tbl">
+            <div class="tbl-head" id="members-head" style="grid-template-columns:8px 135px 150px minmax(180px,1fr) 100px 70px 90px 110px 130px;">
+              <span></span>
+              <span>회원번호</span><span>이름</span><span>이메일</span><span>가입일</span><span>상태</span><span>권한</span><span>최근 로그인</span><span style="text-align:right;padding-right:6px;">활동</span>
+            </div>
+            <div id="members-list"></div>
+          </div>
+        </div>
+
+        <!-- 내보내기 모달 -->
+        <div id="members-export-modal" class="mexp-overlay" hidden>
+          <div class="mexp-modal" role="dialog" aria-modal="true" aria-labelledby="mexp-title">
+            <div class="mexp-head">
+              <div>
+                <div id="mexp-title" class="text-ink font-extrabold text-[15px]">회원 정보 내보내기</div>
+                <div class="text-muted text-[12px] mt-1">민감 정보가 포함되어 있어요. 사유를 적어주시면 자동으로 감사 로그에 기록돼요.</div>
+              </div>
+              <button class="mexp-close" id="mexp-close" aria-label="닫기">×</button>
+            </div>
+            <div class="mexp-body">
+              <div class="mexp-section">
+                <div class="mexp-label">범위</div>
+                <div class="mexp-radio" role="radiogroup">
+                  <label><input type="radio" name="mexp-scope" value="filtered" checked /><span>현재 필터 결과</span></label>
+                  <label><input type="radio" name="mexp-scope" value="selected" /><span>선택한 행만</span></label>
+                  <label><input type="radio" name="mexp-scope" value="all" /><span>전체 회원</span></label>
+                </div>
+              </div>
+              <div class="mexp-section">
+                <div class="mexp-label">형식</div>
+                <div class="mexp-radio" role="radiogroup">
+                  <label><input type="radio" name="mexp-fmt" value="csv" checked /><span>CSV</span></label>
+                  <label><input type="radio" name="mexp-fmt" value="xlsx" /><span>엑셀</span></label>
+                </div>
+              </div>
+              <div class="mexp-section">
+                <div class="mexp-label">컬럼</div>
+                <div class="mexp-radio" role="radiogroup">
+                  <label><input type="radio" name="mexp-col" value="basic" checked /><span>기본 (테이블 표시 컬럼)</span></label>
+                  <label><input type="radio" name="mexp-col" value="ext" /><span>확장 (국가·누적 발급·누적 분쟁 포함)</span></label>
+                  <label><input type="radio" name="mexp-col" value="custom" /><span>커스텀 (체크 선택)</span></label>
+                </div>
+              </div>
+              <div class="mexp-section">
+                <div class="mexp-label">민감 정보 마스킹</div>
+                <label class="mexp-row"><input type="checkbox" checked disabled /><span>KYC 항목은 마스킹 유지 (raw 다운로드는 별도 신청)</span></label>
+              </div>
+              <div class="mexp-section">
+                <div class="mexp-label">사유 <span class="text-danger">*</span></div>
+                <textarea id="mexp-reason" rows="3" placeholder="예: 2026년 4월 분쟁 이력 보유 회원 외부 감사 자료 제출 (감사번호 #2026-04-A)"></textarea>
+                <div class="text-muted text-[11px] mt-1">사유는 감사 로그에 시각·실행자·범위·결과 행수와 함께 자동 기록돼요.</div>
+              </div>
+            </div>
+            <div class="mexp-foot">
+              <button class="btn" id="mexp-cancel">취소</button>
+              <button class="btn primary" id="mexp-go" disabled>내보내기 실행</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <div class="h-10 bg-base border-t border-border flex items-center px-6 gap-4 text-[11px] text-muted flex-shrink-0">
+    <span>Testnet · 가상 인물 · MYAPO OPS · 2026-05-03</span>
+    <span class="ml-auto mono">v3.2 · console</span>
+  </div>
+</div>
+
+</main>
+
+<footer class="max-w-[1440px] mx-auto px-8 pb-12 mt-6">
+  <div class="rounded-sm bg-surface border border-border px-6 py-4 flex items-center gap-4 text-[12px] text-muted flex-wrap" style="box-shadow:var(--shadow-card);">
+    <span class="badge-testnet">Testnet</span>
+    <span class="badge-mock">Mock</span>
+    <span>MYAPO 운영 콘솔 — 실라이브 페이지 wireframe</span>
+    <span class="ml-auto mono text-[11px]">v3.2 · 2026-05-03</span>
+  </div>
+</footer>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+// ===================== 데이터 =====================
+const STAGES = ['기관발급','서류도착','번역/공증','아포스티유 발급','사용자 지갑 저장'];
+
+// 진행 중 요청 — 요청 시각 최신순
+const PROGRESS = [
+  { id:'REQ-2026-0423', user:'Adebayo Ola',     email:'adebayo.ola@gmail.com',  doc:'범죄경력증명서', country:'나이지리아', stage:2, sub:'approve', t:'2026-05-04 14:38' },
+  { id:'REQ-2026-0422', user:'Nguyen Hoa',      email:'hoa.nguyen@gmail.com',   doc:'소득증명서', country:'베트남',   stage:0, sub:'gen',     t:'2026-05-04 14:12' },
+  { id:'REQ-2026-0421', user:'Rahim Khan',      email:'rkhan@yahoo.com',        doc:'학력증명서', country:'방글라데시', stage:3, sub:null,      t:'2026-05-04 13:55' },
+  { id:'REQ-2026-0420', user:'Maria Santos',    email:'msantos@gmail.com',      doc:'혼인증명서', country:'필리핀',   stage:1, sub:'approve', t:'2026-05-04 13:21' },
+  { id:'REQ-2026-0419', user:'Tran Van Minh',   email:'tvminh@hotmail.com',     doc:'출생증명서', country:'베트남',   stage:2, sub:'gen',     t:'2026-05-04 12:48' },
+];
+
+// 유효한 문서 — 발급일 최신순
+const VALID = [
+  { id:'CRD-A1FA-3X', req:'REQ-2026-0418', user:'Pham Thi Linh',  email:'phamlinh@gmail.com',     doc:'출생증명서', country:'베트남',   issued:'2026-05-04', exp:'2027-05-04', dleft:365 },
+  { id:'CRD-A1FB-7Y', req:'REQ-2026-0417', user:'Carlos Mendoza', email:'cmendoza@yahoo.com',     doc:'혼인증명서', country:'필리핀',   issued:'2026-05-03', exp:'2027-05-03', dleft:364 },
+  { id:'CRD-A1F9-2A', req:'REQ-2026-0414', user:'Aisha Bello',    email:'aisha.bello@gmail.com',  doc:'소득증명서', country:'나이지리아', issued:'2026-05-03', exp:'2027-05-03', dleft:364 },
+  { id:'CRD-A1F8-2W', req:'REQ-2026-0410', user:'Tran Van Minh',  email:'tvminh@hotmail.com',     doc:'출생증명서', country:'베트남',   issued:'2026-04-28', exp:'2027-04-28', dleft:359 },
+  { id:'CRD-A1F5-9K', req:'REQ-2026-0402', user:'Maria Santos',   email:'msantos@gmail.com',      doc:'혼인증명서', country:'필리핀',   issued:'2026-04-15', exp:'2026-05-15', dleft:11 },
+  { id:'CRD-A1F2-4N', req:'REQ-2026-0398', user:'Rahim Khan',     email:'rkhan@yahoo.com',        doc:'학력증명서', country:'방글라데시', issued:'2026-03-28', exp:'2026-05-09', dleft:5 },
+  { id:'CRD-A1EE-1Q', req:'REQ-2026-0388', user:'Nguyen Hoa',     email:'hoa.nguyen@gmail.com',   doc:'소득증명서', country:'베트남',   issued:'2026-03-12', exp:'2026-05-08', dleft:4 },
+  { id:'CRD-A1E6-3M', req:'REQ-2026-0371', user:'Roberto Cruz',   email:'rcruz@outlook.com',      doc:'출생증명서', country:'필리핀',   issued:'2026-02-14', exp:'2027-02-14', dleft:286 },
+];
+
+// 만료된 문서 — 만료일 최신순
+const EXPIRED = [
+  { id:'CRD-A0FA-1X', req:'REQ-2025-0918', user:'Le Thi Mai',    email:'mai.le@gmail.com',       doc:'범죄경력증명서', country:'베트남',   issued:'2025-04-30', exp:'2026-04-30' },
+  { id:'CRD-A0E2-9Z', req:'REQ-2025-0902', user:'Pedro Garcia',  email:'pgarcia@yahoo.com',      doc:'혼인증명서',   country:'필리핀',   issued:'2025-04-25', exp:'2026-04-25' },
+  { id:'CRD-A0D3-8B', req:'REQ-2025-0888', user:'Anjali Sharma', email:'anjali.s@gmail.com',     doc:'학력증명서',   country:'방글라데시', issued:'2025-04-18', exp:'2026-04-18' },
+  { id:'CRD-A0C7-2P', req:'REQ-2025-0871', user:'Diego Ruiz',    email:'diego.ruiz@hotmail.com', doc:'출생증명서',   country:'필리핀',   issued:'2025-04-10', exp:'2026-04-10' },
+];
+
+// 폐기된 문서 — 폐기일 최신순
+const REVOKED = [
+  { id:'CRD-A0D7-4F', req:'REQ-2025-0879', user:'Sunita Rai',     email:'sunita.rai@hotmail.com', doc:'학력증명서', country:'네팔',     issued:'2025-04-01', revoked:'2026-05-01', reason:'사용자 폐기 요청' },
+  { id:'CRD-A0C3-7T', req:'REQ-2025-0855', user:'Hassan Ahmed',   email:'hassan@gmail.com',       doc:'학력증명서', country:'방글라데시', issued:'2025-03-21', revoked:'2026-04-22', reason:'분쟁 — 정보 정정' },
+  { id:'CRD-A0B9-5R', req:'REQ-2025-0834', user:'Marcelo Lopez',  email:'mlopez@outlook.com',     doc:'혼인증명서', country:'필리핀',   issued:'2025-03-12', revoked:'2026-04-18', reason:'사용자 폐기 요청' },
+];
+
+// 실패한 요청 — 실패 시각 최신순
+const FAILED = [
+  { id:'REQ-2026-0415', user:'Le Van Duc',     email:'levanduc@gmail.com',     doc:'범죄경력증명서', country:'베트남', stage:2, t:'2026-05-04 12:32', reason:'번역사 응답 시간 초과 (24h)' },
+  { id:'REQ-2026-0394', user:'Carlos Suarez',  email:'csuarez@yahoo.com',      doc:'학력증명서', country:'필리핀',   stage:0, t:'2026-04-29 16:08', reason:'기관 측 발급 거절 — 본인 확인 미완료' },
+];
+
+const S3 = [
+  { t:'2026-05-03 14:22:11', op:'업로드', file:'REQ-2026-0419-original.pdf', user:'Tran Van Minh', size:'1.4 MB', bucket:'myapo-docs', ok:true },
+  { t:'2026-05-03 14:21:48', op:'업로드', file:'REQ-2026-0419-meta.json', user:'시스템', size:'3.2 KB', bucket:'myapo-docs', ok:true },
+  { t:'2026-05-03 14:18:02', op:'다운로드', file:'REQ-2026-0418-final.pdf', user:'운영자 A', size:'2.1 MB', bucket:'myapo-docs', ok:true },
+  { t:'2026-05-03 13:55:30', op:'업로드', file:'REQ-2026-0420-original.pdf', user:'Maria Santos', size:'1.7 MB', bucket:'myapo-docs', ok:true },
+  { t:'2026-05-03 13:42:14', op:'다운로드', file:'REQ-2026-0417-final.pdf', user:'주미 한국 영사관 (LA)', size:'2.3 MB', bucket:'myapo-docs', ok:true },
+  { t:'2026-05-03 13:11:08', op:'업로드', file:'REQ-2026-0416-translation.pdf', user:'번역사 김민지', size:'904 KB', bucket:'myapo-docs', ok:false },
+  { t:'2026-05-03 12:48:55', op:'다운로드', file:'REQ-2026-0414-final.pdf', user:'Aisha Bello', size:'2.0 MB', bucket:'myapo-docs', ok:true },
+  { t:'2026-05-03 12:32:01', op:'업로드', file:'REQ-2026-0415-meta.json', user:'시스템', size:'3.1 KB', bucket:'myapo-docs', ok:false },
+  { t:'2026-05-03 11:58:42', op:'업로드', file:'REQ-2026-0414-original.pdf', user:'Adebayo Ola', size:'1.5 MB', bucket:'myapo-docs', ok:true },
+  { t:'2026-05-03 11:42:18', op:'다운로드', file:'REQ-2026-0413-final.pdf', user:'운영자 B', size:'2.2 MB', bucket:'myapo-docs', ok:true },
+  { t:'2026-05-03 11:18:33', op:'업로드', file:'REQ-2026-0412-translation.pdf', user:'번역사 박정우', size:'1.1 MB', bucket:'myapo-docs', ok:true },
+  { t:'2026-05-03 10:55:09', op:'업로드', file:'REQ-2026-0411-original.pdf', user:'Maria Lopez', size:'1.3 MB', bucket:'myapo-docs', ok:true },
+  { t:'2026-05-03 10:32:51', op:'다운로드', file:'REQ-2026-0410-final.pdf', user:'법무법인 가정', size:'2.4 MB', bucket:'myapo-docs', ok:true },
+  { t:'2026-05-03 10:08:44', op:'업로드', file:'REQ-2026-0409-meta.json', user:'시스템', size:'3.0 KB', bucket:'myapo-docs', ok:true },
+];
+
+// 분쟁 출처 다양화 — 4 협업 파트너 + 사용자 5 region 분포
+const DISPUTES = [
+  { id:'DSP-038', req:'REQ-2026-0419', user:'Tran Van Minh', who:'리갈브리지 번역공증사무소', reason:'범죄경력증명서 번역 항목 누락 의심', at:'2026-05-02', age:'1일 경과', state:'검토 중' },
+  { id:'DSP-037', req:'REQ-2026-0405', user:'Le Van Duc',    who:'외교부 영사실',              reason:'아포스티유 인장 불선명',            at:'2026-04-29', age:'4일 경과', state:'접수' },
+  { id:'DSP-036', req:'REQ-2026-0388', user:'Nguyen Hoa',    who:'국세청',                     reason:'발급일자 불일치',                   at:'2026-04-21', age:'12일 경과', state:'해결' },
+  { id:'DSP-035', req:'REQ-2026-0372', user:'Anjali Sharma', who:'법무부 출입국·외국인정책본부', reason:'외국인등록상 영문 성명 불일치',    at:'2026-04-12', age:'21일 경과', state:'해결' },
+  { id:'DSP-034', req:'REQ-2026-0359', user:'Adebayo Ola',   who:'회원 본인',                  reason:'최종본 PDF 파일 손상',              at:'2026-04-03', age:'30일 경과', state:'해결' },
+  { id:'DSP-033', req:'REQ-2026-0341', user:'Carlos Suarez', who:'주미 한국 영사관 (LA)',      reason:'이름 표기 오류',                    at:'2026-03-22', age:'42일 경과', state:'기각' },
+];
+
+// 기관 enum (단일 진실원) — 분쟁 [F-20] 출처·기관 제출 inst·필터 select 공유
+// 4 협업 파트너 + 사용자 본인 = 분쟁 출처 식별자
+// (관제 대상이 아닌 협업 파트너 식별 도구 — institution-* 4 화면 신설 후 재정의)
+const INSTITUTION_ENUM = [
+  // 협업 파트너 1: 정부 발급 (한국 정부 부처)
+  { code:'KR-MOJ-IMM',    name:'법무부 출입국·외국인정책본부',   region:'정부 발급' },
+  { code:'KR-NTS',        name:'국세청',                         region:'정부 발급' },
+  { code:'KR-SCOURT-FRM', name:'대법원 전자가족관계등록',        region:'정부 발급' },
+
+  // 협업 파트너 2: 번역·공증
+  { code:'KR-LB-NOTARY',  name:'리갈브리지 번역공증사무소',      region:'번역·공증' },
+
+  // 협업 파트너 3: 아포스티유
+  { code:'KR-MOFA-APO',   name:'외교부 영사실 (아포스티유)',     region:'아포스티유' },
+
+  // 협업 파트너 4: 해외 수령
+  { code:'US-CONSUL',     name:'주미 한국 영사관 (LA)',          region:'해외 수령' },
+  { code:'CA-CONSUL',     name:'주캐나다 한국 영사관',           region:'해외 수령' },
+  { code:'DE-CONSUL',     name:'주독일 한국 영사관',             region:'해외 수령' },
+  { code:'AU-CONSUL',     name:'주호주 한국 영사관',             region:'해외 수령' },
+
+  // 사용자 본인 단계 (스스로 일으킨 분쟁 — 파일 손상 등)
+  { code:'USER-SELF',     name:'회원 본인',                      region:'사용자' },
+];
+const INSTITUTION_LABEL = Object.fromEntries(INSTITUTION_ENUM.map(i => [i.code, i.name]));
+
+// 인증 트리거 enum (3종 한정 — 로그인·회원가입·KYC raw 조회 제외)
+// 사용자 결정 (2026-05-07): 발급·제출·분쟁 무거운 액션만 게이트
+const TRIGGER_ENUM = [
+  { key:'issue_request',       label:'발급 신청' },
+  { key:'institution_submit',  label:'기관 제출' },
+  { key:'dispute_report',      label:'분쟁 신고' },
+];
+const TRIGGER_LABEL = Object.fromEntries(TRIGGER_ENUM.map(t => [t.key, t.label]));
+
+// 인증 로그 — 토스 본인인증 이벤트 (Mock · 30일 자동 파기 정책)
+// 결과: ok(성공) · ci_mismatch(CI 불일치 차단) · expired(인증서 만료) · cancel(사용자 취소)
+const AUTH_LOG = [
+  { id:'AUTH-2026-0512', t:'2026-05-04 14:38', user:'Adebayo Ola',     trigger:'issue_request',      result:'ok',          ci:'a3f1···c8d2', device:'Android · Galaxy S23', ip:'220.118.0.0/24', linkedId:'REQ-2026-0423' },
+  { id:'AUTH-2026-0511', t:'2026-05-04 14:24', user:'Tran Van Minh',   trigger:'institution_submit', result:'ok',          ci:'9b2c···7e41', device:'iOS · iPhone 14',     ip:'175.223.0.0/24', linkedId:'SUB-2026-0089' },
+  { id:'AUTH-2026-0510', t:'2026-05-04 14:12', user:'Nguyen Hoa',      trigger:'issue_request',      result:'ok',          ci:'5f8a···2b3c', device:'Android · Pixel 7',   ip:'112.184.0.0/24', linkedId:'REQ-2026-0422' },
+  { id:'AUTH-2026-0509', t:'2026-05-04 13:55', user:'Carlos Suarez',   trigger:'issue_request',      result:'ci_mismatch', ci:'c1e7···9a02', device:'iOS · iPhone 12',     ip:'118.235.0.0/24', linkedId:'REQ-2026-0421' },
+  { id:'AUTH-2026-0508', t:'2026-05-04 13:21', user:'Maria Santos',    trigger:'dispute_report',     result:'ok',          ci:'4d6b···f1e8', device:'Android · Galaxy A52', ip:'211.234.0.0/24', linkedId:'DSP-038' },
+  { id:'AUTH-2026-0507', t:'2026-05-04 12:48', user:'Tran Van Minh',   trigger:'issue_request',      result:'ok',          ci:'9b2c···7e41', device:'iOS · iPhone 14',     ip:'175.223.0.0/24', linkedId:'REQ-2026-0419' },
+  { id:'AUTH-2026-0506', t:'2026-05-04 12:32', user:'Le Van Duc',      trigger:'institution_submit', result:'ci_mismatch', ci:'7e2a···b4c9', device:'Android · 알 수 없음', ip:'45.114.0.0/24',  linkedId:'SUB-2026-0088' },
+  { id:'AUTH-2026-0505', t:'2026-05-04 11:58', user:'Adebayo Ola',     trigger:'institution_submit', result:'ok',          ci:'a3f1···c8d2', device:'Android · Galaxy S23', ip:'220.118.0.0/24', linkedId:'SUB-2026-0087' },
+  { id:'AUTH-2026-0504', t:'2026-05-04 10:22', user:'Pham Thi Linh',   trigger:'institution_submit', result:'ok',          ci:'2c9d···5f6a', device:'iOS · iPhone 13',     ip:'121.190.0.0/24', linkedId:'SUB-2026-0086' },
+  { id:'AUTH-2026-0503', t:'2026-05-04 09:15', user:'Nguyen Hoa',      trigger:'dispute_report',     result:'expired',     ci:'5f8a···2b3c', device:'Android · Pixel 7',   ip:'112.184.0.0/24', linkedId:'DSP-036' },
+  { id:'AUTH-2026-0502', t:'2026-05-03 18:04', user:'Tran Van Minh',   trigger:'dispute_report',     result:'ok',          ci:'9b2c···7e41', device:'iOS · iPhone 14',     ip:'175.223.0.0/24', linkedId:'DSP-038' },
+  { id:'AUTH-2026-0501', t:'2026-05-03 16:42', user:'Aisha Bello',     trigger:'institution_submit', result:'ok',          ci:'b8e3···a107', device:'Android · Galaxy S22', ip:'202.30.0.0/24',  linkedId:'SUB-2026-0085' },
+  { id:'AUTH-2026-0500', t:'2026-05-03 15:18', user:'Carlos Mendoza',  trigger:'institution_submit', result:'cancel',      ci:'6a4d···e2f1', device:'iOS · iPhone 11',     ip:'59.16.0.0/24',   linkedId:'SUB-2026-0084' },
+  { id:'AUTH-2026-0499', t:'2026-05-03 14:02', user:'Mohammed Sani',   trigger:'issue_request',      result:'ci_mismatch', ci:'8f2b···d3a5', device:'Android · 알 수 없음', ip:'103.215.0.0/24', linkedId:'REQ-2026-0411' },
+  { id:'AUTH-2026-0498', t:'2026-05-03 11:38', user:'Maria Santos',    trigger:'institution_submit', result:'ok',          ci:'4d6b···f1e8', device:'Android · Galaxy A52', ip:'211.234.0.0/24', linkedId:'SUB-2026-0083' },
+];
+
+// 기관 제출 — 사용자가 자기 지갑 크리덴셜을 외부 기관에 제출. 1 크리덴셜 N 기관 = N 행
+// 결과: received(수령) · verifying(검증 중) · rejected(반려)
+const SUBMITS = [
+  { id:'SUB-2026-0089', cred:'CRD-A1F8-2W', req:'REQ-2026-0410', user:'Tran Van Minh',   doc:'출생증명서',   inst:'US-CONSUL',  submittedAt:'2026-05-04 14:24', result:'received',  rejectReason:'', authId:'AUTH-2026-0511' },
+  { id:'SUB-2026-0088', cred:'CRD-A1F2-4N', req:'REQ-2026-0398', user:'Rahim Khan',      doc:'학력증명서',   inst:'CA-CONSUL',  submittedAt:'2026-05-04 12:18', result:'rejected',  rejectReason:'발급일자 불일치 — 재발급 필요', authId:'AUTH-2026-0506' },
+  { id:'SUB-2026-0087', cred:'CRD-A1F9-2A', req:'REQ-2026-0414', user:'Adebayo Ola',     doc:'소득증명서',   inst:'DE-CONSUL',  submittedAt:'2026-05-04 11:54', result:'verifying', rejectReason:'', authId:'AUTH-2026-0505' },
+  { id:'SUB-2026-0086', cred:'CRD-A1FA-3X', req:'REQ-2026-0418', user:'Pham Thi Linh',   doc:'출생증명서',   inst:'US-CONSUL',  submittedAt:'2026-05-04 10:18', result:'received',  rejectReason:'', authId:'AUTH-2026-0504' },
+  { id:'SUB-2026-0085', cred:'CRD-A1F9-2A', req:'REQ-2026-0414', user:'Aisha Bello',     doc:'소득증명서',   inst:'US-CONSUL',  submittedAt:'2026-05-03 16:38', result:'verifying', rejectReason:'', authId:'AUTH-2026-0501' },
+  { id:'SUB-2026-0084', cred:'CRD-A1FB-7Y', req:'REQ-2026-0417', user:'Carlos Mendoza',  doc:'혼인증명서',   inst:'CA-CONSUL',  submittedAt:'2026-05-03 15:14', result:'rejected',  rejectReason:'아포스티유 인장 불선명 — 재발급 후 재제출 권고', authId:'AUTH-2026-0500' },
+  { id:'SUB-2026-0083', cred:'CRD-A1F5-9K', req:'REQ-2026-0402', user:'Maria Santos',    doc:'혼인증명서',   inst:'AU-CONSUL',  submittedAt:'2026-05-03 11:32', result:'received',  rejectReason:'', authId:'AUTH-2026-0498' },
+  { id:'SUB-2026-0082', cred:'CRD-A1F8-2W', req:'REQ-2026-0410', user:'Tran Van Minh',   doc:'출생증명서',   inst:'AU-CONSUL',  submittedAt:'2026-05-02 14:48', result:'received',  rejectReason:'', authId:'AUTH-2026-0492' },
+  { id:'SUB-2026-0081', cred:'CRD-A1EE-1Q', req:'REQ-2026-0388', user:'Nguyen Hoa',      doc:'소득증명서',   inst:'DE-CONSUL',  submittedAt:'2026-05-01 10:22', result:'rejected',  rejectReason:'발급일자 불일치 — 재발급 필요', authId:'AUTH-2026-0488' },
+  { id:'SUB-2026-0080', cred:'CRD-A1E6-3M', req:'REQ-2026-0371', user:'Roberto Cruz',    doc:'출생증명서',   inst:'AU-CONSUL',  submittedAt:'2026-04-30 16:08', result:'received',  rejectReason:'', authId:'AUTH-2026-0481' },
+  { id:'SUB-2026-0079', cred:'CRD-A1FA-3X', req:'REQ-2026-0418', user:'Pham Thi Linh',   doc:'출생증명서',   inst:'US-CONSUL',  submittedAt:'2026-04-30 11:12', result:'received',  rejectReason:'', authId:'AUTH-2026-0476' },
+  { id:'SUB-2026-0078', cred:'CRD-A0FA-1X', req:'REQ-2025-0918', user:'Le Thi Mai',      doc:'범죄경력증명서', inst:'DE-CONSUL',  submittedAt:'2026-04-29 14:22', result:'verifying', rejectReason:'', authId:'AUTH-2026-0472' },
+];
+
+// 회원 = 일반 회원만. 운영자·관리자는 별도 채용 절차로 발급되며 본 페이지의 관리 대상이 아님.
+// 모든 회원은 권한 = '일반 회원'. (권한 컬럼은 향후 분기 가능성 고려해 유지)
+const MEMBERS = [
+  { mid:'MA-2026-00001', name:'Le Thi Mai',      email:'mai.le@gmail.com',       country:'베트남',     flag:'🇻🇳', joined:'2025-05-30', state:'탈퇴', role:'일반 회원', last:'30일 전',   lastH:720, issuedCount:3, inProgressCount:0, disputeCount:0, openDisputeCount:0, risks:[],                            multiAccountSuspects:[] },
+  { mid:'MA-2026-00002', name:'Hassan Ahmed',    email:'hassan@gmail.com',       country:'파키스탄',   flag:'🇵🇰', joined:'2025-07-14', state:'정지', role:'일반 회원', last:'1주 전',    lastH:168, issuedCount:5, inProgressCount:0, disputeCount:2, openDisputeCount:0, risks:['vpn'],                       multiAccountSuspects:[] },
+  { mid:'MA-2026-00003', name:'Pham Thi Linh',   email:'phamlinh@gmail.com',     country:'베트남',     flag:'🇻🇳', joined:'2025-08-18', state:'활성', role:'일반 회원', last:'어제',      lastH:24,  issuedCount:2, inProgressCount:1, disputeCount:0, openDisputeCount:0, risks:[],                            multiAccountSuspects:[] },
+  { mid:'MA-2026-00004', name:'Sunita Rai',      email:'sunita.rai@hotmail.com', country:'네팔',       flag:'🇳🇵', joined:'2025-09-09', state:'정지', role:'일반 회원', last:'3일 전',    lastH:72,  issuedCount:4, inProgressCount:0, disputeCount:1, openDisputeCount:0, risks:[],                            multiAccountSuspects:[] },
+  { mid:'MA-2026-00005', name:'Roberto Cruz',    email:'rcruz@outlook.com',      country:'필리핀',     flag:'🇵🇭', joined:'2025-10-25', state:'활성', role:'일반 회원', last:'2일 전',    lastH:48,  issuedCount:6, inProgressCount:0, disputeCount:0, openDisputeCount:0, risks:[],                            multiAccountSuspects:[] },
+  { mid:'MA-2026-00006', name:'Maria Santos',    email:'msantos@gmail.com',      country:'필리핀',     flag:'🇵🇭', joined:'2025-11-04', state:'활성', role:'일반 회원', last:'2시간 전',  lastH:2,   issuedCount:1, inProgressCount:0, disputeCount:0, openDisputeCount:0, risks:[],                            multiAccountSuspects:[] },
+  { mid:'MA-2026-00007', name:'Aisha Bello',     email:'aisha.bello@gmail.com',  country:'나이지리아', flag:'🇳🇬', joined:'2025-12-11', state:'활성', role:'일반 회원', last:'4시간 전',  lastH:4,   issuedCount:3, inProgressCount:0, disputeCount:0, openDisputeCount:0, risks:[],                            multiAccountSuspects:[] },
+  { mid:'MA-2026-00008', name:'Tran Van Minh',   email:'tvminh@hotmail.com',     country:'베트남',     flag:'🇻🇳', joined:'2026-01-12', state:'활성', role:'일반 회원', last:'5분 전',    lastH:0.1, issuedCount:8, inProgressCount:1, disputeCount:2, openDisputeCount:1, risks:['repeat_dispute'],            multiAccountSuspects:[] },
+  { mid:'MA-2026-00009', name:'Carlos Mendoza',  email:'cmendoza@yahoo.com',     country:'멕시코',     flag:'🇲🇽', joined:'2026-02-20', state:'활성', role:'일반 회원', last:'30분 전',   lastH:0.5, issuedCount:1, inProgressCount:1, disputeCount:0, openDisputeCount:0, risks:[],                            multiAccountSuspects:[] },
+  { mid:'MA-2026-00010', name:'Rahim Khan',      email:'rkhan@yahoo.com',        country:'방글라데시', flag:'🇧🇩', joined:'2026-03-08', state:'활성', role:'일반 회원', last:'어제',      lastH:24,  issuedCount:2, inProgressCount:0, disputeCount:0, openDisputeCount:0, risks:[],                            multiAccountSuspects:[] },
+  { mid:'MA-2026-00011', name:'Nguyen Hoa',      email:'hoa.nguyen@gmail.com',   country:'베트남',     flag:'🇻🇳', joined:'2025-09-22', state:'활성', role:'일반 회원', last:'15분 전',  lastH:0.25, issuedCount:4, inProgressCount:0, disputeCount:1, openDisputeCount:0, risks:[],                            multiAccountSuspects:[] },
+  { mid:'MA-2026-00012', name:'Adebayo Ola',     email:'adebayo.ola@gmail.com',  country:'나이지리아', flag:'🇳🇬', joined:'2025-12-03', state:'활성', role:'일반 회원', last:'1시간 전',  lastH:1,   issuedCount:2, inProgressCount:0, disputeCount:0, openDisputeCount:0, risks:[],                            multiAccountSuspects:[] },
+  { mid:'MA-2026-00013', name:'Le Van Duc',      email:'levanduc@gmail.com',     country:'베트남',     flag:'🇻🇳', joined:'2026-02-08', state:'활성', role:'일반 회원', last:'어제',      lastH:24,  issuedCount:3, inProgressCount:0, disputeCount:1, openDisputeCount:1, risks:[],                            multiAccountSuspects:[] },
+  { mid:'MA-2026-00014', name:'Carlos Suarez',   email:'csuarez@yahoo.com',      country:'멕시코',     flag:'🇲🇽', joined:'2026-01-30', state:'활성', role:'일반 회원', last:'2일 전',    lastH:48,  issuedCount:1, inProgressCount:0, disputeCount:0, openDisputeCount:0, risks:['multi_account'],             multiAccountSuspects:['MA-2026-00015'] },
+  { mid:'MA-2026-00015', name:'Carlos S.',       email:'carlos.s@yahoo.com',     country:'멕시코',     flag:'🇲🇽', joined:'2026-04-12', state:'활성', role:'일반 회원', last:'1일 전',    lastH:24,  issuedCount:0, inProgressCount:1, disputeCount:0, openDisputeCount:0, risks:['multi_account'],             multiAccountSuspects:['MA-2026-00014'] },
+  { mid:'MA-2026-00016', name:'Pedro Garcia',    email:'pgarcia@yahoo.com',      country:'페루',       flag:'🇵🇪', joined:'2025-03-12', state:'활성', role:'일반 회원', last:'1주 전',    lastH:168, issuedCount:7, inProgressCount:0, disputeCount:0, openDisputeCount:0, risks:[],                            multiAccountSuspects:[] },
+  { mid:'MA-2026-00017', name:'Anjali Sharma',   email:'anjali.s@gmail.com',     country:'인도',       flag:'🇮🇳', joined:'2025-04-19', state:'활성', role:'일반 회원', last:'3일 전',    lastH:72,  issuedCount:5, inProgressCount:0, disputeCount:0, openDisputeCount:0, risks:[],                            multiAccountSuspects:[] },
+  { mid:'MA-2026-00018', name:'Diego Ruiz',      email:'diego.ruiz@hotmail.com', country:'아르헨티나', flag:'🇦🇷', joined:'2025-05-22', state:'탈퇴', role:'일반 회원', last:'45일 전',   lastH:1080, issuedCount:1, inProgressCount:0, disputeCount:0, openDisputeCount:0, risks:[],                            multiAccountSuspects:[] },
+  { mid:'MA-2026-00019', name:'Marcelo Lopez',   email:'mlopez@outlook.com',     country:'페루',       flag:'🇵🇪', joined:'2025-06-30', state:'활성', role:'일반 회원', last:'5일 전',    lastH:120, issuedCount:9, inProgressCount:0, disputeCount:3, openDisputeCount:0, risks:['repeat_dispute'],            multiAccountSuspects:[] },
+  { mid:'MA-2026-00020', name:'Faruq Ibrahim',   email:'faruq.i@gmail.com',      country:'나이지리아', flag:'🇳🇬', joined:'2026-04-25', state:'활성', role:'일반 회원', last:'2시간 전',  lastH:2,   issuedCount:1, inProgressCount:0, disputeCount:0, openDisputeCount:0, risks:[],                            multiAccountSuspects:[] },
+  { mid:'MA-2026-00021', name:'Samira Begum',    email:'samira.b@gmail.com',     country:'방글라데시', flag:'🇧🇩', joined:'2026-04-28', state:'활성', role:'일반 회원', last:'1시간 전',  lastH:1,   issuedCount:0, inProgressCount:1, disputeCount:0, openDisputeCount:0, risks:[],                            multiAccountSuspects:[] },
+  { mid:'MA-2026-00022', name:'Mohammed Sani',   email:'msani@hotmail.com',      country:'나이지리아', flag:'🇳🇬', joined:'2025-08-15', state:'활성', role:'일반 회원', last:'어제',      lastH:24,  issuedCount:2, inProgressCount:0, disputeCount:0, openDisputeCount:0, risks:['impossible_travel'],         multiAccountSuspects:[] },
+  { mid:'MA-2026-00023', name:'Putri Ayu',       email:'putri.ayu@gmail.com',    country:'인도네시아', flag:'🇮🇩', joined:'2025-09-30', state:'활성', role:'일반 회원', last:'10분 전',   lastH:0.17, issuedCount:4, inProgressCount:0, disputeCount:0, openDisputeCount:0, risks:[],                            multiAccountSuspects:[] },
+  { mid:'MA-2026-00024', name:'Ramesh Thapa',    email:'r.thapa@gmail.com',      country:'네팔',       flag:'🇳🇵', joined:'2025-11-22', state:'활성', role:'일반 회원', last:'30분 전',   lastH:0.5, issuedCount:6, inProgressCount:0, disputeCount:1, openDisputeCount:0, risks:['rapid_revoke'],              multiAccountSuspects:[] },
+];
+
+// 위험 신호 라벨 + 컬러
+const RISK_META = {
+  repeat_dispute:    { label:'반복 분쟁',         color:'#F04452', bg:'#FDE7E9', desc:'같은 사유의 분쟁이 3회 이상 반복됐어요' },
+  impossible_travel: { label:'비정상 이동',       color:'#FFB020', bg:'#FFF4DE', desc:'5분 내 원거리 IP 점프가 감지됐어요' },
+  vpn:               { label:'의심 IP',           color:'#7341D6', bg:'#F4F0FF', desc:'VPN/Tor 대역에서 로그인됐어요' },
+  rapid_revoke:      { label:'발급-폐기 반복',     color:'#FFB020', bg:'#FFF4DE', desc:'발급 직후 즉시 폐기 패턴이 3회 이상 반복됐어요' },
+  multi_account:     { label:'다중 계정 의심',     color:'#F04452', bg:'#FDE7E9', desc:'유사 계정이 감지됐어요' },
+};
+
+// 회원번호 lookup
+const MID = Object.fromEntries(MEMBERS.map(m => [m.name, m.mid]));
+function midOf(name){ return MID[name] || ''; }
+
+// ===================== 렌더 =====================
+function stateBadge(s){
+  if (s === '완료됨') return `<span class="vpill bg-success-soft text-success"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>완료됨</span>`;
+  if (s === '실패함') return `<span class="vpill bg-danger-soft text-danger">실패함</span>`;
+  if (s === '폐기됨') return `<span class="vpill bg-base border border-border text-muted">폐기됨</span>`;
+  if (s === '진행 중') return `<span class="vpill bg-primary-soft text-primary">진행 중</span>`;
+  if (s === '검토 중') return `<span class="vpill bg-warning-soft" style="color:#7a5400;">검토 중</span>`;
+  if (s === '접수') return `<span class="vpill bg-primary-soft text-primary">접수</span>`;
+  if (s === '해결') return `<span class="vpill bg-success-soft text-success">해결</span>`;
+  if (s === '기각') return `<span class="vpill bg-base border border-border text-muted">기각</span>`;
+  if (s === '활성') return `<span class="vpill bg-success-soft text-success">활성</span>`;
+  if (s === '정지') return `<span class="vpill bg-warning-soft" style="color:#7a5400;">정지</span>`;
+  if (s === '탈퇴') return `<span class="vpill bg-base border border-border text-muted">탈퇴</span>`;
+  return s;
+}
+
+// 진행 중 카드 + 최근 목록 — 제거됨 (문서 관리로 통합)
+
+// ===================== 검색 / 필터 / 저장된 뷰 엔진 =====================
+// 회원번호 → 회원 lookup
+const MID2MEM = Object.fromEntries(MEMBERS.map(m => [m.mid, m]));
+function midPill(mid){
+  return mid ? `<span class="mono text-[11px] font-bold" style="background:#F4F9FF;color:#1B64DA;padding:2px 8px;border-radius:6px;letter-spacing:.02em;white-space:nowrap;">${mid}</span>` : '';
+}
+// 날짜 비교 헬퍼 — 데이터 기준일 2026-05-04
+const NOW = new Date('2026-05-04T15:00:00');
+function daysAgo(dateStr){
+  if (!dateStr) return 9999;
+  const d = new Date(dateStr.replace(' ', 'T'));
+  return (NOW - d) / 86400000;
+}
+function matchDate(dateStr, mode){
+  if (!mode) return true;
+  const ago = daysAgo(dateStr);
+  if (mode === 'today') return ago < 1;
+  if (mode === '7') return ago <= 7;
+  if (mode === '30') return ago <= 30;
+  if (mode === '90') return ago <= 90;
+  if (mode === '365+') return ago > 365;
+  return true;
+}
+
+// 페이지별 상태 — { q, filters: {...} }
+const F = {
+  docs:    { q:'', filters: {doc:'', country:'', date:'', sort:'latest'} },
+  s3:      { q:'', filters: {op:'', result:'', who:'', bucket:'', date:'', sort:'latest'} },
+  auth:    { q:'', filters: {result:'', trigger:'', date:'', sort:'latest'} },
+  dispute: { q:'', filters: {state:'', who:'', date:'', sort:'latest'} },
+  members: { q:'', filters: {state:'', country:'', joined:'', dispute:'', sort:'recent'} },
+};
+
+// 빌트인 + 사용자 저장 뷰
+const BUILTIN_VIEWS = {
+  docs: [
+    { name: '만료 임박 7일', filters:{doc:'',country:'',date:'',sort:'latest'}, q:'', tab:'valid', _expSoon:true },
+    { name: '베트남 출생증명서', filters:{doc:'출생증명서',country:'베트남',date:'',sort:'latest'}, q:'' },
+    { name: '오늘 실패한 요청', filters:{doc:'',country:'',date:'today',sort:'latest'}, q:'', tab:'failed' },
+  ],
+  s3:      [
+    { name: '오늘 실패한 업로드', filters:{op:'업로드',result:'fail',date:'today',sort:'latest'}, q:'' },
+    { name: '큰 파일순 (전체)',   filters:{op:'',result:'',date:'',sort:'size'}, q:'' },
+  ],
+  auth:    [
+    { name: 'CI 불일치 차단 — 최근 7일',    filters:{result:'ci_mismatch',trigger:'',date:'7',sort:'latest'}, q:'' },
+    { name: '다른 디바이스에서의 인증 — 오늘', filters:{result:'',trigger:'',date:'today',sort:'latest'}, q:'' },
+  ],
+  dispute: [
+    { name: '미해결 (접수+검토)', filters:{state:'',who:'',date:'',sort:'latest'}, q:'', _open:true },
+    { name: '최근 7일',           filters:{state:'',who:'',date:'7',sort:'latest'}, q:'' },
+  ],
+  members: [
+    { name: '운영자만',     filters:{state:'',role:'운영자',joined:'',sort:'recent'}, q:'' },
+    { name: '정지된 회원',  filters:{state:'정지',role:'',joined:'',sort:'recent'}, q:'' },
+    { name: '최근 30일 가입', filters:{state:'',role:'',joined:'30',sort:'new'}, q:'' },
+  ],
+};
+function userViews(p){ try { return JSON.parse(localStorage.getItem('myapo_views_'+p) || '[]'); } catch(e){ return []; } }
+function setUserViews(p, v){ localStorage.setItem('myapo_views_'+p, JSON.stringify(v)); }
+
+// 필터/검색 라벨 (칩 표시용)
+const FILTER_LABELS = {
+  docs:    { doc:'문서 유형', country:'국가', date:'기간', sort:'정렬' },
+  s3:      { op:'동작', result:'결과', who:'요청자', bucket:'버킷', date:'기간', sort:'정렬' },
+  auth:    { result:'결과', trigger:'트리거', date:'기간', sort:'정렬' },
+  dispute: { state:'상태', who:'신고자', date:'기간', sort:'정렬' },
+  members: { state:'상태', country:'국가', joined:'가입기간', dispute:'분쟁 이력', sort:'정렬' },
+};
+const VAL_LABELS = {
+  date:    { today:'오늘', '7':'지난 7일', '30':'지난 30일', '90':'지난 90일', '365+':'1년 이상' },
+  result:  { ok:'성공', fail:'실패', ci_mismatch:'CI 불일치 차단', expired:'인증서 만료', cancel:'사용자 취소' },
+  trigger: { issue_request:'발급 신청', institution_submit:'기관 제출', dispute_report:'분쟁 신고' },
+  sort:    { latest:'최신순', oldest:'오래된순', name:'이름순', size:'크기 큰 순', recent:'최근 로그인순', new:'가입 최신순', old:'가입 오래된순', issued:'누적 발급 많은순', dispute:'누적 분쟁 많은순' },
+  joined:  { '7':'최근 7일', '30':'최근 30일', '90':'최근 90일', '365+':'1년 이상' },
+  who:     { system:'시스템', ops:'운영자', translator:'번역사', org:'기관 / 법무법인', member:'일반 회원' },
+  dispute: { yes:'분쟁 보유', no:'분쟁 없음' },
+};
+function valLabel(key, val){
+  if (!val) return '';
+  if (VAL_LABELS[key] && VAL_LABELS[key][val]) return VAL_LABELS[key][val];
+  return val;
+}
+// 정렬 키가 기본값일 때는 칩으로 안 보여줌
+const DEFAULT_SORT = { docs:'latest', s3:'latest', auth:'latest', dispute:'latest', members:'recent' };
+
+function activeChips(p){
+  const out = [];
+  if (F[p].q) out.push({ kind:'q', label: '검색', val: F[p].q });
+  Object.entries(F[p].filters).forEach(([k,v]) => {
+    if (!v) return;
+    if (k === 'sort' && v === DEFAULT_SORT[p]) return;
+    if (k === '_mode'){
+      // KPI 카드 클릭으로 적용된 복합 모드 — 칩으로 노출 + X 로 해제 가능
+      const modeLabel = v === 'failure' ? '실패 (CI 불일치 + 만료)' : v === 'rateBase' ? '성공률 분모 (취소 제외)' : v;
+      out.push({ kind:'f', key:k, label:'KPI', val: modeLabel });
+      return;
+    }
+    out.push({ kind:'f', key:k, label: FILTER_LABELS[p][k], val: valLabel(k, v) });
+  });
+  return out;
+}
+function renderChips(p){
+  const wrap = document.querySelector(`[data-chips="${p}"]`);
+  if (!wrap) return;
+  const chips = activeChips(p);
+  if (!chips.length){ wrap.innerHTML = ''; return; }
+  wrap.innerHTML = chips.map(c => {
+    if (c.kind === 'q'){
+      return `<span class="chip chip-search"><span class="k">검색</span> "${c.val}"<span class="x" data-clear-q="${p}" title="검색어 지우기">×</span></span>`;
+    }
+    return `<span class="chip"><span class="k">${c.label}</span> ${c.val}<span class="x" data-clear="${p}" data-clear-key="${c.key}" title="해제">×</span></span>`;
+  }).join('') + `<button class="chip-clear" data-clear-all="${p}">모두 해제</button>`;
+}
+
+// 활성 뷰 매칭 (현재 상태가 어떤 뷰와 일치하는지)
+function matchView(p){
+  const all = [...BUILTIN_VIEWS[p], ...userViews(p).map(v=>({...v, _user:true}))];
+  const cur = F[p];
+  return all.findIndex(v => v.q === cur.q && JSON.stringify(v.filters) === JSON.stringify(cur.filters));
+}
+function renderViewsMenu(p){
+  const wrap = document.querySelector(`[data-views="${p}"]`);
+  if (!wrap) return;
+  const idx = matchView(p);
+  const activeName = (idx >= 0) ? [...BUILTIN_VIEWS[p], ...userViews(p)][idx].name : null;
+  const built = BUILTIN_VIEWS[p];
+  const user = userViews(p);
+  const list = (arr, isUser) => arr.length
+    ? arr.map((v,i) => `<div class="sv-item ${activeName===v.name ? 'active' : ''}" data-view-pick="${p}" data-view-type="${isUser?'u':'b'}" data-view-i="${i}">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;color:#3182F6;"><polyline points="20 6 9 17 4 12" style="${activeName===v.name?'':'opacity:0;'}"/></svg>
+        <span class="sv-name">${v.name}</span>
+        ${isUser ? `<svg class="sv-del" data-view-del="${p}" data-view-i="${i}" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>` : ''}
+      </div>`).join('')
+    : `<div class="sv-empty">저장된 검색이 없어요</div>`;
+  wrap.innerHTML = `
+    <button class="sv-btn ${activeName ? 'has-active' : ''}" data-views-toggle="${p}">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+      ${activeName || '저장된 검색'}
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <div class="sv-menu">
+      <div class="sv-section-label">자주 쓰는 검색</div>
+      ${list(built, false)}
+      <div class="sv-divider"></div>
+      <div class="sv-section-label">내 저장된 검색</div>
+      ${list(user, true)}
+      <div class="sv-divider"></div>
+      <div class="sv-save" data-view-save="${p}">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        현재 검색 저장하기
+      </div>
+    </div>`;
+}
+
+// 페이지별 검색/필터 적용 + 렌더 트리거
+function applyAll(p){
+  renderChips(p);
+  renderViewsMenu(p);
+  if (p === 'docs') renderDocs();
+  if (p === 's3') renderS3();
+  if (p === 'auth') { renderAuth(); syncAuthKpiActive(); }
+  if (p === 'dispute') renderDisputes();
+  if (p === 'members') renderMembers();
+}
+
+// 인증 로그 KPI 카드 활성 동기화 — F.auth 가 KPI preset 과 정확 일치하면 해당 카드 .kpi-on
+function syncAuthKpiActive(){
+  const f = F.auth.filters;
+  const noOtherFilters = !F.auth.q && !f.trigger && f.date === 'today' && (f.sort === 'latest' || !f.sort);
+  let kpi = '';
+  if (noOtherFilters){
+    if (f._mode === 'failure')        kpi = 'failure';
+    else if (f._mode === 'rateBase')  kpi = 'rate';
+    else if (!f._mode && f.result === 'ok') kpi = 'success';
+    else if (!f._mode && !f.result)         kpi = 'attempt';
+  }
+  document.querySelectorAll('[data-page="auth"] .kpi-clickable[data-auth-kpi]').forEach(c => {
+    c.classList.toggle('kpi-on', c.dataset.authKpi === kpi);
+  });
+}
+
+// 검색 매칭 helpers
+function matchQ(q, fields){
+  if (!q) return true;
+  const needle = q.toLowerCase();
+  return fields.some(f => (f||'').toString().toLowerCase().includes(needle));
+}
+
+// ===================== 문서 관리 — 통합 렌더 =====================
+// 진행/유효/만료/폐기/실패 모두 일관된 형태로 필터링
+function filterDocsRows(rawRows, dateField){
+  const f = F.docs.filters;
+  const q = F.docs.q;
+  let rows = rawRows.filter(r => {
+    if (f.doc && r.meta.doc !== f.doc) return false;
+    if (f.country && r.meta.country !== f.country) return false;
+    if (f.date && !matchDate(r.meta[dateField], f.date)) return false;
+    if (q){
+      const fields = [r.meta.id, r.meta.req, r.meta.user, r.meta.email, midOf(r.meta.user)];
+      if (!matchQ(q, fields)) return false;
+    }
+    return true;
+  });
+  if (f.sort === 'oldest') rows = rows.slice().reverse();
+  else if (f.sort === 'name') rows = rows.slice().sort((a,b) => (a.meta.user||'').localeCompare(b.meta.user||''));
+  return rows;
+}
+
+const DOC_TABS = {
+  progress: {
+    cols: '130px 135px 130px minmax(180px,1fr) 110px 90px 130px 80px',
+    head: ['요청번호','회원번호','요청자','이메일','문서 유형','국가','요청 시각','상태'],
+    dateField: 't',
+    rows: () => filterDocsRows(PROGRESS.map(r => ({
+      key: r.id,
+      cells: [
+        `<span class="mono text-[12px] font-bold text-ink">${r.id}</span>`,
+        midPill(midOf(r.user)) || `<span class="text-muted text-[11px]">—</span>`,
+        `<span class="text-ink font-semibold">${r.user}</span>`,
+        `<span class="text-muted text-[12px] mono">${r.email}</span>`,
+        `<span class="text-sub">${r.doc}</span>`,
+        `<span class="text-sub">${r.country}</span>`,
+        `<span class="text-muted text-[12px] mono">${r.t}</span>`,
+        `<span class="vpill bg-primary-soft text-primary">진행 중</span>`,
+      ],
+      stage: r.stage, sub: r.sub, mode: 'progress', meta: {...r, req:r.id},
+    })), 't'),
+  },
+  valid: {
+    cols: '130px 135px 130px minmax(180px,1fr) 110px 90px 100px 170px',
+    head: ['크리덴셜 ID','회원번호','요청자','이메일','문서 유형','국가','발급일','만료일 / 남은 기간'],
+    dateField: 'issued',
+    rows: () => filterDocsRows(VALID.map(r => {
+      const urgent = r.dleft <= 7 ? 'text-danger font-bold' : r.dleft <= 30 ? 'text-warning font-semibold' : 'text-sub';
+      return {
+        key: r.id,
+        cells: [
+          `<span class="mono text-[12px] font-bold text-ink">${r.id}</span>`,
+          midPill(midOf(r.user)) || `<span class="text-muted text-[11px]">—</span>`,
+          `<span class="text-ink font-semibold">${r.user}</span>`,
+          `<span class="text-muted text-[12px] mono">${r.email}</span>`,
+          `<span class="text-sub">${r.doc}</span>`,
+          `<span class="text-sub">${r.country}</span>`,
+          `<span class="text-sub text-[12px] mono">${r.issued}</span>`,
+          `<span class="text-[12px]"><span class="mono">${r.exp}</span> · <span class="${urgent}">D-${r.dleft}</span></span>`,
+        ],
+        stage: 5, sub: null, mode: 'valid', meta: r,
+        _dleft: r.dleft,
+      };
+    }), 'issued'),
+  },
+  expired: {
+    cols: '130px 135px 130px minmax(180px,1fr) 110px 90px 100px 130px',
+    head: ['크리덴셜 ID','회원번호','요청자','이메일','문서 유형','국가','발급일','만료일'],
+    dateField: 'exp',
+    rows: () => filterDocsRows(EXPIRED.map(r => ({
+      key: r.id,
+      cells: [
+        `<span class="mono text-[12px] font-bold text-muted line-through">${r.id}</span>`,
+        midPill(midOf(r.user)) || `<span class="text-muted text-[11px]">—</span>`,
+        `<span class="text-sub">${r.user}</span>`,
+        `<span class="text-muted text-[12px] mono">${r.email}</span>`,
+        `<span class="text-muted">${r.doc}</span>`,
+        `<span class="text-muted">${r.country}</span>`,
+        `<span class="text-muted text-[12px] mono">${r.issued}</span>`,
+        `<span class="text-[12px]"><span class="vpill bg-base border border-border text-muted">만료 · ${r.exp}</span></span>`,
+      ],
+      stage: 5, sub: null, mode: 'expired', meta: r,
+    })), 'exp'),
+  },
+  revoked: {
+    cols: '130px 135px 130px 180px 110px 90px 100px minmax(160px,1fr)',
+    head: ['크리덴셜 ID','회원번호','요청자','이메일','문서 유형','국가','폐기일','폐기 사유'],
+    dateField: 'revoked',
+    rows: () => filterDocsRows(REVOKED.map(r => ({
+      key: r.id,
+      cells: [
+        `<span class="mono text-[12px] font-bold text-muted line-through">${r.id}</span>`,
+        midPill(midOf(r.user)) || `<span class="text-muted text-[11px]">—</span>`,
+        `<span class="text-sub">${r.user}</span>`,
+        `<span class="text-muted text-[12px] mono">${r.email}</span>`,
+        `<span class="text-muted">${r.doc}</span>`,
+        `<span class="text-muted">${r.country}</span>`,
+        `<span class="text-muted text-[12px] mono">${r.revoked}</span>`,
+        `<span class="text-[12px]"><span class="vpill bg-base border border-border text-muted">${r.reason}</span></span>`,
+      ],
+      stage: 5, sub: null, mode: 'revoked', meta: r,
+    })), 'revoked'),
+  },
+  failed: {
+    cols: '130px 135px 130px 180px 110px 90px 120px minmax(180px,1fr)',
+    head: ['요청번호','회원번호','요청자','이메일','문서 유형','국가','실패 시각','실패 사유'],
+    dateField: 't',
+    rows: () => filterDocsRows(FAILED.map(r => ({
+      key: r.id,
+      cells: [
+        `<span class="mono text-[12px] font-bold text-ink">${r.id}</span>`,
+        midPill(midOf(r.user)) || `<span class="text-muted text-[11px]">—</span>`,
+        `<span class="text-ink font-semibold">${r.user}</span>`,
+        `<span class="text-muted text-[12px] mono">${r.email}</span>`,
+        `<span class="text-sub">${r.doc}</span>`,
+        `<span class="text-sub">${r.country}</span>`,
+        `<span class="text-muted text-[12px] mono">${r.t}</span>`,
+        `<span class="text-[12px]"><span class="vpill bg-danger-soft text-danger">실패 · ${STAGES[r.stage]}</span> <span class="text-sub ml-1">${r.reason}</span></span>`,
+      ],
+      stage: r.stage, sub: null, mode: 'failed', meta: {...r, req:r.id},
+    })), 't'),
+  },
+  submitted: {
+    cols: '125px 130px 130px 130px 200px 130px 110px minmax(180px,1fr)',
+    head: ['제출 ID','크리덴셜 ID','회원번호','요청자','제출 기관','제출 시각','결과','반려 사유'],
+    dateField: 'submittedAt',
+    rows: () => {
+      const f = F.docs.filters, q = F.docs.q;
+      let rows = SUBMITS.filter(r => {
+        if (f.doc && r.doc !== f.doc) return false;
+        if (f.date && !matchDate(r.submittedAt, f.date)) return false;
+        if (q && !matchQ(q, [r.id, r.cred, r.req, r.user, midOf(r.user), r.inst, INSTITUTION_LABEL[r.inst]||''])) return false;
+        return true;
+      });
+      if (f.sort === 'oldest') rows = rows.slice().reverse();
+      else if (f.sort === 'name') rows = rows.slice().sort((a,b) => (a.user||'').localeCompare(b.user||''));
+      const resultBadge = res =>
+        res === 'received'  ? '<span class="vpill bg-success-soft text-success">수령</span>' :
+        res === 'verifying' ? '<span class="vpill bg-primary-soft text-primary">검증 중</span>' :
+        res === 'rejected'  ? '<span class="vpill bg-danger-soft text-danger">반려</span>' : res;
+      return rows.map(r => ({
+        key: r.id,
+        cells: [
+          `<span class="mono text-[12px] font-bold text-ink">${r.id}</span>`,
+          `<span class="mono text-[12px] text-sub">${r.cred}</span>`,
+          midPill(midOf(r.user)) || `<span class="text-muted text-[11px]">—</span>`,
+          `<span class="text-ink font-semibold">${r.user}</span>`,
+          `<span class="text-[12px]"><span class="mono text-muted">${r.inst}</span> · <span class="text-sub">${INSTITUTION_LABEL[r.inst]||''}</span></span>`,
+          `<span class="text-muted text-[12px] mono">${r.submittedAt}</span>`,
+          resultBadge(r.result),
+          r.rejectReason
+            ? `<span class="text-[12px] text-danger">${r.rejectReason}</span>`
+            : `<span class="text-muted text-[11px]">—</span>`,
+        ],
+        stage: 5, sub: null, mode: 'submitted', meta: {...r, id:r.id, req:r.req, doc:r.doc, country:''},
+      }));
+    },
+  },
+};
+
+// 5단계 파이프라인
+function pipeline(stage, sub, mode){
+  let h = '';
+  STAGES.forEach((label, i) => {
+    let cls = '';
+    if (mode === 'failed'){
+      if (i < stage) cls = 'done';
+      else if (i === stage) cls = 'active';
+    } else {
+      if (i < stage) cls = 'done';
+      else if (i === stage) cls = 'active';
+    }
+    const dotContent = (cls === 'done') ? '✓' : (mode === 'failed' && i === stage ? '!' : (i+1));
+    const dotStyle = (mode === 'failed' && i === stage) ? 'background:#FDE7E9;border-color:#F04452;color:#F04452;' : '';
+    h += `<div class="stage ${cls}"><div class="dot" style="${dotStyle}">${dotContent}</div><div class="label">${label}</div></div>`;
+    if (i < STAGES.length - 1){
+      let cc = '', g = '', a = '';
+      if (i < stage){ cc = 'done'; g = 'done'; a = 'done'; }
+      else if (i === stage && mode === 'progress'){
+        cc = 'active';
+        if (sub === 'gen'){ g = 'active'; }
+        else if (sub === 'approve'){ g = 'done'; a = 'active'; }
+      }
+      h += `<div class="connector ${cc}"><div class="bar"></div><div class="substeps">
+        <span class="substep ${g}"><span class="sd"></span>크리덴셜 생성</span>
+        <span class="substep ${a}"><span class="sd"></span>사용자 승인</span>
+      </div></div>`;
+    }
+  });
+  return h;
+}
+
+let activeDocTab = 'progress';
+let openRowKey = null;
+
+function renderDocs(){
+  const def = DOC_TABS[activeDocTab];
+  const head = document.getElementById('docs-head');
+  head.style.gridTemplateColumns = def.cols;
+  head.innerHTML = def.head.map(h => `<span>${h}</span>`).join('');
+
+  const list = document.getElementById('docs-list');
+  const rows = def.rows();
+  if (!rows.length){
+    list.innerHTML = `<div style="padding:48px 24px;text-align:center;color:#8B95A1;font-size:13px;">
+      <div style="font-size:28px;margin-bottom:6px;">🔍</div>
+      <div style="font-weight:700;color:#4E5968;margin-bottom:4px;">검색 결과가 없어요</div>
+      <div>다른 검색어나 필터를 시도해 보세요.</div>
+    </div>`;
+    // 칩에 결과 건수
+    return;
+  }
+  list.innerHTML = rows.map(r => {
+    if (r.mode === 'submitted'){
+      const sub = r.meta;
+      const resultLabel =
+        sub.result === 'received'  ? '<span class="vpill bg-success-soft text-success">수령</span>' :
+        sub.result === 'verifying' ? '<span class="vpill bg-primary-soft text-primary">검증 중</span>' :
+                                     '<span class="vpill bg-danger-soft text-danger">반려</span>';
+      return `
+      <div class="row-wrap ${openRowKey === r.key ? 'open' : ''}" data-key="${r.key}">
+        <div class="tbl-row" style="grid-template-columns:${def.cols};">
+          ${r.cells.join('')}
+        </div>
+        <div class="row-expand">
+          <div class="flex items-center gap-3 mb-5 flex-wrap">
+            <span class="mono text-[13px] font-bold text-ink">${r.key}</span>
+            ${resultLabel}
+            <span class="vpill bg-base border border-border text-sub">${sub.doc}</span>
+            <span class="vpill bg-base border border-border text-sub">${sub.inst} · ${INSTITUTION_LABEL[sub.inst]||''}</span>
+            <span class="text-[12px] text-muted ml-auto">요청자: ${sub.user}</span>
+            <a class="btn sm" target="_blank" rel="noopener" href="console/request-detail.html?id=${sub.req}">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              발급 요청 상세
+            </a>
+            ${sub.result === 'rejected' ? `<button class="btn sm primary" data-dispute-from="${sub.id}">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              분쟁 신고로 전환
+            </button>` : ''}
+          </div>
+          <div class="grid gap-4" style="grid-template-columns:1fr 280px;">
+            <div>
+              <div class="text-[12px] font-bold text-sub mb-2">결과 타임라인</div>
+              <div class="text-[12px] text-sub" style="line-height:1.9;">
+                <div><span class="mono text-muted">${sub.submittedAt}</span> · 사용자가 <strong>${INSTITUTION_LABEL[sub.inst]||sub.inst}</strong>에 제출</div>
+                ${sub.result !== 'rejected' ? `<div><span class="mono text-muted">${sub.submittedAt.split(' ')[0]} (자동)</span> · 기관 시스템 수령 확인</div>` : ''}
+                ${sub.result === 'verifying' ? `<div><span class="mono text-muted">진행 중</span> · 기관 검증 대기</div>` : ''}
+                ${sub.result === 'rejected' ? `<div class="text-danger"><span class="mono">${sub.submittedAt.split(' ')[0]}</span> · 기관 반려 — ${sub.rejectReason}</div>` : ''}
+                ${sub.result === 'received' ? `<div class="text-success"><span class="mono">${sub.submittedAt.split(' ')[0]}</span> · 검증 완료 · 수령 확정</div>` : ''}
+              </div>
+            </div>
+            <div class="bg-base border border-border rounded-[8px] p-3">
+              <div class="text-[11px] font-bold text-sub mb-1.5">제출 시 본인인증</div>
+              <div>${linkedIdCell(sub.authId)}</div>
+              <div class="text-[11px] text-muted mt-1">↳ 인증 로그에서 자세히</div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }
+    return `
+    <div class="row-wrap ${openRowKey === r.key ? 'open' : ''}" data-key="${r.key}">
+      <div class="tbl-row" style="grid-template-columns:${def.cols};">
+        ${r.cells.join('')}
+      </div>
+      <div class="row-expand">
+        <div class="flex items-center gap-3 mb-5 flex-wrap">
+          <span class="mono text-[13px] font-bold text-ink">${r.key}</span>
+          ${r.mode === 'progress' ? `<span class="vpill bg-primary-soft text-primary pulse-border">진행 중 — ${STAGES[r.stage]}${r.sub === 'gen' ? ' · 크리덴셜 생성' : r.sub === 'approve' ? ' · 사용자 승인' : ''}</span>`
+            : r.mode === 'valid' ? `<span class="vpill bg-success-soft text-success">발급 완료</span>`
+            : r.mode === 'expired' ? `<span class="vpill bg-base border border-border text-muted">만료됨</span>`
+            : r.mode === 'revoked' ? `<span class="vpill bg-base border border-border text-muted">폐기됨</span>`
+            : `<span class="vpill bg-danger-soft text-danger">실패 — ${STAGES[r.stage]}</span>`}
+          <span class="vpill bg-base border border-border text-sub">${r.meta.doc} · ${r.meta.country}</span>
+          <span class="text-[12px] text-muted ml-auto">요청자: ${r.meta.user}</span>
+          <a class="btn sm primary" target="_blank" rel="noopener" href="console/request-detail.html?id=${r.key}">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            상세 페이지
+          </a>
+        </div>
+        <div class="pipeline">${pipeline(r.stage, r.sub, r.mode)}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // 분쟁 신고로 전환 버튼
+  list.querySelectorAll('[data-dispute-from]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const sid = btn.dataset.disputeFrom;
+      const sub = SUBMITS.find(s => s.id === sid);
+      if (!sub) return;
+      const ok = confirm(`분쟁 신고로 전환할까요?\n\n제출 ID: ${sub.id}\n기관: ${INSTITUTION_LABEL[sub.inst]||sub.inst}\n반려 사유: ${sub.rejectReason}\n\n분쟁 추적에 새 분쟁이 사전 채움 상태로 생성돼요.`);
+      if (ok) alert('분쟁이 사전 채움 상태로 등록됐어요. 분쟁 추적 메뉴에서 검토해 주세요.');
+    });
+  });
+
+  // 행 클릭 → 펼침
+  list.querySelectorAll('.row-wrap').forEach(w => {
+    w.querySelector('.tbl-row').addEventListener('click', e => {
+      // 상세 페이지 버튼 클릭은 무시
+      if (e.target.closest('a,button')) return;
+      const k = w.dataset.key;
+      openRowKey = (openRowKey === k) ? null : k;
+      list.querySelectorAll('.row-wrap').forEach(x => x.classList.toggle('open', x.dataset.key === openRowKey));
+    });
+  });
+}
+
+document.querySelectorAll('.tab[data-doctab]').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab[data-doctab]').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    activeDocTab = t.dataset.doctab;
+    openRowKey = null;
+    renderDocs();
+  });
+});
+renderDocs();
+
+// ===================== S3 렌더 =====================
+// S3 요청자 카테고리 분류
+function s3WhoCategory(user){
+  if (user === '시스템') return 'system';
+  if (/^운영자/.test(user)) return 'ops';
+  if (/^번역사/.test(user)) return 'translator';
+  if (/(센터|법무법인|법인|기관|회사)$/.test(user)) return 'org';
+  return 'member';
+}
+// 파일명에서 요청번호 추출 (예: REQ-2026-0419-original.pdf → REQ-2026-0419)
+function s3ReqId(file){
+  const m = file && file.match(/REQ-\d{4}-\d{4}/);
+  return m ? m[0] : '';
+}
+
+function renderS3(){
+  const f = F.s3.filters, q = F.s3.q;
+  let rows = S3.filter(r => {
+    if (f.op && r.op !== f.op) return false;
+    if (f.result === 'ok' && !r.ok) return false;
+    if (f.result === 'fail' && r.ok) return false;
+    if (f.who && s3WhoCategory(r.user) !== f.who) return false;
+    if (f.bucket && r.bucket !== f.bucket) return false;
+    if (f.date && !matchDate(r.t, f.date)) return false;
+    if (q && !matchQ(q, [r.file, r.user, r.bucket, midOf(r.user), s3ReqId(r.file)])) return false;
+    return true;
+  });
+  if (f.sort === 'oldest') rows = rows.slice().reverse();
+  else if (f.sort === 'size'){
+    const toBytes = s => {
+      const m = s.match(/([\d.]+)\s*(KB|MB|GB)/i);
+      if (!m) return 0;
+      const n = parseFloat(m[1]);
+      return m[2].toUpperCase() === 'GB' ? n*1e9 : m[2].toUpperCase() === 'MB' ? n*1e6 : n*1e3;
+    };
+    rows = rows.slice().sort((a,b) => toBytes(b.size) - toBytes(a.size));
+  }
+  const list = document.getElementById('s3-list');
+  if (!rows.length){
+    list.innerHTML = `<div style="padding:48px 24px;text-align:center;color:#8B95A1;font-size:13px;"><div style="font-size:28px;margin-bottom:6px;">🔍</div><div style="font-weight:700;color:#4E5968;margin-bottom:4px;">검색 결과가 없어요</div><div>다른 검색어나 필터를 시도해 보세요.</div></div>`;
+    return;
+  }
+  list.innerHTML = rows.map(r => `
+    <div class="tbl-row" style="grid-template-columns:130px 80px minmax(220px,1fr) 110px 130px 70px 95px 70px;">
+      <span class="mono text-[11px] text-muted">${r.t}</span>
+      <span>${r.op === '업로드'
+        ? `<span class="vpill bg-primary-soft text-primary"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>업로드</span>`
+        : `<span class="vpill bg-success-soft text-success"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>다운로드</span>`}</span>
+      <span class="mono text-[12px] text-ink">${r.file}</span>
+      <span>${midPill(midOf(r.user)) || '<span class="text-muted text-[11px]">—</span>'}</span>
+      <span class="text-sub">${r.user}</span>
+      <span class="text-sub mono text-[12px]">${r.size}</span>
+      <span class="text-muted text-[12px] mono">${r.bucket}</span>
+      <span>${r.ok ? '<span class="vpill bg-success-soft text-success">성공</span>' : '<span class="vpill bg-danger-soft text-danger">실패</span>'}</span>
+    </div>
+  `).join('');
+}
+renderS3();
+
+// ===================== 인증 로그 렌더 =====================
+function authResultBadge(r){
+  if (r === 'ok')          return '<span class="vpill bg-success-soft text-success">성공</span>';
+  if (r === 'ci_mismatch') return '<span class="vpill bg-warning-soft" style="color:#7a5400;">CI 불일치 차단</span>';
+  if (r === 'expired')     return '<span class="vpill bg-base border border-border text-muted">인증서 만료</span>';
+  if (r === 'cancel')      return '<span class="vpill bg-base border border-border text-muted">사용자 취소</span>';
+  return r;
+}
+function authTriggerBadge(t){
+  const lbl = TRIGGER_LABEL[t] || t;
+  if (t === 'issue_request')      return `<span class="vpill bg-primary-soft text-primary">${lbl}</span>`;
+  if (t === 'institution_submit') return `<span class="vpill" style="background:#E6F8F2;color:#00875A;">${lbl}</span>`;
+  if (t === 'dispute_report')     return `<span class="vpill bg-warning-soft" style="color:#7a5400;">${lbl}</span>`;
+  return lbl;
+}
+function linkedIdCell(id){
+  if (!id) return '<span class="text-muted text-[11px]">—</span>';
+  if (id.startsWith('REQ-')) return `<a class="mono text-[11px] font-bold text-primary" href="console/request-detail.html?id=${id}" target="_blank" rel="noopener">${id}</a>`;
+  if (id.startsWith('DSP-')) return `<a class="mono text-[11px] font-bold text-primary" href="console/dispute-detail.html?id=${id}" target="_blank" rel="noopener">${id}</a>`;
+  if (id.startsWith('SUB-')) return `<span class="mono text-[11px] font-bold text-primary" data-jump-submit="${id}" style="cursor:pointer;text-decoration:underline;">${id}</span>`;
+  return `<span class="mono text-[11px] text-muted">${id}</span>`;
+}
+function renderAuth(){
+  const f = F.auth.filters, q = F.auth.q;
+  let rows = AUTH_LOG.filter(r => {
+    if (f.result && r.result !== f.result) return false;
+    if (f.trigger && r.trigger !== f.trigger) return false;
+    if (f.date && !matchDate(r.t, f.date)) return false;
+    if (q && !matchQ(q, [r.id, r.user, r.ci, r.linkedId, midOf(r.user)])) return false;
+    return true;
+  });
+  // _mode 분기 — KPI 카드 클릭 시 적용 (select 단일 값으로 표현 불가한 복합 결과 필터)
+  if (f._mode === 'failure')   rows = rows.filter(r => r.result === 'ci_mismatch' || r.result === 'expired');
+  else if (f._mode === 'rateBase') rows = rows.filter(r => r.result !== 'cancel');
+  if (f.sort === 'oldest') rows = rows.slice().reverse();
+  const list = document.getElementById('auth-list');
+  if (!rows.length){
+    list.innerHTML = `<div style="padding:48px 24px;text-align:center;color:#8B95A1;font-size:13px;"><div style="font-size:28px;margin-bottom:6px;">🔍</div><div style="font-weight:700;color:#4E5968;margin-bottom:4px;">검색 결과가 없어요</div><div>다른 검색어나 필터를 시도해 보세요.</div></div>`;
+    return;
+  }
+  list.innerHTML = rows.map(r => `
+    <div class="tbl-row" style="grid-template-columns:170px 150px 130px 150px minmax(180px,1fr);">
+      <span class="mono text-[11px] text-muted">${r.t}</span>
+      <span>${midPill(midOf(r.user)) || '<span class="text-muted text-[11px]">—</span>'}</span>
+      <span>${authTriggerBadge(r.trigger)}</span>
+      <span>${authResultBadge(r.result)}</span>
+      <span>${linkedIdCell(r.linkedId)}</span>
+    </div>
+  `).join('');
+}
+renderAuth();
+
+// 인증 로그 KPI 카드 클릭 → 필터 자동 세팅 + 검색 즉시 실행
+const AUTH_KPI_PRESETS = {
+  attempt: {result:'',   _mode:''},          // 오늘 인증 시도 (모든 결과)
+  success: {result:'ok', _mode:''},          // 성공
+  failure: {result:'',   _mode:'failure'},   // 실패 (ci_mismatch + expired)
+  rate:    {result:'',   _mode:'rateBase'},  // 성공률 (사용자 취소 제외)
+};
+document.querySelectorAll('[data-page="auth"] .kpi-clickable[data-auth-kpi]').forEach(card => {
+  card.addEventListener('click', () => {
+    const kpi = card.dataset.authKpi;
+    const preset = AUTH_KPI_PRESETS[kpi];
+    if (!preset) return;
+    // F.auth 상태 갱신 — 기간=오늘 고정, 트리거 비움, 정렬 기본값
+    F.auth.q = '';
+    F.auth.filters = { result: preset.result, trigger: '', date: 'today', sort: 'latest', _mode: preset._mode };
+    // select·input UI 동기화 (표준 키만; _mode 는 비표시)
+    document.querySelectorAll('select[data-filter="auth"]').forEach(sel => {
+      sel.value = F.auth.filters[sel.dataset.key] || '';
+    });
+    const inp = document.getElementById('auth-q'); if (inp) inp.value = '';
+    // 검색 즉시 실행 (applyAll → syncAuthKpiActive 가 활성 카드 강조)
+    applyAll('auth');
+  });
+});
+
+// ===================== 분쟁 렌더 =====================
+function renderDisputes(){
+  const f = F.dispute.filters, q = F.dispute.q;
+  let rows = DISPUTES.filter(r => {
+    if (f.state && r.state !== f.state) return false;
+    if (f.who && r.who !== f.who) return false;
+    if (f.date && !matchDate(r.at, f.date)) return false;
+    if (q && !matchQ(q, [r.id, r.req, r.who, r.reason, r.user, midOf(r.user)])) return false;
+    return true;
+  });
+  // 빌트인 뷰 — 미해결 (접수 + 검토 중)만 보기 (활성 뷰 매칭 시 적용)
+  const idx = matchView('dispute');
+  if (idx >= 0){
+    const v = [...BUILTIN_VIEWS.dispute, ...userViews('dispute')][idx];
+    if (v && v._open) rows = rows.filter(r => r.state === '접수' || r.state === '검토 중');
+  }
+  if (f.sort === 'oldest') rows = rows.slice().reverse();
+  const list = document.getElementById('dispute-list');
+  if (!rows.length){
+    list.innerHTML = `<div style="padding:48px 24px;text-align:center;color:#8B95A1;font-size:13px;"><div style="font-size:28px;margin-bottom:6px;">🔍</div><div style="font-weight:700;color:#4E5968;margin-bottom:4px;">검색 결과가 없어요</div><div>다른 검색어나 필터를 시도해 보세요.</div></div>`;
+    return;
+  }
+  list.innerHTML = rows.map(r => `
+    <div class="tbl-row" style="grid-template-columns:100px 130px 105px 130px 130px minmax(180px,1fr) 90px 90px 75px;" onclick="window.open('console/dispute-detail.html?id=${r.id}','_blank')">
+      <span class="mono text-[12px] font-bold text-ink">${r.id}</span>
+      <span class="mono text-[12px] text-sub">${r.req}</span>
+      <span>${midPill(midOf(r.user)) || '<span class="text-muted text-[11px]">—</span>'}</span>
+      <span class="text-ink font-semibold text-[12px]">${r.user || '—'}</span>
+      <span class="text-sub text-[12px]">${r.who}</span>
+      <span class="text-sub text-[12px]">${r.reason}</span>
+      <span class="text-muted text-[12px] mono">${r.at}</span>
+      <span class="text-muted text-[12px]">${r.age}</span>
+      <span>${stateBadge(r.state)}</span>
+    </div>
+  `).join('');
+}
+renderDisputes();
+
+// ===================== 회원 렌더 =====================
+function renderMembers(){
+  const f = F.members.filters, q = F.members.q;
+  let rows = MEMBERS.filter(m => {
+    if (f.state && m.state !== f.state) return false;
+    if (f.country && m.country !== f.country) return false;
+    if (f.dispute === 'yes' && m.disputeCount === 0) return false;
+    if (f.dispute === 'no' && m.disputeCount > 0) return false;
+    if (f.joined){
+      const ago = daysAgo(m.joined);
+      if (f.joined === '7' && ago > 7) return false;
+      if (f.joined === '30' && ago > 30) return false;
+      if (f.joined === '90' && ago > 90) return false;
+      if (f.joined === '365+' && ago <= 365) return false;
+    }
+    if (q && !matchQ(q, [m.mid, m.name, m.email, m.country])) return false;
+    return true;
+  });
+  if (f.sort === 'recent') rows = rows.slice().sort((a,b) => a.lastH - b.lastH);
+  else if (f.sort === 'new') rows = rows.slice().sort((a,b) => b.joined.localeCompare(a.joined));
+  else if (f.sort === 'old') rows = rows.slice().sort((a,b) => a.joined.localeCompare(b.joined));
+  else if (f.sort === 'name') rows = rows.slice().sort((a,b) => a.name.localeCompare(b.name));
+  else if (f.sort === 'issued') rows = rows.slice().sort((a,b) => b.issuedCount - a.issuedCount);
+  else if (f.sort === 'dispute') rows = rows.slice().sort((a,b) => b.disputeCount - a.disputeCount);
+
+  // 다중 계정 묶음 카드
+  const multi = document.getElementById('members-multi-card');
+  const multiSet = new Set();
+  rows.forEach(m => { if (m.multiAccountSuspects && m.multiAccountSuspects.length) multiSet.add(m.mid); });
+  if (multi){
+    if (multiSet.size >= 2){
+      multi.innerHTML = `<div class="multi-card">
+        <div class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <div class="body">
+          <div class="ttl">유사 계정이 ${multiSet.size}개 묶음으로 감지됐어요</div>
+          <div class="desc">이메일·이름·KYC·디바이스 신호가 비슷한 계정들이에요. 다중 계정 의심으로 분류됐어요.</div>
+        </div>
+        <button class="btn" onclick="filterMultiOnly()">묶음만 보기</button>
+      </div>`;
+    } else multi.innerHTML = '';
+  }
+
+  const list = document.getElementById('members-list');
+  if (!rows.length){
+    list.innerHTML = `<div style="padding:48px 24px;text-align:center;color:#8B95A1;font-size:13px;"><div style="font-size:28px;margin-bottom:6px;">🔍</div><div style="font-weight:700;color:#4E5968;margin-bottom:4px;">검색 결과가 없어요</div><div>다른 검색어나 필터를 시도해 보세요.</div></div>`;
+    return;
+  }
+  const cols = '8px 135px 150px minmax(180px,1fr) 100px 70px 90px 110px 130px';
+  // sync head columns too
+  const head = document.getElementById('members-head'); if (head) head.style.gridTemplateColumns = cols;
+  list.innerHTML = rows.map(m => {
+    const hasRisk = m.risks && m.risks.length;
+    const riskColor = hasRisk ? RISK_META[m.risks[0]].color : 'transparent';
+    const riskTitle = hasRisk ? m.risks.map(r => RISK_META[r].label + ' — ' + RISK_META[r].desc).join('\n') : '';
+    const riskPips = hasRisk ? `<span class="risk-icons" title="${riskTitle}">${m.risks.map(r => `<span class="risk-pip" style="background:${RISK_META[r].color};">${RISK_META[r].label.charAt(0)}</span>`).join('')}</span>` : '';
+    const dispBadge = m.disputeCount > 0
+      ? `<span class="meta-cnt warn" title="누적 분쟁 ${m.disputeCount}건"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>${m.disputeCount}</span>`
+      : '';
+    const issBadge = `<span class="meta-cnt" title="누적 발급 ${m.issuedCount}건">📄 ${m.issuedCount}</span>`;
+    return `
+    <div class="tbl-row" style="grid-template-columns:${cols};padding-left:0;" onclick="window.open('console/member-detail.html?id=${m.mid}','_blank')">
+      <span class="risk-bar" style="background:${riskColor};"></span>
+      <span style="padding-left:18px;">${midPill(m.mid)}</span>
+      <span class="text-ink font-semibold">${m.name}${riskPips ? '&nbsp;' + riskPips : ''}</span>
+      <span class="text-muted text-[12px] mono">${m.email}</span>
+      <span class="text-sub text-[12px] mono">${m.joined}</span>
+      <span>${stateBadge(m.state)}</span>
+      <span class="text-sub text-[12px]">${m.role}</span>
+      <span class="text-muted text-[12px]">${m.last}</span>
+      <span style="display:inline-flex;gap:6px;align-items:center;justify-content:flex-end;padding-right:6px;">
+        <span class="meta-flag" title="${m.country}">${m.flag}</span>
+        ${issBadge}
+        ${dispBadge}
+      </span>
+    </div>
+  `;}).join('');
+}
+function filterMultiOnly(){
+  // 임시: 정렬을 분쟁 기준으로 + 위험 신호 강조
+  alert('다중 계정 의심 묶음만 보기는 와이어프레임 단계예요. 실제 운영 환경에서는 묶음별 그룹뷰로 펼쳐져요.');
+}
+renderMembers();
+
+// 회원 KPI 클릭 → 칩 추가/해제
+function syncSel(key, val){
+  const s = document.querySelector(`select[data-filter="members"][data-key="${key}"]`);
+  if (s) s.value = val;
+}
+document.querySelectorAll('[data-mkpi]').forEach(k => {
+  k.addEventListener('click', () => {
+    const kind = k.dataset.mkpi;
+    const f = F.members.filters;
+    if (kind === 'all'){
+      F.members.q = '';
+      const inp = document.getElementById('members-q'); if (inp) inp.value = '';
+      Object.keys(f).forEach(key => { f[key] = (key === 'sort') ? 'recent' : ''; });
+      document.querySelectorAll('select[data-filter="members"]').forEach(s => s.value = (s.dataset.key === 'sort') ? 'recent' : '');
+      document.querySelectorAll('[data-mkpi]').forEach(x => x.classList.remove('kpi-on'));
+    } else if (kind === 'active'){ f.state = '활성'; syncSel('state', '활성'); }
+    else if (kind === 'suspend'){ f.state = '정지'; syncSel('state', '정지'); }
+    else if (kind === 'leave'){ f.state = '탈퇴'; syncSel('state', '탈퇴'); }
+    else if (kind === 'new7'){ f.joined = '7'; syncSel('joined', '7'); }
+    else if (kind === 'login7'){ f.sort = 'recent'; syncSel('sort', 'recent'); }
+    else if (kind === 'dispute'){ f.dispute = 'yes'; syncSel('dispute', 'yes'); }
+    applyAll('members');
+    if (kind !== 'all'){
+      document.querySelectorAll('[data-mkpi]').forEach(x => x.classList.toggle('kpi-on', x === k));
+    }
+  });
+});
+
+// 회원 내보내기 모달 (관리자 전용 — 와이어프레임 기본은 일반 운영자)
+const EXPORT_ADMIN = false;
+const expBtn = document.getElementById('members-export-btn');
+const expModal = document.getElementById('members-export-modal');
+const expReason = document.getElementById('mexp-reason');
+const expGo = document.getElementById('mexp-go');
+if (expBtn){
+  if (!EXPORT_ADMIN){
+    expBtn.style.opacity = '0.5';
+    expBtn.style.cursor = 'not-allowed';
+    expBtn.title = '관리자 권한이 필요해요';
+    expBtn.addEventListener('click', () => alert('내보내기는 관리자 권한이 필요해요. 관리자에게 요청해주세요.'));
+  } else {
+    expBtn.addEventListener('click', () => { expModal.hidden = false; });
+  }
+}
+function closeExp(){ if (expModal) expModal.hidden = true; if (expReason) expReason.value = ''; if (expGo) expGo.disabled = true; }
+const expClose = document.getElementById('mexp-close');
+const expCancel = document.getElementById('mexp-cancel');
+if (expClose) expClose.addEventListener('click', closeExp);
+if (expCancel) expCancel.addEventListener('click', closeExp);
+if (expReason) expReason.addEventListener('input', () => { expGo.disabled = expReason.value.trim().length < 5; });
+if (expGo) expGo.addEventListener('click', () => {
+  alert('내보내기를 시작했어요. 감사 로그에 기록되며 완료 시 알림으로 알려드려요.');
+  closeExp();
+});
+
+// 사이드바 페이지 전환
+const URLS = {
+  dashboard:'ops.myapo.demo/console/dashboard',
+  docs:'ops.myapo.demo/console/docs',
+  s3:'ops.myapo.demo/console/s3',
+  auth:'ops.myapo.demo/console/auth',
+  dispute:'ops.myapo.demo/console/dispute',
+  members:'ops.myapo.demo/console/members'
+};
+function gotoPage(p){
+  document.querySelectorAll('.side-link').forEach(l => l.classList.toggle('active', l.dataset.page === p));
+  document.querySelectorAll('.page').forEach(s => s.classList.toggle('active', s.dataset.page === p));
+  document.getElementById('winbar-url').textContent = URLS[p] || '';
+}
+document.querySelectorAll('.side-link[data-page]').forEach(link => {
+  link.addEventListener('click', e => { e.preventDefault(); gotoPage(link.dataset.page); });
+});
+
+// KPI 클릭 → 가장 가까운 탭으로 이동
+document.querySelectorAll('.kpi[data-jump-tab]').forEach(k => {
+  k.addEventListener('click', () => {
+    const tab = k.dataset.jumpTab;
+    document.querySelectorAll('.tab[data-doctab]').forEach(x => x.classList.toggle('active', x.dataset.doctab === tab));
+    activeDocTab = tab;
+    openRowKey = null;
+    renderDocs();
+    document.getElementById('docs-tbl').scrollIntoView({behavior:'smooth', block:'start'});
+  });
+});
+
+// 대시보드 placeholder 빠른 이동 버튼
+document.querySelectorAll('[data-jump]').forEach(b => {
+  b.addEventListener('click', () => gotoPage(b.dataset.jump));
+});
+
+// 대시보드 KPI / 위험 신호 / 빠른 액션 — 통합 점프 핸들러
+// data-jump-page (필수) + data-jump-tab (문서 관리 탭) + data-jump-view (저장된 뷰) + data-jump-filter-result (제출 결과 필터)
+document.querySelectorAll('[data-jump-page]').forEach(el => {
+  el.addEventListener('click', e => {
+    e.preventDefault();
+    const p = el.dataset.jumpPage;
+    const tab = el.dataset.jumpTab;
+    const view = el.dataset.jumpView;
+    const filterResult = el.dataset.jumpFilterResult;
+    gotoPage(p);
+    if (p === 'docs' && tab && tab !== 'all'){
+      document.querySelectorAll('.tab[data-doctab]').forEach(x => x.classList.toggle('active', x.dataset.doctab === tab));
+      activeDocTab = tab;
+      openRowKey = null;
+      if (filterResult && tab === 'submitted'){
+        // submitted 탭의 결과 필터는 별도 로직 — 인라인 필터로 적용 (간이)
+        // 현재는 docs 의 표준 필터에 result 가 없으므로 시연용으로 검색어로 대체
+        F.docs.q = filterResult === 'rejected' ? '반려' : '';
+        const inp = document.getElementById('docs-q'); if (inp) inp.value = F.docs.q;
+      }
+      renderDocs();
+      const tbl = document.getElementById('docs-tbl');
+      if (tbl) tbl.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+    if (p === 'auth' && view){
+      // 저장된 뷰 매칭 — "ci-mismatch-7d" → "CI 불일치 차단 — 최근 7일"
+      if (view === 'ci-mismatch-7d'){
+        F.auth.q = '';
+        F.auth.filters = {result:'ci_mismatch', trigger:'', date:'7', sort:'latest'};
+        // select·input 동기화
+        document.querySelectorAll('select[data-filter="auth"]').forEach(sel => {
+          sel.value = F.auth.filters[sel.dataset.key] || '';
+        });
+        const inp = document.getElementById('auth-q'); if (inp) inp.value = '';
+        applyAll('auth');
+      }
+    }
+  });
+});
+
+// ===================== 검색 / 필터 / 저장된 뷰 — 이벤트 =====================
+// 검색: 엔터 또는 검색 버튼
+document.querySelectorAll('input[type="search"][id$="-q"]').forEach(input => {
+  const p = input.id.replace('-q','');
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter'){
+      F[p].q = input.value.trim();
+      applyAll(p);
+    }
+  });
+});
+document.querySelectorAll('[data-search-go]').forEach(b => {
+  b.addEventListener('click', () => {
+    const p = b.dataset.searchGo;
+    const input = document.getElementById(p+'-q');
+    F[p].q = input.value.trim();
+    applyAll(p);
+  });
+});
+// 필터 select: 변경 즉시 적용
+document.querySelectorAll('select[data-filter]').forEach(sel => {
+  sel.addEventListener('change', () => {
+    const p = sel.dataset.filter;
+    const k = sel.dataset.key;
+    F[p].filters[k] = sel.value;
+    applyAll(p);
+  });
+});
+// 칩 X 클릭 / 모두 해제 — 이벤트 위임
+document.body.addEventListener('click', e => {
+  // 검색어 지우기
+  const cq = e.target.closest('[data-clear-q]');
+  if (cq){
+    const p = cq.dataset.clearQ;
+    F[p].q = '';
+    const inp = document.getElementById(p+'-q');
+    if (inp) inp.value = '';
+    applyAll(p);
+    return;
+  }
+  // 개별 필터 해제
+  const cf = e.target.closest('[data-clear]');
+  if (cf){
+    const p = cf.dataset.clear;
+    const k = cf.dataset.clearKey;
+    F[p].filters[k] = (k === 'sort') ? DEFAULT_SORT[p] : '';
+    const sel = document.querySelector(`select[data-filter="${p}"][data-key="${k}"]`);
+    if (sel) sel.value = (k === 'sort') ? DEFAULT_SORT[p] : '';
+    applyAll(p);
+    return;
+  }
+  // 모두 해제
+  const cc = e.target.closest('[data-clear-all]');
+  if (cc){
+    const p = cc.dataset.clearAll;
+    F[p].q = '';
+    Object.keys(F[p].filters).forEach(k => F[p].filters[k] = (k === 'sort') ? DEFAULT_SORT[p] : '');
+    const inp = document.getElementById(p+'-q');
+    if (inp) inp.value = '';
+    document.querySelectorAll(`select[data-filter="${p}"]`).forEach(s => {
+      s.value = (s.dataset.key === 'sort') ? DEFAULT_SORT[p] : '';
+    });
+    applyAll(p);
+    return;
+  }
+});
+
+// 저장된 뷰 — 토글 / 선택 / 저장 / 삭제
+document.body.addEventListener('click', e => {
+  const tg = e.target.closest('[data-views-toggle]');
+  if (tg){
+    const p = tg.dataset.viewsToggle;
+    document.querySelectorAll('.saved-views').forEach(sv => {
+      if (sv.dataset.views !== p) sv.classList.remove('open');
+    });
+    tg.closest('.saved-views').classList.toggle('open');
+    return;
+  }
+  const pk = e.target.closest('[data-view-pick]');
+  if (pk){
+    e.stopPropagation();
+    const p = pk.dataset.viewPick;
+    const isUser = pk.dataset.viewType === 'u';
+    const i = +pk.dataset.viewI;
+    const arr = isUser ? userViews(p) : BUILTIN_VIEWS[p];
+    const v = arr[i];
+    if (!v) return;
+    F[p].q = v.q || '';
+    F[p].filters = {...F[p].filters, ...v.filters};
+    // UI 동기화
+    const inp = document.getElementById(p+'-q');
+    if (inp) inp.value = F[p].q;
+    document.querySelectorAll(`select[data-filter="${p}"]`).forEach(s => {
+      s.value = F[p].filters[s.dataset.key] || '';
+    });
+    // 탭 전환 (docs only)
+    if (p === 'docs' && v.tab){
+      document.querySelectorAll('.tab[data-doctab]').forEach(x => x.classList.toggle('active', x.dataset.doctab === v.tab));
+      activeDocTab = v.tab;
+      openRowKey = null;
+    }
+    document.querySelectorAll('.saved-views').forEach(sv => sv.classList.remove('open'));
+    applyAll(p);
+    return;
+  }
+  const dl = e.target.closest('[data-view-del]');
+  if (dl){
+    e.stopPropagation();
+    const p = dl.dataset.viewDel;
+    const i = +dl.dataset.viewI;
+    const arr = userViews(p);
+    arr.splice(i, 1);
+    setUserViews(p, arr);
+    renderViewsMenu(p);
+    document.querySelector(`[data-views="${p}"]`).classList.add('open');
+    return;
+  }
+  const sv = e.target.closest('[data-view-save]');
+  if (sv){
+    const p = sv.dataset.viewSave;
+    const name = prompt('저장된 검색 이름을 입력하세요', '내 검색 ' + (userViews(p).length + 1));
+    if (!name) return;
+    const arr = userViews(p);
+    arr.push({ name, q: F[p].q, filters: {...F[p].filters} });
+    setUserViews(p, arr);
+    renderViewsMenu(p);
+    return;
+  }
+  // 외부 클릭 시 메뉴 닫기
+  if (!e.target.closest('.saved-views')){
+    document.querySelectorAll('.saved-views').forEach(sv => sv.classList.remove('open'));
+  }
+});
+
+// 초기 칩 + 뷰 메뉴 렌더
+['docs','s3','dispute','members'].forEach(applyAll);
+
+// ===================== 대시보드 =====================
+const DASH = (() => {
+  // ----- 데이터 (시드 + 약간의 가짜 변동) -----
+  const HOURLY_BASE = [2,1,1,0,0,1,3,7,12,15,18,16,14,11,13,16,14,9,7,5,4,3,3,2]; // 24시간
+  const WEEKLY = [
+    {d:'4/27', total:118, done:108, fail:6},
+    {d:'4/28', total:134, done:127, fail:5},
+    {d:'4/29', total:142, done:131, fail:8},
+    {d:'4/30', total:128, done:120, fail:4},
+    {d:'5/1',  total:151, done:140, fail:9},
+    {d:'5/2',  total:138, done:127, fail:6},
+    {d:'5/3',  total:152, done:142, fail:7},
+  ];
+  const COUNTRY = [
+    {n:'미국',     v:214, c:'#3182F6'},
+    {n:'캐나다',   v:132, c:'#00C48C'},
+    {n:'호주',     v:76,  c:'#FFB020'},
+    {n:'독일',     v:42,  c:'#18BFFF'},
+    {n:'기타',     v:46,  c:'#8B95A1'},
+  ];
+  const DOCTYPE = [
+    {n:'졸업증명서', v:186, c:'#3182F6'},
+    {n:'성적증명서', v:154, c:'#00C48C'},
+    {n:'재학증명서', v:94,  c:'#FFB020'},
+    {n:'학위증',     v:52,  c:'#18BFFF'},
+    {n:'기타',       v:24,  c:'#8B95A1'},
+  ];
+  const INSTITUTION_DIST = [
+    {n:'주미 한국 영사관',     v:98, c:'#3182F6'},
+    {n:'주캐나다 한국 영사관', v:60, c:'#00C48C'},
+    {n:'주호주 한국 영사관',   v:38, c:'#FFB020'},
+    {n:'주독일 한국 영사관',   v:28, c:'#18BFFF'},
+    {n:'기타',                 v:24, c:'#8B95A1'},
+  ];
+  // 요청→서명 소요시간 분포 (분 단위 버킷)
+  const LEADTIME = [
+    {b:'0-15',   v:42},
+    {b:'15-30',  v:88},
+    {b:'30-45',  v:124},
+    {b:'45-60',  v:96},
+    {b:'1-2시간', v:78},
+    {b:'2-4시간', v:42},
+    {b:'4시간+', v:18},
+  ];
+  // 활동 피드 (가짜 시간 — 분 단위 상대)
+  const FEED_SEED = [
+    {t:0,   k:'done',    who:'MA-2026-00012', msg:'졸업증명서 발급 완료',         loc:'미국 뉴욕'},
+    {t:2,   k:'progress',who:'MA-2026-00118', msg:'번역 / 검수 단계 진입',        loc:'캐나다 토론토'},
+    {t:5,   k:'done',    who:'MA-2026-00041', msg:'성적증명서 발급 완료',         loc:'호주 시드니'},
+    {t:8,   k:'dispute', who:'MA-2026-00007', msg:'분쟁 접수 — 정보 불일치',      loc:'독일 베를린'},
+    {t:12,  k:'failed',  who:'MA-2026-00203', msg:'발급 실패 — 기관 문서 검증 거절', loc:'미국 LA'},
+    {t:18,  k:'done',    who:'MA-2026-00094', msg:'재학증명서 발급 완료',         loc:'캐나다 밴쿠버'},
+    {t:24,  k:'revoked', who:'MA-2026-00023', msg:'문서 폐기 — 본인 요청',         loc:'미국 시카고'},
+    {t:31,  k:'request', who:'MA-2026-00231', msg:'신규 발급 요청 접수',           loc:'호주 멜버른'},
+    {t:42,  k:'done',    who:'MA-2026-00086', msg:'학위증 발급 완료',              loc:'미국 보스턴'},
+    {t:55,  k:'done',    who:'MA-2026-00139', msg:'졸업증명서 발급 완료',         loc:'독일 뮌헨'},
+  ];
+
+  // ----- ApexCharts 공통 옵션 -----
+  const fontFamily = '"Pretendard Variable", Pretendard, system-ui, sans-serif';
+  const monoFont   = '"JetBrains Mono", monospace';
+
+  function timeLabels(){
+    return Array.from({length:24}, (_,i) => `${String(i).padStart(2,'0')}시`);
+  }
+
+  let chHourly, chWeekly, chCountry, chDocType, chInst, chLead;
+
+  function buildHourly(){
+    const opt = {
+      chart:{ type:'bar', height:240, fontFamily, toolbar:{show:false}, animations:{enabled:true, speed:300} },
+      series:[{ name:'발급 요청', data: HOURLY_BASE }],
+      xaxis:{
+        categories: timeLabels(),
+        labels:{ style:{ colors:'#8B95A1', fontSize:'10px', fontWeight:600 }, rotate:0, hideOverlappingLabels:true },
+        axisBorder:{ color:'#E5E8EB' }, axisTicks:{ show:false },
+      },
+      yaxis:{ labels:{ style:{ colors:'#8B95A1', fontSize:'10px', fontFamily:monoFont } } },
+      grid:{ borderColor:'#F2F4F6', strokeDashArray:3, padding:{ left:0, right:0 } },
+      plotOptions:{ bar:{ borderRadius:3, columnWidth:'62%' } },
+      colors:['#3182F6'],
+      dataLabels:{ enabled:false },
+      tooltip:{ y:{ formatter: v => `${v} 건` }, style:{ fontFamily } },
+      states:{ hover:{ filter:{ type:'darken', value:0.92 } } },
+    };
+    chHourly = new ApexCharts(document.querySelector('#chart-hourly'), opt);
+    chHourly.render();
+  }
+
+  function buildWeekly(){
+    const opt = {
+      chart:{ height:240, fontFamily, toolbar:{show:false}, animations:{enabled:true, speed:300} },
+      series:[
+        { name:'발급량',  type:'column', data: WEEKLY.map(d=>d.total) },
+        { name:'완료율',  type:'line',   data: WEEKLY.map(d=> +(d.done/d.total*100).toFixed(1)) },
+        { name:'실패율',  type:'line',   data: WEEKLY.map(d=> +(d.fail/d.total*100).toFixed(1)) },
+      ],
+      xaxis:{
+        categories: WEEKLY.map(d=>d.d),
+        labels:{ style:{ colors:'#8B95A1', fontSize:'11px', fontWeight:600 } },
+        axisBorder:{ color:'#E5E8EB' }, axisTicks:{ show:false },
+      },
+      yaxis:[
+        { title:{ text:'발급량', style:{ color:'#8B95A1', fontSize:'10px', fontWeight:700 } }, labels:{ style:{ colors:'#8B95A1', fontSize:'10px', fontFamily:monoFont } } },
+        { opposite:true, title:{ text:'%', style:{ color:'#8B95A1', fontSize:'10px', fontWeight:700 } }, labels:{ style:{ colors:'#8B95A1', fontSize:'10px', fontFamily:monoFont }, formatter: v => `${v}%` }, max:100 },
+        { show:false, max:100 },
+      ],
+      stroke:{ width:[0, 2.5, 2.5], curve:'smooth' },
+      colors:['#3182F6', '#00C48C', '#F04452'],
+      plotOptions:{ bar:{ borderRadius:3, columnWidth:'52%' } },
+      grid:{ borderColor:'#F2F4F6', strokeDashArray:3 },
+      dataLabels:{ enabled:false },
+      legend:{ position:'top', horizontalAlign:'right', fontSize:'11px', fontWeight:700, labels:{ colors:'#4E5968' }, markers:{ width:8, height:8, radius:8 }, itemMargin:{ horizontal:8 } },
+      tooltip:{ shared:true, style:{ fontFamily } },
+      markers:{ size:4, strokeWidth:2, hover:{ size:6 } },
+    };
+    chWeekly = new ApexCharts(document.querySelector('#chart-weekly'), opt);
+    chWeekly.render();
+  }
+
+  function buildDonut(selector, data){
+    const opt = {
+      chart:{ type:'donut', width:120, height:120, fontFamily, sparkline:{ enabled:true } },
+      series: data.map(d=>d.v),
+      labels: data.map(d=>d.n),
+      colors: data.map(d=>d.c),
+      stroke:{ width:2, colors:['#fff'] },
+      plotOptions:{ pie:{ donut:{ size:'62%' } } },
+      dataLabels:{ enabled:false },
+      legend:{ show:false },
+      tooltip:{ y:{ formatter: v => `${v} 건` }, style:{ fontFamily } },
+    };
+    const chart = new ApexCharts(document.querySelector(selector), opt);
+    chart.render();
+    return chart;
+  }
+
+  function buildLeadtime(){
+    const opt = {
+      chart:{ type:'bar', height:128, fontFamily, toolbar:{show:false}, sparkline:{ enabled:false } },
+      series:[{ name:'요청 수', data: LEADTIME.map(b=>b.v) }],
+      xaxis:{
+        categories: LEADTIME.map(b=>b.b),
+        labels:{ style:{ colors:'#8B95A1', fontSize:'9px', fontWeight:600 } },
+        axisBorder:{ color:'#E5E8EB' }, axisTicks:{ show:false },
+      },
+      yaxis:{ show:false },
+      grid:{ show:false, padding:{ left:-8, right:-8, top:-8, bottom:0 } },
+      plotOptions:{ bar:{ borderRadius:3, columnWidth:'58%', colors:{ ranges:[
+        { from:0, to:30, color:'#9DC4FA' }, { from:31, to:100, color:'#3182F6' }, { from:101, to:9999, color:'#1B64DA' },
+      ]} } },
+      colors:['#3182F6'], dataLabels:{ enabled:false },
+      tooltip:{ y:{ formatter: v => `${v} 건` }, style:{ fontFamily } },
+    };
+    chLead = new ApexCharts(document.querySelector('#hist-leadtime'), opt);
+    chLead.render();
+  }
+
+  // ----- 활동 피드 렌더 -----
+  const FEED_ICONS = {
+    done:    { i:'check-circle-2', cls:'success', label:'발급 완료'   },
+    failed:  { i:'x-octagon',      cls:'danger',  label:'발급 실패'   },
+    revoked: { i:'ban',            cls:'muted',   label:'폐기'        },
+    dispute: { i:'alert-triangle', cls:'warning', label:'분쟁 접수'   },
+    progress:{ i:'loader',         cls:'info',    label:'단계 이동'   },
+    request: { i:'file-plus',      cls:'info',    label:'요청 접수'   },
+  };
+  function fmtAgo(min){
+    if (min < 1) return '방금 전';
+    if (min < 60) return `${min}분 전`;
+    const h = Math.floor(min/60);
+    return `${h}시간 ${min%60}분 전`;
+  }
+  function renderFeed(){
+    const wrap = document.getElementById('dash-feed');
+    if (!wrap) return;
+    wrap.innerHTML = FEED_SEED.map(e => {
+      const cfg = FEED_ICONS[e.k] || FEED_ICONS.request;
+      return `<div class="feed-row">
+        <span class="fi ${cfg.cls}"><i data-lucide="${cfg.i}"></i></span>
+        <div class="ft">
+          <div class="l1">${e.msg} <span class="who">${e.who}</span></div>
+          <div class="l2">${cfg.label} · ${e.loc}</div>
+        </div>
+        <span class="tt">${fmtAgo(e.t)}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // ----- 자동 갱신 -----
+  let timer = null;
+  let paused = false;
+  let secs = 5;
+
+  function tick(){
+    secs--;
+    const liveText = document.getElementById('dash-live-text');
+    if (paused){
+      if (liveText) liveText.textContent = '일시정지됨';
+      return;
+    }
+    if (secs <= 0){
+      // "갱신": 헤드라인 KPI에 미세 변동 + 시간대 차트 갱신
+      const k = document.getElementById('d-kpi-today');
+      if (k){
+        const cur = +k.textContent;
+        const next = cur + (Math.random() < 0.4 ? 1 : 0);
+        k.textContent = next;
+        k.parentElement.parentElement.classList.remove('flash-update');
+        void k.offsetWidth;
+        k.parentElement.parentElement.classList.add('flash-update');
+      }
+      // 시간대 차트: 마지막 buckets 살짝 변동
+      if (chHourly){
+        const data = HOURLY_BASE.slice();
+        const now = new Date().getHours();
+        data[now] = data[now] + Math.floor(Math.random()*2);
+        chHourly.updateSeries([{ name:'발급 요청', data }]);
+      }
+      const lt = document.getElementById('dash-last-tick');
+      if (lt){
+        const d = new Date();
+        const hh = String(d.getHours()).padStart(2,'0');
+        const mm = String(d.getMinutes()).padStart(2,'0');
+        const ss = String(d.getSeconds()).padStart(2,'0');
+        lt.textContent = `마지막 갱신 · ${hh}:${mm}:${ss}`;
+      }
+      secs = 5;
+    }
+    if (liveText) liveText.textContent = `LIVE · ${secs}초`;
+  }
+
+  function setPaused(p){
+    paused = p;
+    const pill = document.getElementById('dash-live');
+    const icn  = document.getElementById('dash-pause-icon');
+    const txt  = document.getElementById('dash-pause-text');
+    const ltxt = document.getElementById('dash-live-text');
+    if (!pill) return;
+    pill.classList.toggle('paused', p);
+    if (icn){
+      icn.setAttribute('data-lucide', p ? 'play' : 'pause');
+      lucide.createIcons();
+    }
+    if (txt) txt.textContent = p ? '재개' : '일시정지';
+    if (ltxt) ltxt.textContent = p ? '일시정지됨' : `LIVE · ${secs}초`;
+  }
+
+  function init(){
+    if (typeof ApexCharts === 'undefined'){ return; }
+    // 차트는 페이지가 보일 때 그려야 정확한 크기로 렌더됨
+    buildHourly();
+    buildWeekly();
+    chCountry = buildDonut('#donut-country', COUNTRY);
+    chDocType = buildDonut('#donut-doctype', DOCTYPE);
+    chInst    = buildDonut('#donut-inst', INSTITUTION_DIST);
+    buildLeadtime();
+    renderFeed();
+    lucide.createIcons();
+
+    // 일시정지 버튼
+    const pauseBtn = document.getElementById('dash-pause');
+    if (pauseBtn) pauseBtn.addEventListener('click', () => setPaused(!paused));
+
+    // KPI / 알림 / 빠른 액션 → 페이지 + 탭 점프
+    document.querySelectorAll('[data-jump-page]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const p = btn.dataset.jumpPage;
+        const t = btn.dataset.jumpTab;
+        gotoPage(p);
+        if (p === 'docs' && t){
+          document.querySelectorAll('.tab[data-doctab]').forEach(x => x.classList.toggle('active', x.dataset.doctab === t));
+          if (typeof activeDocTab !== 'undefined'){ activeDocTab = t; openRowKey = null; renderDocs(); }
+        }
+      });
+    });
+
+    // 자동 갱신 시작
+    if (timer) clearInterval(timer);
+    timer = setInterval(tick, 1000);
+  }
+
+  return { init };
+})();
+
+DASH.init();
+
+lucide.createIcons();
+</script>
+</body>
+</html>

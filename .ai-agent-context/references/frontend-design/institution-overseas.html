@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1440" />
+<title>Document Acceptance · U.S. Department of State, Office of Authentications</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  tailwind.config = { theme: { extend: { colors:{
+    primary:'#3182F6','primary-deep':'#1B64DA','primary-soft':'#E8F2FE',
+    success:'#00C48C','success-soft':'#E6FAF3',
+    warning:'#FFB020','warning-soft':'#FFF4DE',
+    danger:'#F04452','danger-soft':'#FDE7E9',
+    info:'#18BFFF','info-soft':'#E2F7FF',
+    base:'#F9FAFB',border:'#E5E8EB',ink:'#191F28',sub:'#4E5968',muted:'#8B95A1',surface:'#FFFFFF'
+  }, fontFamily:{
+    sans:['Pretendard Variable','Pretendard','-apple-system','system-ui','sans-serif'],
+    mono:['JetBrains Mono','monospace']
+  }, borderRadius:{xs:'8px',sm:'12px',md:'16px',pill:'999px'},
+    boxShadow:{card:'0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.06)'} } } }
+</script>
+<style>
+  html,body{background:#EAECEF;}
+  body{font-family:'Pretendard Variable',Pretendard,-apple-system,system-ui,sans-serif;color:#191F28;-webkit-font-smoothing:antialiased;}
+  .mono{font-family:'JetBrains Mono','SFMono-Regular',Menlo,monospace;}
+  .num{font-feature-settings:"tnum" 1;letter-spacing:-0.01em;}
+
+  /* 글로벌 4탭 */
+  .global-tabs{position:sticky;top:0;z-index:200;display:flex;gap:0;background:#fff;border-bottom:1px solid #E5E8EB;padding:0 32px;}
+  .global-tab{padding:14px 20px;font-size:14px;font-weight:600;color:#4E5968;text-decoration:none;border-bottom:2px solid transparent;}
+  .global-tab.active{color:#3182F6;border-bottom-color:#3182F6;}
+  :focus-visible{outline:2px solid #3182F6;outline-offset:2px;}
+
+  /* 데스크톱 윈도우 프레임 */
+  .desktop{width:1400px;background:#F9FAFB;border-radius:14px;overflow:hidden;border:1px solid #E5E8EB;box-shadow:0 10px 36px rgba(0,0,0,.10);}
+  .winbar{height:36px;background:#EEF0F3;display:flex;align-items:center;padding:0 12px;gap:6px;border-bottom:1px solid #E5E8EB;flex-shrink:0;}
+  .winbar .dot{width:10px;height:10px;border-radius:999px;}
+  .badge-testnet{background:#E2F7FF;color:#0594BF;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;}
+  .badge-mock{background:#FFF4DE;color:#7a5400;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;}
+
+  /* 사이드바 */
+  .side{width:240px;background:#FFFFFF;border-right:1px solid #E5E8EB;flex-shrink:0;display:flex;flex-direction:column;}
+  .side-link{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:600;color:#4E5968;cursor:pointer;margin:1px 6px;text-decoration:none;}
+  .side-link:hover{background:#F9FAFB;}
+  .side-link.active{background:#E8F2FE;color:#3182F6;}
+  .side-link [data-lucide]{width:16px;height:16px;stroke-width:2;flex-shrink:0;}
+  [data-lucide]{width:18px;height:18px;stroke-width:2;}
+
+
+  .last-tick{font-size:11px;color:#8B95A1;font-weight:600;font-family:'JetBrains Mono',monospace;font-feature-settings:"tnum" 1;}
+
+  /* KPI */
+  .stat{background:#fff;border:1px solid #E5E8EB;border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:6px;text-align:left;}
+  .stat .h{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+  .stat .lbl{font-size:11px;font-weight:700;color:#8B95A1;}
+  .stat .ic{width:24px;height:24px;border-radius:8px;background:#F4F9FF;color:#3182F6;display:flex;align-items:center;justify-content:center;}
+  .stat .ic [data-lucide]{width:13px;height:13px;}
+  .stat.success .ic{background:#E6FAF3;color:#00C48C;}
+  .stat.warning .ic{background:#FFF4DE;color:#B27500;}
+  .stat.danger  .ic{background:#FDE7E9;color:#C0303B;}
+  .stat .v{display:flex;align-items:baseline;gap:5px;}
+  .stat .n{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:800;color:#191F28;font-feature-settings:"tnum" 1;letter-spacing:-0.02em;}
+  .stat.success .n{color:#00834C;}
+  .stat.danger  .n{color:#C0303B;}
+  .stat.warning .n{color:#7a5400;}
+  .stat .u{font-size:11px;font-weight:700;color:#8B95A1;}
+  .stat .foot{font-size:11px;color:#8B95A1;font-weight:600;}
+
+  /* 테이블 */
+  .tbl{background:#fff;border:1px solid #E5E8EB;border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04),0 1px 3px rgba(0,0,0,.06);}
+  .tbl-head{display:grid;grid-template-columns:160px 1.3fr 1fr 1.4fr 110px 80px;column-gap:12px;background:#F9FAFB;padding:11px 18px;font-size:11px;font-weight:700;color:#8B95A1;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #E5E8EB;}
+  .tbl-row{display:grid;grid-template-columns:160px 1.3fr 1fr 1.4fr 110px 80px;column-gap:12px;padding:14px 18px;border-bottom:1px solid #F2F4F6;font-size:13px;align-items:center;cursor:pointer;}
+  .tbl-row:last-child{border-bottom:0;}
+  .tbl-row:hover{background:#F9FAFB;}
+  .tbl-row.open{background:#F4F9FF;}
+  .tbl-row .req{font-family:'JetBrains Mono',monospace;font-weight:700;color:#1B64DA;font-size:12px;}
+  .tbl-row .applicant b{color:#191F28;font-weight:700;}
+  .tbl-row .applicant span{color:#8B95A1;font-family:'JetBrains Mono',monospace;font-size:11px;display:block;margin-top:2px;}
+  .tbl-row .doc{color:#191F28;font-weight:600;}
+
+  .vpill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700;white-space:nowrap;}
+  .vpill.wait{background:#F2F4F6;color:#4E5968;}
+  .vpill.review{background:#FFF4DE;color:#7a5400;}
+  .vpill.done{background:#E6FAF3;color:#00834C;}
+  .vpill.warn{background:#FFF4DE;color:#7a5400;}
+  .vpill.fail{background:#FDE7E9;color:#C0303B;}
+  .vpill.hold{background:#F2F4F6;color:#191F28;border:1px solid #C5CCD3;}
+
+  /* expand 패널 */
+  .row-wrap{border-bottom:1px solid #F2F4F6;}
+  .row-wrap:last-child{border-bottom:0;}
+  .row-wrap .tbl-row{border-bottom:0;}
+  .row-expand{display:none;background:#FAFBFC;border-top:1px solid #E5E8EB;padding:24px 22px;}
+  .row-wrap.open .row-expand{display:block;}
+
+  .panel{background:#fff;border:1px solid #E5E8EB;border-radius:12px;padding:20px 22px;}
+  .panel h4{font-size:13px;font-weight:800;color:#191F28;margin-bottom:14px;}
+
+  .kv{display:grid;grid-template-columns:160px 1fr;gap:10px 16px;font-size:13px;line-height:1.5;}
+  .kv dt{color:#8B95A1;font-weight:600;}
+  .kv dd{margin:0;color:#191F28;font-weight:600;}
+
+  /* Document checks */
+  .check-list{display:flex;flex-direction:column;gap:8px;}
+  .check-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:4px;background:#F9FAFB;border:1px solid #E5E8EB;font-size:12px;font-weight:600;color:#191F28;}
+  .check-row.ok{background:#E6FAF3;border-color:#A7E5CD;color:#00834C;}
+  .check-row.fail{background:#FDE7E9;border-color:#F8B8BE;color:#C0303B;}
+  .check-row .ck{width:18px;height:18px;border-radius:4px;background:#fff;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;color:inherit;}
+  .check-row .lbl{flex:1;}
+  .check-row .det{color:inherit;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;opacity:.85;}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:38px;padding:0 16px;border-radius:6px;border:1px solid #C5CCD3;background:#fff;font-size:13px;font-weight:700;color:#191F28;cursor:pointer;transition:all 100ms ease-out;}
+  .btn:hover{background:#F2F4F6;}
+  .btn.primary{background:#1B64DA;border-color:#1B64DA;color:#fff;}
+  .btn.primary:hover{background:#163E80;border-color:#163E80;}
+  .btn.success{background:#00834C;border-color:#00834C;color:#fff;}
+  .btn.success:hover{background:#006B3E;border-color:#006B3E;}
+  .btn.outline-danger{background:#fff;border-color:#C0303B;color:#C0303B;}
+  .btn.outline-danger:hover{background:#FDE7E9;}
+  .btn.ghost{background:transparent;border:0;color:#8B95A1;}
+
+  textarea.reason{width:100%;border:1px solid #C5CCD3;border-radius:4px;padding:10px 12px;font-size:13px;font-family:inherit;resize:vertical;min-height:80px;}
+  textarea.reason:focus{outline:none;border-color:#1B64DA;box-shadow:0 0 0 2px rgba(27,100,218,.12);}
+
+  .placeholder-page{display:flex;flex-direction:column;align-items:center;justify-content:center;height:600px;text-align:center;color:#8B95A1;gap:8px;}
+  .placeholder-page [data-lucide]{width:36px;height:36px;color:#B0B8C1;}
+  .page{display:none;}
+  .page.active{display:block;}
+
+  .disclaimer{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px 18px;border-radius:12px;background:#FFFBF1;border:1px solid #FFD380;color:#7a5400;font-size:11px;font-weight:600;}
+  .disclaimer b{color:#5a3c00;}
+</style>
+</head>
+<body class="min-h-screen">
+
+<nav class="global-tabs" role="tablist">
+  <a href="./index.html" class="global-tab" role="tab">인덱스</a>
+  <a href="./app.html" class="global-tab" role="tab">앱</a>
+  <a href="./institution-kr.html" class="global-tab" role="tab">국내 발급 기관</a>
+  <a href="./institution-translator.html" class="global-tab" role="tab">번역·공증사</a>
+  <a href="./institution-apostille.html" class="global-tab" role="tab">아포스티유</a>
+  <a href="./institution-overseas.html" class="global-tab active" role="tab" aria-current="page">해외 수령 기관</a>
+  <a href="./console.html" class="global-tab" role="tab">콘솔</a>
+</nav>
+
+<header class="max-w-[1440px] mx-auto px-8 pt-8 pb-5">
+  <div class="flex items-end justify-between">
+    <div>
+      <div class="text-[10px] font-bold text-muted uppercase tracking-[0.06em] mb-1">U.S. Department of State / Office of Authentications</div>
+      <h1 class="text-[22px] font-extrabold text-ink" style="letter-spacing:-0.01em;">Foreign Public Document Acceptance</h1>
+      <div class="text-[13px] text-sub mt-1">Reviews foreign public documents bearing an apostille (Hague Convention 1961) for acceptance by U.S. federal recipients.</div>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="badge-testnet">Testnet</span>
+      <span class="badge-mock">Mock</span>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-[1440px] mx-auto px-4 pb-16">
+
+<div class="desktop mx-auto">
+  <div class="winbar">
+    <span class="dot bg-danger"></span><span class="dot bg-warning"></span><span class="dot bg-success"></span>
+    <span class="ml-3 text-[11px] mono" style="color:#8B95A1;">state.gov/ooa/foreign-document-review</span>
+    <span class="ml-auto flex items-center gap-2"><span class="badge-testnet">Testnet</span><span class="badge-mock">Mock</span></span>
+  </div>
+
+  <div class="flex" style="min-height:900px;">
+    <!-- ========== 사이드바 ========== -->
+    <aside class="side p-3">
+      <div class="px-3 pt-3 pb-3 mb-2 border-b border-border">
+        <div class="text-[12px] font-bold text-ink">U.S. Dept. of State</div>
+        <div class="text-[10px] mt-0.5" style="color:#8B95A1;">Office of Authentications</div>
+      </div>
+      <a class="side-link active" data-page="inbox"><i data-lucide="inbox"></i>Pending Review</a>
+      <a class="side-link" data-page="received"><i data-lucide="folder"></i>Decision Records</a>
+      <a class="side-link" data-page="health"><i data-lucide="activity"></i>System Status</a>
+
+      <div class="mt-auto px-3 pb-3 pt-6 border-t border-border mt-4">
+        <div class="text-[10px]" style="color:#8B95A1;">v1.0 · 2026-05-08</div>
+      </div>
+    </aside>
+
+    <div class="flex-1 overflow-auto" style="background:#F9FAFB;">
+
+      <!-- ========== 들어온 제출 ========== -->
+      <section class="page active" data-page="inbox">
+        <div class="p-8">
+
+          <div class="flex items-start justify-between mb-6 gap-4">
+            <div>
+              <h2 class="text-[18px] font-extrabold text-ink" style="letter-spacing:-0.01em;">Pending Document Review</h2>
+              <div class="text-[13px] text-sub mt-1">Documents submitted for acceptance review. Officers verify the apostille, signatures, and form compliance before deciding.</div>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <span class="last-tick">Updated · 2026-05-08 11:42 PST</span>
+            </div>
+          </div>
+
+          <!-- KPI 4 -->
+          <div class="grid gap-3 mb-6" style="grid-template-columns:repeat(4,minmax(0,1fr));">
+            <div class="stat">
+              <div class="h"><span class="lbl">Today — Received</span><span class="ic"><i data-lucide="inbox"></i></span></div>
+              <div class="v"><span class="n">14</span><span class="u">docs</span></div>
+              <div class="foot">Yesterday 11 · 7-day avg 12</div>
+            </div>
+            <div class="stat warning">
+              <div class="h"><span class="lbl">Pending Review</span><span class="ic"><i data-lucide="clock"></i></span></div>
+              <div class="v"><span class="n">3</span><span class="u">docs</span></div>
+              <div class="foot">Avg wait 8 min</div>
+            </div>
+            <div class="stat success">
+              <div class="h"><span class="lbl">Today — Accepted</span><span class="ic"><i data-lucide="file-check"></i></span></div>
+              <div class="v"><span class="n">10</span><span class="u">docs</span></div>
+              <div class="foot">Acceptance rate 71.4%</div>
+            </div>
+            <div class="stat danger">
+              <div class="h"><span class="lbl">Today — Rejected</span><span class="ic"><i data-lucide="file-x"></i></span></div>
+              <div class="v"><span class="n">1</span><span class="u">doc</span></div>
+              <div class="foot">Form mismatch</div>
+            </div>
+          </div>
+
+          <!-- Document table -->
+          <div class="tbl">
+            <div class="tbl-head">
+              <div>Case ID</div>
+              <div>Submitter</div>
+              <div>Issuing Country</div>
+              <div>Document</div>
+              <div>Status</div>
+              <div>Action</div>
+            </div>
+
+            <!-- ROW 1 — Pending Review (officer working) -->
+            <div class="row-wrap" data-row="1">
+              <div class="tbl-row">
+                <div class="req">2026-OOA-LA-04211</div>
+                <div class="applicant"><b>KIM Min-su</b><span>Korean national · Passport **27</span></div>
+                <div>Republic of Korea</div>
+                <div class="doc">Certificate of Tax Payment (납세증명서)</div>
+                <div><span class="vpill review">Under Review</span></div>
+                <div><i data-lucide="chevron-down" style="color:#8B95A1;"></i></div>
+              </div>
+              <div class="row-expand">
+                <div class="grid gap-5" style="grid-template-columns:1fr 320px;">
+                  <div class="space-y-5">
+
+                    <div class="panel">
+                      <h4>Submission Information</h4>
+                      <dl class="kv">
+                        <dt>Case ID</dt><dd class="mono">2026-OOA-LA-04211</dd>
+                        <dt>Received</dt><dd class="mono">2026-05-08 16:42 PST</dd>
+                        <dt>Filing purpose</dt><dd>U.S. State tax filing — California FTB Form 540NR (TY 2025)</dd>
+                        <dt>Submitter</dt><dd>KIM Min-su · ROK passport ending **27</dd>
+                      </dl>
+                    </div>
+
+                    <div class="panel">
+                      <h4>Document on File</h4>
+                      <dl class="kv">
+                        <dt>Title</dt><dd>Certificate of Tax Payment (납세증명서)</dd>
+                        <dt>Issuing authority</dt><dd>National Tax Service of the Republic of Korea</dd>
+                        <dt>Issue date</dt><dd class="mono">2026-05-08</dd>
+                        <dt>Validity</dt><dd class="mono">3 months — until 2026-08-08</dd>
+                        <dt>Translation</dt><dd>Korean → English, certified translator: J. Park (KOTRA #2851)</dd>
+                        <dt>Notarization</dt><dd>Seoul Central Notary Office, Notary No. SC-2026-1147</dd>
+                        <dt>Apostille</dt><dd>Republic of Korea — Ministry of Foreign Affairs · Seal No. MOFA-2026-04711 · Hague Convention 1961</dd>
+                      </dl>
+                    </div>
+
+                    <div class="panel">
+                      <h4>Officer Verification Checklist</h4>
+                      <div class="check-list">
+                        <div class="check-row ok">
+                          <span class="ck"><i data-lucide="check" style="width:11px;height:11px;"></i></span>
+                          <span class="lbl">Apostille certificate on file (Hague 1961)</span>
+                          <span class="det">MOFA-2026-04711 — verified against ROK registry</span>
+                        </div>
+                        <div class="check-row ok">
+                          <span class="ck"><i data-lucide="check" style="width:11px;height:11px;"></i></span>
+                          <span class="lbl">Issuing authority signature & seal</span>
+                          <span class="det">NTS official seal — match</span>
+                        </div>
+                        <div class="check-row ok">
+                          <span class="ck"><i data-lucide="check" style="width:11px;height:11px;"></i></span>
+                          <span class="lbl">Document within validity period</span>
+                          <span class="det">Issued 2026-05-08; expires 2026-08-08</span>
+                        </div>
+                        <div class="check-row ok">
+                          <span class="ck"><i data-lucide="check" style="width:11px;height:11px;"></i></span>
+                          <span class="lbl">Certified English translation attached</span>
+                          <span class="det">Translator credentials on file</span>
+                        </div>
+                        <div class="check-row ok">
+                          <span class="ck"><i data-lucide="check" style="width:11px;height:11px;"></i></span>
+                          <span class="lbl">Form matches stated filing purpose</span>
+                          <span class="det">Tax payment proof — accepted form for FTB 540NR</span>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  <div class="space-y-3">
+                    <button class="btn success w-full" id="accept-btn-1">
+                      <i data-lucide="file-check"></i>Accept
+                    </button>
+                    <button class="btn outline-danger w-full">
+                      <i data-lucide="file-x"></i>Reject
+                    </button>
+                    <div class="text-[11px] text-muted mt-3 leading-relaxed">A written reason will accompany any rejection and be communicated to the submitter (5 U.S.C. §555(e)).</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ROW 2 — Rejected (form mismatch) -->
+            <div class="row-wrap" data-row="2">
+              <div class="tbl-row">
+                <div class="req">2026-OOA-LA-04210</div>
+                <div class="applicant"><b>PARK Seo-yeon</b><span>Korean national</span></div>
+                <div>Republic of Korea</div>
+                <div class="doc">Family Relation Certificate (가족관계증명서)</div>
+                <div><span class="vpill reject">Rejected</span></div>
+                <div><i data-lucide="chevron-down" style="color:#8B95A1;"></i></div>
+              </div>
+              <div class="row-expand">
+                <div class="panel" style="border-color:#F8B8BE;background:#FEF4F5;">
+                  <h4 style="color:#C0303B;">Rejection Notice</h4>
+                  <dl class="kv">
+                    <dt>Decision date</dt><dd class="mono">2026-05-08 15:11 PST</dd>
+                    <dt>Reason</dt><dd>Document type does not satisfy the receiving agency's evidentiary requirement. The recipient agency requires a "Basic Certificate" (기본증명서, full version), not a "Family Relation Certificate". Document is otherwise properly apostilled.</dd>
+                    <dt>Guidance to submitter</dt><dd>Please submit a "Basic Certificate (Detailed)" issued by the Republic of Korea Supreme Court family registry, with apostille and certified English translation.</dd>
+                    <dt>Officer</dt><dd>Officer J. Robinson · OOA-LA-04</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+
+            <!-- ROW 4 — Accepted (closed case) -->
+            <div class="row-wrap" data-row="4">
+              <div class="tbl-row">
+                <div class="req">2026-OOA-LA-04208</div>
+                <div class="applicant"><b>KIM Ji-hun</b><span>Korean national</span></div>
+                <div>Republic of Korea</div>
+                <div class="doc">Real Estate Registry Certificate (부동산 등기사항증명서)</div>
+                <div><span class="vpill done">Accepted</span></div>
+                <div><i data-lucide="chevron-down" style="color:#8B95A1;"></i></div>
+              </div>
+              <div class="row-expand">
+                <div class="panel">
+                  <h4>Acceptance Record</h4>
+                  <dl class="kv">
+                    <dt>Decision date</dt><dd class="mono">2026-05-08 09:31 PST</dd>
+                    <dt>Officer</dt><dd>Officer J. Robinson · OOA-LA-04</dd>
+                    <dt>Forwarded to</dt><dd>Los Angeles County Recorder — for real estate transfer</dd>
+                    <dt>Submitter notified</dt><dd>2026-05-08 09:33 PST · email + applicant portal</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="disclaimer mt-6">
+            <i data-lucide="info" style="width:14px;height:14px;"></i>
+            <span><b>WIREFRAME DEMO · TESTNET · MOCK DATA</b> · This screen is a wireframe for the KFIP 2026 entry. It does not connect to U.S. State Department systems. Submitter names and case numbers are fictitious.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== Decision Records (placeholder) ========== -->
+      <section class="page" data-page="received">
+        <div class="placeholder-page">
+          <i data-lucide="folder"></i>
+          <div class="text-[16px] font-bold text-ink">Decision Records</div>
+          <div class="text-[13px]">Search and export closed cases (acceptance / rejection / hold). Coming soon.</div>
+          <div class="text-[11px] mono" style="color:#B0B8C1;">/decisions</div>
+        </div>
+      </section>
+
+      <!-- ========== System Status (placeholder) ========== -->
+      <section class="page" data-page="health">
+        <div class="placeholder-page">
+          <i data-lucide="activity"></i>
+          <div class="text-[16px] font-bold text-ink">System Status</div>
+          <div class="text-[13px]">External verification channels (foreign apostille registries, document intake gateway). Coming soon.</div>
+          <div class="text-[11px] mono" style="color:#B0B8C1;">/system/health</div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+</main>
+
+<script>
+  document.querySelectorAll('.side-link[data-page]').forEach(link => {
+    link.addEventListener('click', () => {
+      document.querySelectorAll('.side-link[data-page]').forEach(l => l.classList.remove('active'));
+      link.classList.add('active');
+      const page = link.dataset.page;
+      document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.dataset.page === page));
+    });
+  });
+
+  document.querySelectorAll('.row-wrap').forEach(wrap => {
+    wrap.querySelector('.tbl-row').addEventListener('click', () => {
+      wrap.classList.toggle('open');
+    });
+  });
+
+  const acceptBtn = document.getElementById('accept-btn-1');
+  if (acceptBtn) {
+    acceptBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      acceptBtn.innerHTML = '<i data-lucide="loader-2" class="animate-spin"></i>Processing';
+      acceptBtn.disabled = true;
+      setTimeout(() => {
+        acceptBtn.innerHTML = '<i data-lucide="check"></i>Accepted';
+        if (window.lucide) lucide.createIcons();
+      }, 1400);
+    });
+  }
+
+  if (window.lucide) lucide.createIcons();
+</script>
+</body>
+</html>

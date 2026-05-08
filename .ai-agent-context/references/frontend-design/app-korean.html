@@ -1,0 +1,1885 @@
+<!doctype html>
+<!-- 시연 라벨: MyApo 모바일 앱 (v3, 7 화면 A-01~A-07) -->
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MyApo 모바일 앱 — v3 (와이어프레임)</title>
+
+  <!-- CDN 4종 (rules/11 §7 + research §5.3) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary:        '#3182F6',
+            'primary-deep': '#1B64DA',
+            'primary-soft': '#E8F2FE',
+            success:        '#00C48C',
+            'success-soft': '#E6FAF3',
+            warning:        '#FFB020',
+            'warning-soft': '#FFF4DE',
+            danger:         '#F04452',
+            'danger-soft':  '#FDE7E9',
+            info:           '#18BFFF',
+            'info-soft':    '#E2F7FF',
+            base:           '#F9FAFB',
+            card:           '#FFFFFF',
+            surface:        '#FFFFFF',
+            border:         '#E5E8EB',
+            ink:            '#191F28',
+            sub:            '#4E5968',
+            muted:          '#8B95A1',
+            code:           '#11181C',
+          },
+          fontFamily: {
+            sans: ['Pretendard Variable','Pretendard','ui-sans-serif','system-ui'],
+            mono: ['JetBrains Mono','IBM Plex Mono','SFMono-Regular','Menlo','monospace'],
+          },
+          boxShadow: {
+            card:  '0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.06)',
+            sheet: '0 -8px 24px rgba(0,0,0,.08)',
+          },
+          borderRadius: { xs:'8px', sm:'12px', md:'16px', pill:'999px' },
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* ── CSS 변수 (rules/11 §2 그대로, 변경 0) ── */
+    :root {
+      --color-primary:        #3182F6;
+      --color-primary-deep:   #1B64DA;
+      --color-primary-soft:   #E8F2FE;
+      --color-success:        #00C48C;
+      --color-warning:        #FFB020;
+      --color-danger:         #F04452;
+      --color-info:           #18BFFF;
+      --color-bg-base:        #F9FAFB;
+      --color-bg-card:        #FFFFFF;
+      --color-bg-code:        #11181C;
+      --color-border:         #E5E8EB;
+      --color-text-primary:   #191F28;
+      --color-text-secondary: #4E5968;
+      --color-text-muted:     #8B95A1;
+      --shadow-card:  0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.06);
+      --shadow-sheet: 0 -8px 24px rgba(0,0,0,.08);
+      --radius-xs:   8px;
+      --radius-sm:   12px;
+      --radius-md:   16px;
+      --radius-pill: 999px;
+      --space-edge:        20px;
+      --space-card-gap:    16px;
+      --space-section-gap: 32px;
+    }
+    html, body { background: #EAECEF; }
+    body {
+      font-family: 'Pretendard Variable', Pretendard, ui-sans-serif, system-ui, sans-serif;
+      color: #191F28;
+      -webkit-font-smoothing: antialiased;
+    }
+    .font-mono { font-family: 'JetBrains Mono', 'IBM Plex Mono', SFMono-Regular, Menlo, monospace; }
+
+    /* ── MobileFrame (#16) ── */
+    .mobile-frame {
+      width: 360px; height: 800px; border-radius: 36px;
+      background: #F9FAFB; overflow: hidden; position: relative;
+      box-shadow: 0 4px 24px rgba(15,20,25,.12);
+      border: 2px solid #D1D5DB;
+      display: flex; flex-direction: column;
+      flex-shrink: 0;
+    }
+    .mobile-notch {
+      height: 24px; background: #191F28; border-radius: 0 0 14px 14px;
+      width: 100px; margin: 0 auto; flex-shrink: 0;
+    }
+    .mobile-content { flex: 1; overflow-y: auto; padding: 12px 20px 8px; }
+    .mobile-cta { padding: 12px 20px; background: #fff; border-top: 1px solid #E5E8EB; flex-shrink: 0; }
+    .mobile-nav {
+      height: 56px; background: #fff; border-top: 1px solid #E5E8EB;
+      display: flex; align-items: center; justify-content: space-around;
+      flex-shrink: 0;
+    }
+    .app-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 20px 8px; background: #fff; border-bottom: 1px solid #E5E8EB;
+      flex-shrink: 0;
+    }
+    .app-bar-title { font-size: 17px; font-weight: 700; color: #191F28; }
+    .app-bar-badges { display: flex; gap: 4px; }
+
+    /* ── variant-label pill (context §6.2) ── */
+    .variant-label {
+      display: inline-block; margin-bottom: 8px;
+      padding: 4px 12px; border-radius: 999px;
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      border: 1px solid transparent;
+    }
+    .variant-active  { background: #E8F2FE; color: #1B64DA; border-color: #B8D8FF; }
+    .variant-loading { background: #E2F7FF; color: #0A7B9E; border-color: #A8E1F5; }
+    .variant-empty   { background: #F9FAFB; color: #4E5968; border-color: #E5E8EB; }
+    .variant-error   { background: #FDE7E9; color: #9F2A37; border-color: #F5BFC4; }
+
+    /* ── screen-label pill ── */
+    .screen-label {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 999px;
+      background: #191F28; color: #fff; font-weight: 700; font-size: 11px;
+    }
+    .vpill {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 500;
+    }
+    .badge-testnet  { background: #E2F7FF; color: #0A7B9E; }
+    .badge-mock     { background: #FFF4DE; color: #9A6500; }
+    .badge-precheck { background: #E8F2FE; color: #1B64DA; }
+
+    /* ── card ── */
+    .card {
+      background: #fff; border: 1px solid #E5E8EB;
+      border-radius: 12px; box-shadow: var(--shadow-card); padding: 16px;
+    }
+
+    /* ── btn-primary ── */
+    .btn-primary {
+      width: 100%; height: 56px; background: #3182F6; color: #fff;
+      border-radius: 12px; font-size: 17px; font-weight: 700;
+      border: none; cursor: pointer; transition: background 0.1s;
+    }
+    .btn-primary:hover { background: #1B64DA; }
+    .btn-primary:active { transform: scale(0.96); background: #1B64DA; transition: transform 50ms; }
+    .btn-primary:disabled { background: #8B95A1; cursor: not-allowed; }
+    .btn-secondary {
+      width: 100%; height: 48px; background: transparent; color: #4E5968;
+      border-radius: 12px; font-size: 15px; font-weight: 600;
+      border: 1px solid #E5E8EB; cursor: pointer; margin-top: 8px;
+    }
+
+    /* ── progress bar ── */
+    .progress-track {
+      height: 6px; background: #E5E8EB; border-radius: 999px; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; background: #3182F6; border-radius: 999px;
+      transition: width 600ms ease-out;
+    }
+
+    /* ── step dots (StepProgress #4) ── */
+    .step-dot {
+      width: 22px; height: 22px; border-radius: 999px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; flex-shrink: 0;
+    }
+    .step-dot-done   { background: #00C48C; color: #fff; }
+    .step-dot-active { background: #3182F6; color: #fff; animation: pulseDot 1.5s ease-in-out infinite; }
+    .step-dot-wait   { background: #E5E8EB; color: #8B95A1; }
+    .step-dot-error  { background: #F04452; color: #fff; }
+    .step-line       { flex: 1; height: 2px; background: #E5E8EB; }
+    .step-line-done  { background: #00C48C; }
+
+    /* ── skeleton ── */
+    .skeleton {
+      background: linear-gradient(90deg,#E5E8EB 25%,#F0F1F3 50%,#E5E8EB 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite; border-radius: 8px;
+    }
+    @keyframes shimmer { 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
+    @keyframes pulseDot { 0%,100%{opacity:1;} 50%{opacity:.45;} }
+    @keyframes pulseRing { 0%,100%{box-shadow:0 0 0 0 rgba(49,130,246,.4);} 50%{box-shadow:0 0 0 4px rgba(49,130,246,0);} }
+
+    /* ── section ── */
+    .section-wrap { margin-bottom: var(--space-section-gap); }
+    .screen-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .variant-row   { display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 24px; }
+
+    /* ── global page layout ── */
+    .page-container { max-width: 1600px; margin: 0 auto; padding: 32px 32px 0; }
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 32px; padding-bottom: 16px;
+      border-bottom: 1px solid #E5E8EB;
+    }
+    .variants-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 360px);
+      gap: 24px;
+      margin-bottom: 12px;
+    }
+    @media (max-width:1024px) {
+      .variants-grid { grid-template-columns: repeat(2, 360px); }
+      .page-container { padding: 20px 16px 0; }
+    }
+    @media (max-width:640px) {
+      .variants-grid { grid-template-columns: 360px; }
+    }
+
+    /* ── bottom sheet overlay ── */
+    .bottom-sheet-overlay {
+      position: absolute; inset: 0; background: rgba(0,0,0,.4); z-index: 10;
+      display: flex; align-items: flex-end;
+    }
+    .bottom-sheet {
+      width: 100%; background: #fff;
+      border-radius: 16px 16px 0 0; padding: 20px;
+      box-shadow: var(--shadow-sheet);
+    }
+    .bottom-sheet-handle {
+      width: 40px; height: 4px; background: #E5E8EB;
+      border-radius: 2px; margin: 0 auto 16px;
+    }
+
+    /* ── pulse border (active step) ── */
+    .pulse-border { animation: pulseRing 1.5s ease-in-out infinite; }
+
+    /* ── detail-toggle (자세히 보기, 디폴트 숨김) ── */
+    .detail-panel { display: none; }
+    .detail-panel.open { display: block; }
+
+    /* ── DocBundleSelectGrid: 문서 선택 카드 그리드 (1열, 모바일 가독성 우선) ── */
+    .doc-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .doc-card {
+      background: #fff;
+      border: 1.5px solid #E5E8EB;
+      border-radius: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: border-color 0.12s, background 0.12s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .doc-card.selected {
+      border-color: #3182F6;
+      background: #E8F2FE;
+    }
+    .doc-card-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      background: #F9FAFB;
+      border: 1px solid #E5E8EB;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      font-size: 11px; font-weight: 700; color: #4E5968;
+    }
+    .doc-card.selected .doc-card-icon {
+      background: #E8F2FE; border-color: #B8D8FF; color: #1B64DA;
+    }
+    .doc-card-body { flex: 1; min-width: 0; }
+    .doc-card-name { font-size: 13px; font-weight: 700; color: #191F28; line-height: 1.35; margin-bottom: 2px; }
+    .doc-card-eng  { font-size: 11px; color: #8B95A1; margin-bottom: 2px; line-height: 1.3; }
+    .doc-card-use  { font-size: 11px; color: #4E5968; margin-bottom: 0; }
+    .doc-card-issuer {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 10px; font-weight: 700;
+      background: #F9FAFB; color: #4E5968;
+      border: 1px solid #E5E8EB;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    /* ── A-04 탭 스타일 ── */
+    .tab-bar {
+      display: flex; gap: 0;
+      border-bottom: 1.5px solid #E5E8EB;
+      margin-bottom: 0;
+      flex-shrink: 0;
+      background: #fff;
+    }
+    .tab-btn {
+      flex: 1; padding: 9px 4px 7px;
+      font-size: 13px; font-weight: 700;
+      color: #8B95A1; background: transparent; border: none;
+      cursor: pointer; border-bottom: 2px solid transparent;
+      margin-bottom: -1.5px;
+      transition: color 0.12s;
+    }
+    .tab-btn.active { color: #3182F6; border-bottom-color: #3182F6; }
+    .tab-section-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+      text-transform: uppercase; color: #8B95A1;
+      padding: 4px 10px 3px; border-radius: 999px;
+      background: #F9FAFB; border: 1px solid #E5E8EB;
+      display: inline-block; margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-container">
+  <!-- ── 전역 페이지 헤더 ── -->
+  <div class="page-header">
+    <div>
+      <div class="text-[20px] font-bold text-ink">MyApo 모바일 앱</div>
+      <div class="text-[13px] text-muted mt-1">v3 · 7 화면 A-01~A-07 · 각 화면 4 variant 수직 나열</div>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="vpill badge-testnet">Testnet</span>
+      <span class="vpill badge-mock">Mock</span>
+      <span class="vpill badge-precheck">Pre-Check Only</span>
+    </div>
+  </div>
+
+  <!--
+    Screen ID:     A-01
+    Name:          발급 신청 (서류 선택)
+    Purpose:       P5 김민수 (해외 거주 한국인): 한국 정부 서류 → 해외 제출. 단일 페르소나 시나리오.
+    Interactions:  doc-card 선택 · "발급 신청할게요" CTA → POST /api/issue/request
+    Data bindings: POST /api/issue/request → IssueRequestResponse (status:queued)
+    States:        Active(한국 정부 doc-grid · 납세증명서 선택) · Loading(신청 접수 중) · Empty(서류 미선택) · Error(발급기관 응답 오류)
+  -->
+  <section id="A-01" class="section-wrap">
+    <div class="screen-header">
+      <span class="screen-label">A-01</span>
+      <span class="text-[13px] text-sub font-medium">발급 신청 (페르소나 선택 + 서류 선택)</span>
+      <span class="vpill badge-testnet ml-auto">Testnet</span>
+      <span class="vpill badge-mock">Mock</span>
+      <span class="vpill badge-precheck">Pre-Check Only</span>
+    </div>
+    <div class="variants-grid">
+
+      <!-- variant 1: Active — 페르소나 1 선택 + 한국 정부 doc-grid + 납세증명서 선택 -->
+      <div class="variant-row">
+        <span class="variant-label variant-active">Active / P1 해외 거주 한국인 · 납세증명서 선택</span>
+        <div class="mobile-frame">
+          <div class="mobile-notch"></div>
+          <div class="app-bar">
+            <span class="app-bar-title">서류 발급 신청</span>
+            <div class="app-bar-badges">
+              <span class="vpill badge-testnet" style="font-size:10px;">Testnet</span>
+              <span class="vpill badge-precheck" style="font-size:10px;">Pre-Check Only</span>
+            </div>
+          </div>
+          <div class="mobile-content">
+            <!-- P5 김민수 · 해외 거주 한국인 단일 시나리오 -->
+            <div class="text-[13px] font-bold text-ink mb-1">어떤 한국 서류를 발급받을까요?</div>
+            <!-- P1 doc-grid: 한국 정부 10종 -->
+            <div class="text-[13px] font-bold text-ink mb-1">어떤 한국 서류를 발급받을까요?</div>
+            <div class="text-[11px] text-muted mb-2">발급기관: 한국 정부 · 해외 기관 제출용</div>
+            <div class="doc-grid">
+              <div class="doc-card"><div class="doc-card-icon">법원</div><div class="doc-card-body"><div class="doc-card-name">가족관계증명서 (영문)</div><div class="doc-card-use">미국 이민국 결혼 증빙</div></div><span class="doc-card-issuer">KR-법원</span></div>
+              <div class="doc-card"><div class="doc-card-icon">MOIS</div><div class="doc-card-body"><div class="doc-card-name">주민등록등본 (영문)</div><div class="doc-card-use">거주증명·비자 보조</div></div><span class="doc-card-issuer">KR-MOIS</span></div>
+              <div class="doc-card selected">
+                <div class="doc-card-icon">NTS</div>
+                <div class="doc-card-body">
+                  <div class="doc-card-name">납세증명서 (영문)</div>
+                  <div class="doc-card-eng">Tax Payment Cert.</div>
+                  <div class="doc-card-use">미국 영사관 비자 재정증명</div>
+                </div>
+                <span class="doc-card-issuer" style="background:#E8F2FE;color:#1B64DA;border-color:#B8D8FF;">KR-NTS</span>
+              </div>
+              <div class="doc-card"><div class="doc-card-icon">NTS</div><div class="doc-card-body"><div class="doc-card-name">소득금액증명원 (영문)</div><div class="doc-card-use">비자·이민</div></div><span class="doc-card-issuer">KR-NTS</span></div>
+              <div class="doc-card"><div class="doc-card-icon">NTS</div><div class="doc-card-body"><div class="doc-card-name">사업자등록증명원</div><div class="doc-card-use">해외 법인 설립</div></div><span class="doc-card-issuer">KR-NTS</span></div>
+              <div class="doc-card"><div class="doc-card-icon">법원</div><div class="doc-card-body"><div class="doc-card-name">부동산등기부등본</div><div class="doc-card-use">자산증명</div></div><span class="doc-card-issuer">KR-법원</span></div>
+              <div class="doc-card"><div class="doc-card-icon">병무</div><div class="doc-card-body"><div class="doc-card-name">병적증명서</div><div class="doc-card-use">비자·이민 보조</div></div><span class="doc-card-issuer">KR-병무청</span></div>
+              <div class="doc-card"><div class="doc-card-icon">경찰</div><div class="doc-card-body"><div class="doc-card-name">운전경력증명서</div><div class="doc-card-use">해외 면허 변환</div></div><span class="doc-card-issuer">KR-경찰청</span></div>
+              <div class="doc-card"><div class="doc-card-icon">학교</div><div class="doc-card-body"><div class="doc-card-name">학력증명서 (영문)</div><div class="doc-card-use">해외 취업·유학</div></div><span class="doc-card-issuer">KR-학교</span></div>
+              <div class="doc-card"><div class="doc-card-icon">건보</div><div class="doc-card-body"><div class="doc-card-name">건강보험료납부확인서 (영문)</div><div class="doc-card-use">해외 비자·건강보험 증빙</div></div><span class="doc-card-issuer">KR-건보</span></div>
+            </div>
+            <div class="text-[11px] text-muted">발급해두면 유효기간 안에 무한 재사용해요</div>
+          </div>
+          <div class="mobile-cta">
+            <button class="btn-primary">발급 신청할게요</button>
+            <div class="text-[11px] text-muted text-center mt-1">PIPA §17 동의 포함 · 사용자 디바이스 한정 보관</div>
+          </div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- variant 2: Loading — P1 납세증명서 신청 접수 중 -->
+      <div class="variant-row">
+        <span class="variant-label variant-loading">Loading / P1 해외 거주 한국인 · 납세증명서 신청 접수 중</span>
+        <div class="mobile-frame">
+          <div class="mobile-notch"></div>
+          <div class="app-bar">
+            <span class="app-bar-title">서류 발급 신청</span>
+            <div class="app-bar-badges"><span class="vpill badge-testnet" style="font-size:10px;">Testnet</span></div>
+          </div>
+          <div class="mobile-content">
+            <div class="text-[13px] font-bold text-ink mb-1">어떤 한국 서류를 발급받을까요?</div>
+            <div class="text-[11px] text-muted mb-2">발급기관: 한국 정부 · 해외 기관 제출용</div>
+            <div class="doc-grid">
+              <div class="doc-card"><div class="doc-card-icon">법원</div><div class="doc-card-body"><div class="doc-card-name">가족관계증명서 (영문)</div></div><span class="doc-card-issuer">KR-법원</span></div>
+              <div class="doc-card selected">
+                <div class="doc-card-icon">NTS</div>
+                <div class="doc-card-body">
+                  <div class="doc-card-name">납세증명서 (영문)</div>
+                  <div class="doc-card-eng">Tax Payment Cert.</div>
+                </div>
+                <span class="doc-card-issuer" style="background:#E8F2FE;color:#1B64DA;border-color:#B8D8FF;">KR-NTS</span>
+              </div>
+            </div>
+            <div class="flex flex-col items-center mt-3 gap-1">
+              <div class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+              <div class="text-[12px] text-sub">신청 접수 중이에요. 잠깐만요.</div>
+            </div>
+          </div>
+          <div class="mobile-cta"><button class="btn-primary" disabled>신청 접수 중이에요...</button></div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- variant 3: Empty — 서류 미선택 -->
+      <div class="variant-row">
+        <span class="variant-label variant-empty">Empty / 서류 미선택</span>
+        <div class="mobile-frame">
+          <div class="mobile-notch"></div>
+          <div class="app-bar">
+            <span class="app-bar-title">서류 발급 신청</span>
+            <div class="app-bar-badges"><span class="vpill badge-testnet" style="font-size:10px;">Testnet</span></div>
+          </div>
+          <div class="mobile-content">
+            <div class="text-[13px] font-bold text-ink mb-1">어떤 한국 서류를 발급받을까요?</div>
+            <div class="text-[11px] text-muted mb-3">발급기관: 한국 정부 · 해외 기관 제출용</div>
+            <div class="doc-grid">
+              <div class="doc-card"><div class="doc-card-icon">법원</div><div class="doc-card-body"><div class="doc-card-name">가족관계증명서 (영문)</div></div><span class="doc-card-issuer">KR-법원</span></div>
+              <div class="doc-card"><div class="doc-card-icon">NTS</div><div class="doc-card-body"><div class="doc-card-name">납세증명서 (영문)</div></div><span class="doc-card-issuer">KR-NTS</span></div>
+            </div>
+            <div class="flex flex-col items-center gap-2 mt-4">
+              <i data-lucide="mouse-pointer-click" class="w-7 h-7 text-muted"></i>
+              <div class="text-[13px] text-muted text-center">서류를 선택하면<br/>발급 신청할 수 있어요</div>
+            </div>
+          </div>
+          <div class="mobile-cta"><button class="btn-primary" disabled style="background:#8B95A1;">서류를 선택해요</button></div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- variant 4: Error — 발급기관 응답 오류 -->
+      <div class="variant-row">
+        <span class="variant-label variant-error">Error / 발급기관 응답 오류</span>
+        <div class="mobile-frame">
+          <div class="mobile-notch"></div>
+          <div class="app-bar">
+            <span class="app-bar-title">서류 발급 신청</span>
+            <div class="app-bar-badges"><span class="vpill badge-testnet" style="font-size:10px;">Testnet</span></div>
+          </div>
+          <div class="mobile-content">
+            <!-- P1 납세증명서 선택된 상태에서 발급기관 오류 -->
+            <div class="card mb-3" style="opacity:.6;">
+              <div class="text-[13px] font-bold text-ink">납세증명서 (영문)</div>
+              <div class="text-[11px] text-sub">KR-NTS · 국세청</div>
+            </div>
+            <div class="flex items-center gap-2 p-3 rounded-[8px]" style="background:#FDE7E9;border:1px solid #F04452;">
+              <i data-lucide="alert-triangle" class="w-4 h-4 text-danger flex-shrink-0"></i>
+              <div class="text-[12px] text-danger">발급기관 응답이 없어요. 다시 시도할 수 있어요.</div>
+            </div>
+          </div>
+          <div class="mobile-cta">
+            <button class="btn-primary" style="background:#F04452;">다시 시도할게요</button>
+            <button class="btn-secondary">다음에 할게요</button>
+          </div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.variants-grid A-01 -->
+  </section>
+
+  <!--
+    Screen ID:     A-02
+    Name:          발급 진행 중 (3단계 서명 플로우 — P1 단계 라벨)
+    Purpose:       P1(한국 정부→번역/공증→외교부 인증→내 지갑) 단계 라벨 + 서명 인터랙션
+    Interactions:  단계 완료 시 푸시알림 → Bottom Sheet 서명 → "서명할게요" CTA → 다음 단계 진행
+    Data bindings: GET /api/issue/progress (SSE) → ProgressEvent (step · sign_required)
+    States:        Active(P1 시나리오 3/3 완료) · Loading(P1 번역/공증 진행중 1/3) · Empty(P1 푸시알림·Bottom Sheet 서명) · Error(P1 번역사 응답 없음)
+  -->
+  <section id="A-02" class="section-wrap">
+    <div class="screen-header">
+      <span class="screen-label">A-02</span>
+      <span class="text-[13px] text-sub font-medium">발급 진행 중 — 단계별 서명 플로우</span>
+      <span class="vpill badge-testnet ml-auto">Testnet</span>
+      <span class="vpill badge-mock">Mock</span>
+      <span class="vpill badge-precheck">Pre-Check Only</span>
+    </div>
+    <div class="variants-grid">
+
+      <!-- variant 1: Active — P1 한국→해외 / 3단계 모두 완료 -->
+      <div class="variant-row">
+        <span class="variant-label variant-active">Active / P1 해외 거주 한국인 · 3단계 서명 완료</span>
+        <div class="mobile-frame">
+          <div class="mobile-notch"></div>
+          <div class="app-bar">
+            <span class="app-bar-title">발급 진행 중</span>
+            <div class="app-bar-badges"><span class="vpill badge-testnet" style="font-size:10px;">Testnet</span></div>
+          </div>
+          <div class="mobile-content">
+            <div class="flex flex-col items-center pt-4 pb-3 gap-2">
+              <div class="w-16 h-16 rounded-full bg-success-soft flex items-center justify-center">
+                <i data-lucide="check-circle" class="w-9 h-9 text-success"></i>
+              </div>
+              <div class="text-[17px] font-bold text-ink text-center">서명을 모두 완료했어요</div>
+              <div class="text-[13px] text-sub text-center">납세증명서 (영문) 가<br/>곧 도착해요</div>
+            </div>
+            <!-- StepProgress 4점 — P1 라벨 -->
+            <div class="card mb-3">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-[13px] font-bold text-ink">진행 단계</span>
+                <span class="text-[11px] font-bold text-success">3/3 완료</span>
+              </div>
+              <div class="flex items-center gap-0 mt-2 mb-3">
+                <div class="step-dot step-dot-done"><i data-lucide="check" class="w-3 h-3"></i></div>
+                <div class="step-line step-line-done"></div>
+                <div class="step-dot step-dot-done"><i data-lucide="check" class="w-3 h-3"></i></div>
+                <div class="step-line step-line-done"></div>
+                <div class="step-dot step-dot-done"><i data-lucide="check" class="w-3 h-3"></i></div>
+                <div class="step-line step-line-done"></div>
+                <div class="step-dot step-dot-done"><i data-lucide="check" class="w-3 h-3"></i></div>
+              </div>
+              <!-- P1 라벨: 한국 정부 → 번역/공증 → 외교부 인증 → 내 지갑 -->
+              <div class="grid grid-cols-4 text-center">
+                <div class="text-[9px] text-success font-bold">한국 정부</div>
+                <div class="text-[9px] text-success font-bold">번역/공증</div>
+                <div class="text-[9px] text-success font-bold">외교부 인증</div>
+                <div class="text-[9px] text-success font-bold">내 지갑</div>
+              </div>
+              <div class="mt-2 text-[10px] text-muted text-center">P5 김민수 · 납세증명서 (영문) · 미국 영사관 제출용</div>
+            </div>
+            <div class="text-[11px] text-muted text-center">총 3번의 서명을 완료해주셨어요</div>
+          </div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- variant 2: Loading — P1 한국 정부 → 번역/공증 진행 중 (1/3 완료) -->
+      <div class="variant-row">
+        <span class="variant-label variant-loading">Loading / P1 해외 거주 한국인 · 번역/공증 진행중 (1/3)</span>
+        <div class="mobile-frame">
+          <div class="mobile-notch"></div>
+          <div class="app-bar">
+            <span class="app-bar-title">발급 진행 중</span>
+            <div class="app-bar-badges"><span class="vpill badge-testnet" style="font-size:10px;">Testnet</span></div>
+          </div>
+          <div class="mobile-content">
+            <div class="flex flex-col items-center pt-4 pb-3 gap-2">
+              <div class="w-16 h-16 rounded-full bg-primary-soft flex items-center justify-center">
+                <div class="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" style="border-width:3px;"></div>
+              </div>
+              <div class="text-[17px] font-bold text-ink text-center">번역·공증 중이에요</div>
+              <div class="text-[13px] text-sub text-center">단계 2/3을 처리 중이에요</div>
+            </div>
+            <!-- StepProgress 4점 — P1 라벨 -->
+            <div class="card mb-3">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-[13px] font-bold text-ink">진행 단계</span>
+                <span class="text-[11px] font-bold text-primary">1/3 완료</span>
+              </div>
+              <div class="flex items-center gap-0 mt-2 mb-3">
+                <div class="step-dot step-dot-done"><i data-lucide="check" class="w-3 h-3"></i></div>
+                <div class="step-line step-line-done"></div>
+                <div class="step-dot step-dot-active"><i data-lucide="clock" class="w-3 h-3"></i></div>
+                <div class="step-line"></div>
+                <div class="step-dot step-dot-wait"></div>
+                <div class="step-line"></div>
+                <div class="step-dot step-dot-wait"></div>
+              </div>
+              <!-- P1 라벨: 한국 정부 → 번역/공증 → KR-MFA 인증 → 내 지갑 -->
+              <div class="grid grid-cols-4 text-center">
+                <div class="text-[9px] text-success font-bold">한국 정부</div>
+                <div class="text-[9px] text-primary font-bold">번역/공증</div>
+                <div class="text-[9px] text-muted">KR-MFA 인증</div>
+                <div class="text-[9px] text-muted">내 지갑</div>
+              </div>
+              <div class="progress-track mt-3">
+                <div class="progress-fill" style="width:40%;"></div>
+              </div>
+              <div class="text-[11px] text-muted mt-1 text-right">번역사 처리 중이에요. 잠깐만요.</div>
+              <div class="mt-2 text-[10px] text-muted">P5 김민수 · 납세증명서 (영문) · KR-NTS</div>
+            </div>
+            <div class="text-[11px] text-muted">다음 단계가 완료되면 알려드릴게요</div>
+          </div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- variant 3: Empty — P1 푸시알림 + Bottom Sheet 서명 (단계 1 완료) -->
+      <div class="variant-row">
+        <span class="variant-label variant-empty">Empty / P1 푸시알림 — 서명 2번째 대기</span>
+        <div class="mobile-frame" style="position:relative;">
+          <div class="mobile-notch"></div>
+          <!-- OS 푸시 시뮬레이션 -->
+          <div style="position:absolute;top:28px;left:12px;right:12px;z-index:20;">
+            <div class="card" style="border:1px solid #E5E8EB;box-shadow:0 4px 16px rgba(0,0,0,.12);border-radius:12px;padding:12px 14px;">
+              <div class="flex items-center gap-2 mb-1">
+                <i data-lucide="bell" class="w-4 h-4 text-primary flex-shrink-0"></i>
+                <span class="text-[11px] font-bold text-sub">MyApo · 지금</span>
+              </div>
+              <div class="text-[12px] font-bold text-ink">번역이 끝났어요. 외교부 인증으로 보낼까요?</div>
+              <div class="text-[11px] text-muted">탭해서 서명을 완료해주세요</div>
+            </div>
+          </div>
+          <div class="app-bar" style="margin-top:0;">
+            <span class="app-bar-title">발급 진행 중</span>
+            <div class="app-bar-badges"><span class="vpill badge-testnet" style="font-size:10px;">Testnet</span></div>
+          </div>
+          <div class="mobile-content" style="padding-top:70px;">
+            <div class="card mb-3" style="border:1px solid #3182F6;background:#E8F2FE;">
+              <div class="flex items-start gap-2">
+                <i data-lucide="bell" class="w-4 h-4 text-primary mt-0.5 flex-shrink-0"></i>
+                <div class="flex-1">
+                  <div class="text-[13px] font-bold text-ink">번역이 끝났어요</div>
+                  <div class="text-[11px] text-sub mt-0.5">외교부 인증으로 보낼까요? (P1 · 한국 외교부)</div>
+                  <div class="text-[10px] text-muted mt-1">총 3번의 서명이 필요해요</div>
+                </div>
+              </div>
+            </div>
+            <!-- StepProgress — P1 라벨, 단계 2 완료 -->
+            <div class="card mb-3">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-[13px] font-bold text-ink">진행 단계</span>
+                <span class="text-[11px] font-bold text-warning">2/3 서명 필요</span>
+              </div>
+              <div class="flex items-center gap-0 mt-2 mb-3">
+                <div class="step-dot step-dot-done"><i data-lucide="check" class="w-3 h-3"></i></div>
+                <div class="step-line step-line-done"></div>
+                <div class="step-dot step-dot-done"><i data-lucide="check" class="w-3 h-3"></i></div>
+                <div class="step-line"></div>
+                <div class="step-dot step-dot-wait"></div>
+                <div class="step-line"></div>
+                <div class="step-dot step-dot-wait"></div>
+              </div>
+              <div class="grid grid-cols-4 text-center">
+                <div class="text-[9px] text-success font-bold">한국 정부</div>
+                <div class="text-[9px] text-success font-bold">번역/공증</div>
+                <div class="text-[9px] text-muted">외교부 인증</div>
+                <div class="text-[9px] text-muted">내 지갑</div>
+              </div>
+            </div>
+          </div>
+          <!-- 서명 Bottom Sheet (항상 노출 — 시연용) -->
+          <div class="bottom-sheet-overlay" id="a02-sign-sheet">
+            <div class="bottom-sheet">
+              <div class="bottom-sheet-handle"></div>
+              <div class="text-[17px] font-bold text-ink mb-1">서명이 필요해요</div>
+              <div class="text-[13px] text-sub mb-3">번역이 끝났어요. 외교부 인증으로 보낼까요?</div>
+              <div class="card mb-3" style="background:#F9FAFB;">
+                <div class="flex justify-between py-1 border-b border-border">
+                  <span class="text-[12px] text-muted">서류명</span>
+                  <span class="text-[12px] font-bold text-ink">납세증명서 (영문)</span>
+                </div>
+                <div class="flex justify-between py-1 border-b border-border">
+                  <span class="text-[12px] text-muted">발급기관</span>
+                  <span class="text-[12px] font-bold text-ink">KR-NTS</span>
+                </div>
+                <div class="flex justify-between py-1">
+                  <span class="text-[12px] text-muted">단계</span>
+                  <span class="text-[12px] font-bold text-ink">2/3 · 번역/공증 → 외교부 인증</span>
+                </div>
+              </div>
+              <div class="text-[11px] text-muted mb-3">Testnet · Pre-Check Only · XRPL Credential Mock</div>
+              <button class="btn-primary mb-2" style="height:52px;font-size:16px;">서명할게요</button>
+              <button class="btn-secondary" style="height:40px;font-size:14px;">나중에 할게요</button>
+            </div>
+          </div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- variant 4: Error — P1 단계 2 오류 (번역사 응답 없음) -->
+      <div class="variant-row">
+        <span class="variant-label variant-error">Error / P1 해외 거주 한국인 · 번역사 응답 없음</span>
+        <div class="mobile-frame">
+          <div class="mobile-notch"></div>
+          <div class="app-bar">
+            <span class="app-bar-title">발급 진행 중</span>
+            <div class="app-bar-badges"><span class="vpill badge-testnet" style="font-size:10px;">Testnet</span></div>
+          </div>
+          <div class="mobile-content">
+            <div class="flex items-center gap-2 p-3 rounded-[8px] mb-3" style="background:#FDE7E9;border:1px solid #F04452;">
+              <i data-lucide="alert-triangle" class="w-4 h-4 text-danger flex-shrink-0"></i>
+              <div class="text-[12px] text-danger">번역사 응답이 없어요. 다시 시도할 수 있어요.</div>
+            </div>
+            <!-- StepProgress — P1 라벨, 단계 2 오류 -->
+            <div class="card mb-3">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-[13px] font-bold text-ink">진행 단계</span>
+                <span class="text-[11px] font-bold text-danger">2/3 오류</span>
+              </div>
+              <div class="flex items-center gap-0 mt-2 mb-3">
+                <div class="step-dot step-dot-done"><i data-lucide="check" class="w-3 h-3"></i></div>
+                <div class="step-line step-line-done"></div>
+                <div class="step-dot step-dot-error"><i data-lucide="x" class="w-3 h-3"></i></div>
+                <div class="step-line"></div>
+                <div class="step-dot step-dot-wait"></div>
+                <div class="step-line"></div>
+                <div class="step-dot step-dot-wait"></div>
+              </div>
+              <!-- P1 라벨: 한국 정부 → 번역/공증(오류) → KR-MFA 인증 → 내 지갑 -->
+              <div class="grid grid-cols-4 text-center">
+                <div class="text-[9px] text-success font-bold">한국 정부</div>
+                <div class="text-[9px] text-danger font-bold">번역/공증</div>
+                <div class="text-[9px] text-muted">KR-MFA 인증</div>
+                <div class="text-[9px] text-muted">내 지갑</div>
+              </div>
+              <div class="mt-2 text-[10px] text-muted">P5 김민수 · 납세증명서 (영문) · KR-NTS</div>
+            </div>
+            <div class="text-[12px] text-sub text-center">다시 시도할 수 있어요</div>
+          </div>
+          <div class="mobile-cta">
+            <button class="btn-primary" style="background:#F04452;">다시 서명할게요</button>
+            <button class="btn-secondary">나중에 할게요</button>
+          </div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.variants-grid A-02 -->
+  </section>
+
+  <!--
+    Screen ID:     A-03
+    Name:          내 문서 (사용 가능 / 만료됨 탭)
+    Purpose:       P1: "납세증명서 (영문) 가 지갑에 도착했어요". 카드 전체 클릭 → A-04 (요청한 기관). history 아이콘 → A-06 이력. 만료됨 탭에서 재발급 안내(A-07) 진입.
+    Interactions:  카드 전체 클릭 → A-04 (요청한 기관) · history 아이콘 → A-06 (이력) · "만료됨" 탭 → 만료 카드 표시
+    Data bindings: GET /api/credential/{id} → CredentialDetail (doc_type · expiry · issuer_name · persona_type)
+    States:        Active(사용가능탭·P1 도착) · Loading(사용가능탭·도착중) · Empty(만료됨탭·만료카드) · Error(조회 실패)
+  -->
+  <section id="A-03" class="section-wrap">
+    <div class="screen-header">
+      <span class="screen-label">A-03</span>
+      <span class="text-[13px] text-sub font-medium">내 문서</span>
+      <span class="vpill badge-testnet ml-auto">Testnet</span>
+      <span class="vpill badge-mock">Mock</span>
+      <span class="vpill badge-precheck">Pre-Check Only</span>
+    </div>
+    <div class="variants-grid">
+
+      <!-- variant 1: Active — P1 납세증명서 (영문) 도착 / "사용 가능" 탭 활성 · 카드 클릭 → A-04 · history 아이콘 → A-06 -->
+      <div class="variant-row">
+        <span class="variant-label variant-active">Active / P1 해외 거주 한국인 · 납세증명서 도착 / 사용 가능 탭</span>
+        <div class="mobile-frame" id="a03-active-frame">
+          <div class="mobile-notch"></div>
+          <div class="app-bar">
+            <span class="app-bar-title">내 문서</span>
+            <div class="app-bar-badges"><span class="vpill badge-testnet" style="font-size:10px;">Testnet</span></div>
+          </div>
+          <!-- 카테고리 탭 (segmented control) — "사용 가능" 활성 -->
+          <div class="px-4 pt-3">
+            <div class="flex bg-bg-base p-1 rounded-md">
+              <button class="flex-1 py-2 rounded-sm bg-card shadow-card text-[14px] font-bold text-primary">사용 가능</button>
+              <button class="flex-1 py-2 rounded-sm text-[14px] font-medium text-muted">만료됨</button>
+            </div>
+          </div>
+          <div class="mobile-content">
+            <div class="flex items-center gap-2 p-3 rounded-[8px] mb-2" style="background:#E6FAF3;border:1px solid #00C48C;">
+              <i data-lucide="check-circle" class="w-4 h-4 text-success flex-shrink-0"></i>
+              <div>
+                <div class="text-[13px] font-bold text-ink">납세증명서 (영문) 가 지갑에 도착했어요</div>
+                <div class="text-[11px] text-sub mt-0.5">총 3번의 서명을 완료해주셨어요. 이제 미국 영사관에 제출할 수 있어요</div>
+              </div>
+            </div>
+            <!-- CredentialCard (#1) XLS-70 Active — 카드 전체 클릭 → A-04 (요청한 기관) 진입 · history 아이콘 → A-06 -->
+            <a href="#A-04" aria-label="이 문서를 요청한 기관 보기" class="block cursor-pointer">
+            <div class="card mb-1" style="box-shadow:var(--shadow-card);">
+              <div class="flex items-center justify-between mb-2">
+                <span class="vpill badge-testnet" style="font-size:10px;">XLS-70 · Active</span>
+                <div class="flex items-center gap-1">
+                  <button class="p-1 text-muted rounded-[6px]" onclick="event.stopPropagation();event.preventDefault();">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                  </button>
+                  <!-- history 아이콘: 클릭 시 A-06 이력 진입 (카드 클릭과 분리) -->
+                  <button class="p-1 text-muted rounded-[6px]" aria-label="발급 이력 보기" onclick="event.stopPropagation(); window.location.hash='A-06'; return false;">
+                    <i data-lucide="history" class="w-4 h-4"></i>
+                  </button>
+                  <i data-lucide="chevron-right" class="w-4 h-4 text-muted" style="pointer-events:none;"></i>
+                </div>
+              </div>
+              <div class="text-[15px] font-bold text-ink">납세증명서 (영문)</div>
+              <div class="text-[12px] text-sub">KR-NTS · 한국 국세청</div>
+              <div class="text-[12px] text-sub mt-1">유효기간 <span class="font-bold text-ink">2026-11-02</span> (+183일)</div>
+              <div class="text-[10px] text-muted mt-1">P5 김민수 · 850301-1****** (가명)</div>
+            </div>
+            </a>
+            <!-- 보조: 이력 보기 링크 (A-06 진입) -->
+            <div class="flex items-center justify-end mb-3">
+              <a href="#A-06" class="flex items-center gap-1 text-[12px] font-medium text-muted" style="text-decoration:none;">
+                <i data-lucide="history" class="w-3.5 h-3.5"></i>
+                <span>발급 과정 이력 보기</span>
+                <i data-lucide="chevron-right" class="w-3 h-3"></i>
+              </a>
+            </div>
+          </div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- variant 2: Loading — P1 납세증명서 (영문) 도착 중 · 옵션 비활성 / "사용 가능" 탭 활성 -->
+      <div class="variant-row">
+        <span class="variant-label variant-loading">Loading / P1 해외 거주 한국인 · 납세증명서 (영문) 도착 중 / 사용 가능 탭</span>
+        <div class="mobile-frame">
+          <div class="mobile-notch"></div>
+          <div class="app-bar">
+            <span class="app-bar-title">내 문서</span>
+            <div class="app-bar-badges"><span class="vpill badge-testnet" style="font-size:10px;">Testnet</span></div>
+          </div>
+          <!-- 카테고리 탭 (segmented control) — "사용 가능" 활성 -->
+          <div class="px-4 pt-3">
+            <div class="flex bg-bg-base p-1 rounded-md">
+              <button class="flex-1 py-2 rounded-sm bg-card shadow-card text-[14px] font-bold text-primary">사용 가능</button>
+              <button class="flex-1 py-2 rounded-sm text-[14px] font-medium text-muted">만료됨</button>
+            </div>
+          </div>
+          <div class="mobile-content">
+            <div class="flex items-center gap-2 p-3 rounded-[8px] mb-2" style="background:#E8F2FE;border:1px solid #3182F6;">
+              <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin flex-shrink-0"></div>
+              <div>
+                <div class="text-[13px] font-bold text-ink">납세증명서 (영문)가 도착해요</div>
+                <div class="text-[11px] text-sub mt-0.5">KR-MFA 인증 처리 중이에요. 곧 도착해요</div>
+              </div>
+            </div>
+            <div class="card mb-3">
+              <div class="skeleton h-3 w-24 mb-2"></div>
+              <div class="skeleton h-4 w-40 mb-2"></div>
+              <div class="skeleton h-3 w-32 mb-2"></div>
+              <div class="skeleton h-3 w-28"></div>
+            </div>
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+              <div class="text-[12px] text-sub">곧 도착해요. 잠깐만요.</div>
+            </div>
+          </div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- variant 3: Empty — "만료됨" 탭 활성 · 만료된 카드 1개 표시 + 재발급 안내 -->
+      <div class="variant-row">
+        <span class="variant-label variant-empty">Empty(만료됨 탭) / P1 납세증명서 만료 · 재발급 안내</span>
+        <div class="mobile-frame">
+          <div class="mobile-notch"></div>
+          <div class="app-bar">
+            <span class="app-bar-title">내 문서</span>
+            <div class="app-bar-badges"><span class="vpill badge-testnet" style="font-size:10px;">Testnet</span></div>
+          </div>
+          <!-- 카테고리 탭 (segmented control) — "만료됨" 탭 활성 -->
+          <div class="px-4 pt-3">
+            <div class="flex bg-bg-base p-1 rounded-md">
+              <button class="flex-1 py-2 rounded-sm text-[14px] font-medium text-muted">사용 가능</button>
+              <button class="flex-1 py-2 rounded-sm bg-card shadow-card text-[14px] font-bold text-primary">만료됨</button>
+            </div>
+          </div>
+          <div class="mobile-content">
+            <div class="flex items-center gap-2 p-3 rounded-[8px] mb-3" style="background:#FFF4DE;border:1px solid #FFB020;">
+              <i data-lucide="clock" class="w-4 h-4 text-warning flex-shrink-0"></i>
+              <div class="text-[13px] font-bold text-ink">유효기간이 지난 문서예요. 다시 발급받을 수 있어요</div>
+            </div>
+            <!-- CredentialCard — Revoked variant · 클릭 → A-06 -->
+            <a href="#A-06" aria-label="문서 이력 보기" class="block cursor-pointer">
+            <div class="card mb-3" style="opacity:.7;background:repeating-linear-gradient(45deg,#F9FAFB,#F9FAFB 8px,#F0F1F3 8px,#F0F1F3 16px);">
+              <div class="flex items-center justify-between mb-1">
+                <span class="vpill" style="background:#FDE7E9;color:#9F2A37;font-size:10px;">Revoked · 자동 폐기됨</span>
+                <i data-lucide="chevron-right" class="w-4 h-4 text-muted" style="pointer-events:none;"></i>
+              </div>
+              <div class="text-[15px] font-bold text-ink line-through">납세증명서 (영문)</div>
+              <div class="text-[12px] text-muted line-through">KR-NTS · 한국 국세청</div>
+              <div class="text-[12px] text-muted mt-1">유효기간 2026-04-30 만료됨</div>
+              <div class="text-[10px] text-muted mt-1">P5 김민수 · 850301-1****** (가명)</div>
+            </div>
+            </a>
+            <div class="flex items-start gap-2 p-2 rounded-[8px] mb-2" style="background:#E8F2FE;">
+              <i data-lucide="info" class="w-4 h-4 text-primary mt-0.5 flex-shrink-0"></i>
+              <div class="text-[11px] text-sub">자동 만료·폐기 완료됐어요. 개인정보는 자동으로 삭제돼요.</div>
+            </div>
+          </div>
+          <div class="mobile-cta">
+            <a href="#A-07" class="block"><button class="btn-primary w-full">다시 발급할게요</button></a>
+            <button class="btn-secondary">다음에 할게요</button>
+          </div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- variant 4: Error -->
+      <div class="variant-row">
+        <span class="variant-label variant-error">Error / 조회 실패</span>
+        <div class="mobile-frame">
+          <div class="mobile-notch"></div>
+          <div class="app-bar">
+            <span class="app-bar-title">내 문서</span>
+            <div class="app-bar-badges"><span class="vpill badge-testnet" style="font-size:10px;">Testnet</span></div>
+          </div>
+          <!-- 카테고리 탭 (segmented control) — 비활성 표시 -->
+          <div class="px-4 pt-3">
+            <div class="flex bg-bg-base p-1 rounded-md" style="opacity:.4;">
+              <button class="flex-1 py-2 rounded-sm bg-card shadow-card text-[14px] font-bold text-primary" disabled>사용 가능</button>
+              <button class="flex-1 py-2 rounded-sm text-[14px] font-medium text-muted" disabled>만료됨</button>
+            </div>
+          </div>
+          <div class="mobile-content">
+            <div class="flex flex-col items-center py-10 gap-3">
+              <div class="w-14 h-14 rounded-full bg-danger-soft flex items-center justify-center">
+                <i data-lucide="server-crash" class="w-7 h-7 text-danger"></i>
+              </div>
+              <div class="text-[15px] font-bold text-ink text-center">조회하는 데 문제가 생겼어요</div>
+              <div class="text-[12px] text-muted text-center">다시 시도할 수 있어요.</div>
+            </div>
+            <div class="flex items-center gap-2 p-3 rounded-[8px]" style="background:#FDE7E9;border:1px solid #F04452;">
+              <i data-lucide="alert-triangle" class="w-4 h-4 text-danger flex-shrink-0"></i>
+              <div class="text-[12px] text-danger">API 오류 · 다시 시도할 수 있어요.</div>
+            </div>
+          </div>
+          <div class="mobile-cta"><button class="btn-primary" style="background:#F04452;">다시 시도할게요</button></div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.variants-grid A-03 -->
+  </section>
+
+  <!--
+    Screen ID:     A-04
+    Name:          이 문서를 요청한 기관
+    Purpose:       받은 제출 요청 기관 목록 + 선택 + 제출. PDF 다운로드는 서브 옵션.
+    Interactions:  기관 카드 선택 → Bottom Sheet "OO에 보낼까요?" (Active-2) → POST /api/submit/credential → A-05
+                   PDF 다운로드 (서브 링크) → POST /api/export/pdf
+    Data bindings: GET /api/submit/requests (기관 제출 요청 목록) · POST /api/submit/credential · POST /api/export/pdf
+    States:        Active(기관 목록·선택) · Loading(받은 요청 불러오는 중) · Empty(받은 요청 없음) · Error(요청 불러오기 실패)
+  -->
+  <section id="A-04" class="section-wrap">
+    <div class="screen-header">
+      <span class="screen-label">A-04</span>
+      <span class="text-[13px] text-sub font-medium">이 문서를 요청한 기관</span>
+      <span class="vpill badge-testnet ml-auto">Testnet</span>
+      <span class="vpill badge-mock">Mock</span>
+      <span class="vpill badge-precheck">Pre-Check Only</span>
+    </div>
+
+    <!-- ── 단일 페이지: 받은 요청 기관 목록 (US-CONS · AU-IMM · CA-IMM) + PDF 서브 링크 ── -->
+    <div class="variants-grid">
+
+      <!-- variant 1a: Active · 기관 목록 — 진입 화면, Bottom Sheet 없음 -->
+      <div class="variant-row">
+        <span class="variant-label variant-active">Active · 기관 목록 / P1 · 받은 요청 3건 · 미선택 상태</span>
+        <div class="mobile-frame" style="position:relative;">
+          <div class="mobile-notch"></div>
+          <div class="app-bar">
+            <span class="app-bar-title">이 문서를 요청한 기관</span>
+            <div class="app-bar-badges"><span class="vpill badge-testnet" style="font-size:10px;">Testnet</span></div>
+          </div>
+          <div class="mobile-content" style="padding-top:8px;">
+            <div class="text-[13px] font-bold text-ink mb-0.5">받은 제출 요청이에요</div>
+            <div class="text-[11px] text-muted mb-2">기관이 먼저 요청한 경우에만 보내드릴 수 있어요</div>
+            <!-- P1 해외 기관 3장 — 모두 미선택 상태 -->
+            <div class="card mb-2">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="px-2 py-0.5 rounded-full text-[11px] font-bold" style="background:#F9FAFB;color:#4E5968;border:1px solid #E5E8EB;">요청 받음</span>
+                <span class="text-[11px] text-muted">5월 2일</span>
+              </div>
+              <div class="flex items-center gap-2 mb-1">
+                <div class="w-8 h-8 rounded-[6px] bg-primary flex items-center justify-center text-white font-bold text-[8px] flex-shrink-0">US-CONS</div>
+                <div class="text-[14px] font-bold text-ink">미국 영사관</div>
+              </div>
+              <div class="text-[12px] text-sub mb-1">비자 신청 시 필수예요</div>
+              <div class="text-[11px] font-bold" style="color:#FFB020;">5월 9일까지 제출</div>
+            </div>
+            <!-- AU-IMM -->
+            <div class="card mb-2">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="px-2 py-0.5 rounded-full text-[11px] font-bold" style="background:#F9FAFB;color:#4E5968;border:1px solid #E5E8EB;">요청 받음</span>
+                <span class="text-[11px] text-muted">5월 1일</span>
+              </div>
+              <div class="flex items-center gap-2 mb-1">
+                <div class="w-8 h-8 rounded-[6px] bg-sub flex items-center justify-center text-white font-bold text-[8px] flex-shrink-0">AU-IMM</div>
+                <div class="text-[14px] font-bold text-ink">호주 이민국</div>
+              </div>
+              <div class="text-[12px] text-sub mb-1">영주권 심사 자료예요</div>
+              <div class="text-[11px] font-bold" style="color:#FFB020;">5월 15일까지 제출</div>
+            </div>
+            <!-- CA-IMM -->
+            <div class="card mb-2">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="px-2 py-0.5 rounded-full text-[11px] font-bold" style="background:#F9FAFB;color:#4E5968;border:1px solid #E5E8EB;">요청 받음</span>
+                <span class="text-[11px] text-muted">5월 2일</span>
+              </div>
+              <div class="flex items-center gap-2 mb-1">
+                <div class="w-8 h-8 rounded-[6px] bg-sub flex items-center justify-center text-white font-bold text-[8px] flex-shrink-0">CA-IMM</div>
+                <div class="text-[14px] font-bold text-ink">캐나다 이민국</div>
+              </div>
+              <div class="text-[12px] text-sub mb-1">취업 비자 보강 자료예요</div>
+              <div class="text-[11px] font-bold" style="color:#FFB020;">5월 12일까지 제출</div>
+            </div>
+            <!-- PDF 서브 링크 -->
+            <div class="flex justify-center mt-1">
+              <button class="text-[12px] text-muted flex items-center gap-1" style="text-decoration:underline;background:none;border:none;">
+                <i data-lucide="file-down" class="w-3.5 h-3.5"></i>
+                PDF로 받기
+              </button>
+            </div>
+          </div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- variant 1b: Active · 선택 → 보낼까요? — US-CONS 카드 선택 후 Bottom Sheet 열림 -->
+      <div class="variant-row">
+        <span class="variant-label variant-active">Active · 선택 → 보낼까요? / P1 · US-CONS 선택 + Bottom Sheet</span>
+        <div class="mobile-frame" style="position:relative;">
+          <div class="mobile-notch"></div>
+          <div class="app-bar">
+            <span class="app-bar-title">이 문서를 요청한 기관</span>
+            <div class="app-bar-badges"><span class="vpill badge-testnet" style="font-size:10px;">Testnet</span></div>
+          </div>
+          <div class="mobile-content" style="filter:blur(1px);padding-top:8px;">
+            <div class="text-[13px] font-bold text-ink mb-0.5">받은 제출 요청이에요</div>
+            <div class="text-[11px] text-muted mb-2">기관이 먼저 요청한 경우에만 보내드릴 수 있어요</div>
+            <!-- P1 해외 기관 3장 — US-CONS 선택됨 (primary border) -->
+            <div class="card mb-2" style="border:2px solid #3182F6;background:#E8F2FE;">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="px-2 py-0.5 rounded-full text-[11px] font-bold" style="background:#E8F2FE;color:#1B64DA;border:1px solid #B8D8FF;">요청 받음</span>
+                <span class="text-[11px] text-muted">5월 2일</span>
+              </div>
+              <div class="flex items-center gap-2 mb-1">
+                <div class="w-8 h-8 rounded-[6px] bg-primary flex items-center justify-center text-white font-bold text-[8px] flex-shrink-0">US-CONS</div>
+                <div class="text-[14px] font-bold text-ink">미국 영사관</div>
+                <div class="w-5 h-5 rounded-full bg-primary flex items-center justify-center flex-shrink-0 ml-auto">
+                  <i data-lucide="check" class="w-3 h-3 text-white"></i>
+                </div>
+              </div>
+              <div class="text-[12px] text-sub mb-1">비자 신청 시 필수예요</div>
+              <div class="text-[11px] font-bold" style="color:#FFB020;">5월 9일까지 제출</div>
+            </div>
+            <!-- AU-IMM -->
+            <div class="card mb-2">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="px-2 py-0.5 rounded-full text-[11px] font-bold" style="background:#F9FAFB;color:#4E5968;border:1px solid #E5E8EB;">요청 받음</span>
+                <span class="text-[11px] text-muted">5월 1일</span>
+              </div>
+              <div class="flex items-center gap-2 mb-1">
+                <div class="w-8 h-8 rounded-[6px] bg-sub flex items-center justify-center text-white font-bold text-[8px] flex-shrink-0">AU-IMM</div>
+                <div class="text-[14px] font-bold text-ink">호주 이민국</div>
+              </div>
+              <div class="text-[12px] text-sub mb-1">영주권 심사 자료예요</div>
+              <div class="text-[11px] font-bold" style="color:#FFB020;">5월 15일까지 제출</div>
+            </div>
+            <!-- CA-IMM -->
+            <div class="card mb-2">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="px-2 py-0.5 rounded-full text-[11px] font-bold" style="background:#F9FAFB;color:#4E5968;border:1px solid #E5E8EB;">요청 받음</span>
+                <span class="text-[11px] text-muted">5월 2일</span>
+              </div>
+              <div class="flex items-center gap-2 mb-1">
+                <div class="w-8 h-8 rounded-[6px] bg-sub flex items-center justify-center text-white font-bold text-[8px] flex-shrink-0">CA-IMM</div>
+                <div class="text-[14px] font-bold text-ink">캐나다 이민국</div>
+              </div>
+              <div class="text-[12px] text-sub mb-1">취업 비자 보강 자료예요</div>
+              <div class="text-[11px] font-bold" style="color:#FFB020;">5월 12일까지 제출</div>
+            </div>
+            <!-- PDF 서브 링크 -->
+            <div class="flex justify-center mt-1">
+              <button class="text-[12px] text-muted flex items-center gap-1" style="text-decoration:underline;background:none;border:none;">
+                <i data-lucide="file-down" class="w-3.5 h-3.5"></i>
+                PDF로 받기
+              </button>
+            </div>
+          </div>
+          <!-- AppInTossLookBottomSheet (#9) — P1 미국 영사관 요청 응답 -->
+          <div class="bottom-sheet-overlay">
+            <div class="bottom-sheet">
+              <div class="bottom-sheet-handle"></div>
+              <div class="text-[17px] font-bold text-ink mb-1">미국 영사관에 보낼까요?</div>
+              <div class="text-[13px] text-sub mb-1">납세증명서 (영문)를 보내요</div>
+              <div class="text-[12px] text-muted mb-3">US-CONS · 비자 신청 시 필수 · 5월 9일까지</div>
+              <div class="text-[11px] text-muted mb-3">Testnet · Pre-Check Only · XRPL Credential Mock</div>
+              <button class="btn-primary mb-2" style="height:48px;font-size:15px;">보낼게요</button>
+              <button class="btn-secondary" style="height:40px;font-size:14px;">다음에 할게요</button>
+            </div>
+          </div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- variant 2: Loading — P1 받은 요청 목록 불러오는 중 -->
+      <div class="variant-row">
+        <span class="variant-label variant-loading">Loading / P1 · 받은 요청 불러오는 중</span>
+        <div class="mobile-frame">
+          <div class="mobile-notch"></div>
+          <div class="app-bar">
+            <span class="app-bar-title">이 문서를 요청한 기관</span>
+            <div class="app-bar-badges"><span class="vpill badge-testnet" style="font-size:10px;">Testnet</span></div>
+          </div>
+          <div class="mobile-content" style="padding-top:8px;">
+            <div class="card mb-3"><div class="skeleton h-3 w-32 mb-2"></div><div class="skeleton h-10 w-24 mb-2"></div><div class="skeleton h-3 w-40"></div></div>
+            <div class="flex flex-col items-center mt-4 gap-2">
+              <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+              <div class="text-[13px] text-sub">받은 요청을 불러오고 있어요. 잠깐만요.</div>
+            </div>
+          </div>
+          <div class="mobile-cta"><button class="btn-primary" disabled>불러오는 중이에요...</button></div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- variant 3: Empty — P1 받은 제출 요청 없음 -->
+      <div class="variant-row">
+        <span class="variant-label variant-empty">Empty / P1 · 아직 받은 제출 요청 없음</span>
+        <div class="mobile-frame">
+          <div class="mobile-notch"></div>
+          <div class="app-bar">
+            <span class="app-bar-title">이 문서를 요청한 기관</span>
+            <div class="app-bar-badges"><span class="vpill badge-testnet" style="font-size:10px;">Testnet</span></div>
+          </div>
+          <div class="mobile-content" style="padding-top:8px;">
+            <div class="flex flex-col items-center py-10 gap-3">
+              <div class="w-14 h-14 rounded-full bg-primary-soft flex items-center justify-center">
+                <i data-lucide="inbox" class="w-7 h-7 text-primary"></i>
+              </div>
+              <div class="text-[15px] font-bold text-ink text-center">아직 받은 제출 요청이 없어요</div>
+              <div class="text-[13px] text-muted text-center">기관에서 요청을 보내면<br/>여기에 표시돼요</div>
+            </div>
+          </div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- variant 4: Error — P1 요청 불러오기 실패 -->
+      <div class="variant-row">
+        <span class="variant-label variant-error">Error / P1 · 받은 요청 불러오기 실패</span>
+        <div class="mobile-frame">
+          <div class="mobile-notch"></div>
+          <div class="app-bar">
+            <span class="app-bar-title">이 문서를 요청한 기관</span>
+            <div class="app-bar-badges"><span class="vpill badge-testnet" style="font-size:10px;">Testnet</span></div>
+          </div>
+          <div class="mobile-content" style="padding-top:8px;">
+            <div class="card mb-3" style="border:1px solid #F04452;background:#FDE7E9;">
+              <div class="flex items-center gap-2 mb-2">
+                <i data-lucide="alert-circle" class="w-5 h-5 text-danger"></i>
+                <div class="text-[14px] font-bold text-danger">요청을 불러오지 못했어요</div>
+              </div>
+              <div class="text-[12px] text-danger">다시 시도할 수 있어요.</div>
+            </div>
+            <div class="card" style="opacity:.7;">
+              <div class="text-[13px] font-bold text-ink">기관이 먼저 요청한 경우에만 보내드릴 수 있어요</div>
+              <div class="text-[12px] text-sub">US-CONS · AU-IMM · CA-IMM 요청 목록</div>
+            </div>
+          </div>
+          <div class="mobile-cta">
+            <button class="btn-primary" style="background:#F04452;">다시 시도할게요</button>
+            <button class="btn-secondary">다음에 할게요</button>
+          </div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.variants-grid A-04 -->
+  </section>
+
+  <!--
+    Screen ID:     A-05
+    Name:          전달 중 (페르소나별 전달 대상)
+    Purpose:       P1→"미국 영사관에 전달했어요". KMS·IPFS 등 기술 메타는 노출 안 함.
+    Interactions:  자동 진행 · 완료 시 "전달했어요" 상태 표시 → A-04 복귀 CTA
+    Data bindings: POST /api/submit/execute → SubmitExecuteResponse (status: in_progress|done|error · persona_type · target_agency)
+    States:        Active(P1 미국 영사관 전달 완료) · Loading(P1 전달 진행 중) · Empty(전달 대상 없음) · Error(전달 오류)
+  -->
+  <section id="A-05" class="section-wrap">
+    <div class="screen-header">
+      <span class="screen-label">A-05</span>
+      <span class="text-[13px] text-sub font-medium">전달 중</span>
+      <span class="vpill badge-testnet ml-auto">Testnet</span>
+      <span class="vpill badge-mock">Mock</span>
+      <span class="vpill badge-precheck">Pre-Check Only</span>
+    </div>
+    <div class="variants-grid">
+
+      <!-- variant 1: Active — P1 미국 영사관에 전달 완료 -->
+      <div class="variant-row">
+        <span class="variant-label variant-active">Active / P1 해외 거주 한국인 · 미국 영사관에 전달 완료</span>
+        <div class="mobile-frame">
+          <div class="mobile-notch"></div>
+          <div class="app-bar">
+            <span class="app-bar-title">전달 완료</span>
+            <div class="app-bar-badges"><span class="vpill badge-testnet" style="font-size:10px;">Testnet</span></div>
+          </div>
+          <div class="mobile-content">
+            <div class="flex flex-col items-center pt-6 pb-4 gap-4">
+              <div class="w-20 h-20 rounded-full bg-success-soft flex items-center justify-center">
+                <i data-lucide="check-circle" class="w-10 h-10 text-success"></i>
+              </div>
+              <div class="text-[17px] font-bold text-ink text-center">미국 영사관에 전달했어요</div>
+              <div class="text-[14px] text-sub text-center">US-CONS에<br/>납세증명서 (영문)를 전달했어요</div>
+            </div>
+            <div class="card">
+              <div class="text-[13px] font-bold text-ink mb-1">전달 내역</div>
+              <div class="flex justify-between py-1 border-b border-border">
+                <span class="text-[12px] text-muted">전달 기관</span>
+                <span class="text-[12px] font-bold text-ink">US-CONS 미국 영사관</span>
+              </div>
+              <div class="flex justify-between py-1 border-b border-border">
+                <span class="text-[12px] text-muted">서류명</span>
+                <span class="text-[12px] font-bold text-ink">납세증명서 (영문)</span>
+              </div>
+              <div class="flex justify-between py-1 border-b border-border">
+                <span class="text-[12px] text-muted">발급기관</span>
+                <span class="text-[12px] font-bold text-ink">KR-NTS</span>
+              </div>
+              <div class="flex justify-between py-1">
+                <span class="text-[12px] text-muted">전달 일시</span>
+                <span class="text-[12px] font-bold text-ink">2026-05-02</span>
+              </div>
+            </div>
+          </div>
+          <div class="mobile-cta"><button class="btn-primary">확인했어요</button></div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- variant 2: Loading — P1 미국 영사관 전달 진행 중 -->
+      <div class="variant-row">
+        <span class="variant-label variant-loading">Loading / P1 해외 거주 한국인 · 미국 영사관 전달 중</span>
+        <div class="mobile-frame">
+          <div class="mobile-notch"></div>
+          <div class="app-bar">
+            <span class="app-bar-title">전달 중</span>
+            <div class="app-bar-badges"><span class="vpill badge-testnet" style="font-size:10px;">Testnet</span></div>
+          </div>
+          <div class="mobile-content">
+            <div class="flex flex-col items-center pt-6 pb-4 gap-4">
+              <div class="w-20 h-20 rounded-full bg-primary-soft flex items-center justify-center">
+                <div class="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+              </div>
+              <div class="text-[17px] font-bold text-ink text-center">미국 영사관에 전달 중이에요</div>
+              <div class="text-[14px] text-sub text-center">US-CONS에<br/>전달하고 있어요. 잠깐만요.</div>
+            </div>
+            <div class="card">
+              <div class="progress-track">
+                <div class="progress-fill" style="width:70%;"></div>
+              </div>
+              <div class="text-[11px] text-muted mt-1 text-right">전달 중이에요</div>
+            </div>
+          </div>
+          <div class="mobile-cta"><button class="btn-primary" disabled>전달 완료 후 활성화돼요</button></div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- variant 3: Empty -->
+      <div class="variant-row">
+        <span class="variant-label variant-empty">Empty / 전달 대상 없음</span>
+        <div class="mobile-frame">
+          <div class="mobile-notch"></div>
+          <div class="app-bar">
+            <span class="app-bar-title">전달 중</span>
+            <div class="app-bar-badges"><span class="vpill badge-testnet" style="font-size:10px;">Testnet</span></div>
+          </div>
+          <div class="mobile-content">
+            <div class="flex flex-col items-center py-12 gap-3">
+              <div class="w-14 h-14 rounded-full bg-primary-soft flex items-center justify-center">
+                <i data-lucide="send" class="w-7 h-7 text-primary"></i>
+              </div>
+              <div class="text-[15px] font-bold text-ink text-center">전달할 문서가 없어요</div>
+              <div class="text-[13px] text-muted text-center">A-04에서 제출 기관을<br/>먼저 선택해요</div>
+            </div>
+          </div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- variant 4: Error -->
+      <div class="variant-row">
+        <span class="variant-label variant-error">Error / 전달 오류</span>
+        <div class="mobile-frame">
+          <div class="mobile-notch"></div>
+          <div class="app-bar">
+            <span class="app-bar-title">전달 중</span>
+            <div class="app-bar-badges"><span class="vpill badge-testnet" style="font-size:10px;">Testnet</span></div>
+          </div>
+          <div class="mobile-content">
+            <div class="flex flex-col items-center pt-6 pb-4 gap-4">
+              <div class="w-20 h-20 rounded-full bg-danger-soft flex items-center justify-center">
+                <i data-lucide="alert-circle" class="w-10 h-10 text-danger"></i>
+              </div>
+              <div class="text-[17px] font-bold text-ink text-center">전달 중 문제가 생겼어요</div>
+              <div class="text-[14px] text-sub text-center">다시 시도할 수 있어요.</div>
+            </div>
+          </div>
+          <div class="mobile-cta">
+            <button class="btn-primary" style="background:#F04452;">다시 시도할게요</button>
+            <button class="btn-secondary">다음에 할게요</button>
+          </div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.variants-grid A-05 -->
+  </section>
+
+  <!--
+    Screen ID:     A-06
+    Name:          문서 이력 + 분쟁 신고
+    Purpose:       P1: ①한국 정부(KR-NTS) ②번역/공증 ③외교부 인증(KR-MFA). IPFS·KEK·hash 기술 메타 사용자 가시 0.
+    Interactions:  A-03 이력 링크 진입 → 타임라인 카드 탭 → 그 시점 문서 복호화 Bottom Sheet → 다운로드 / "이 단계에 문제 있어요" / 닫기 → 분쟁 신고 입력 → 신고 완료
+    Data bindings: GET /api/credential/{id}/history → HistoryStepList (step · agency · processed_at · status · persona_type) · POST /api/credential/{id}/history/{step}/download → 암호화 파일 스트림
+    States:        Active(P1 타임라인 · KR-NTS/KR-MFA) · Loading(복호화 중) · Empty(복호화 완료 Bottom Sheet · 다운로드 CTA · P1 납세증명서 영문) · Error(분쟁 신고 입력+완료)
+  -->
+  <section id="A-06" class="section-wrap">
+    <div class="screen-header">
+      <span class="screen-label">A-06</span>
+      <span class="text-[13px] text-sub font-medium">문서 이력 + 분쟁 신고</span>
+      <span class="vpill badge-testnet ml-auto">Testnet</span>
+      <span class="vpill badge-mock">Mock</span>
+      <span class="vpill badge-precheck">Pre-Check Only</span>
+    </div>
+    <div class="variants-grid">
+
+      <!-- variant 1: Active — P1 메인 히스토리 타임라인 (KR-NTS · 번역/공증 · KR-MFA) -->
+      <div class="variant-row">
+        <span class="variant-label variant-active">Active / P1 해외 거주 한국인 · 문서 이력 타임라인</span>
+        <div class="mobile-frame">
+          <div class="mobile-notch"></div>
+          <div class="app-bar">
+            <span class="app-bar-title">문서 이력</span>
+            <div class="app-bar-badges"><span class="vpill badge-testnet" style="font-size:10px;">Testnet</span></div>
+          </div>
+          <div class="mobile-content">
+            <!-- 최종 발급 문서 요약 -->
+            <div class="card mb-3" style="background:#E8F2FE;border:1px solid #B8D8FF;">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-[8px] bg-primary-soft border border-border flex items-center justify-center flex-shrink-0">
+                  <i data-lucide="file-check" class="w-4 h-4 text-primary"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-[13px] font-bold text-ink">납세증명서 (영문)</div>
+                  <div class="text-[11px] text-sub">최종 발급일 2026-05-01 · 발급처 KR-NTS</div>
+                  <div class="text-[10px] text-muted">P5 김민수 · 850301-1****** (가명)</div>
+                </div>
+                <span class="vpill" style="background:#E6FAF3;color:#00875A;font-size:10px;border:1px solid #00C48C;">정상</span>
+              </div>
+            </div>
+            <div class="text-[13px] font-bold text-ink mb-1">발급 단계별 이력이에요</div>
+            <div class="text-[11px] text-muted mb-3">각 단계를 누르면 그 시점의 문서를 직접 확인할 수 있어요</div>
+            <!-- 단계 1: P1 한국 정부 발급 -->
+            <div class="card mb-2" style="cursor:pointer;border:1.5px solid #E5E8EB;">
+              <div class="flex items-center gap-3">
+                <div class="flex flex-col items-center flex-shrink-0" style="width:28px;">
+                  <div class="w-7 h-7 rounded-full bg-success flex items-center justify-center">
+                    <i data-lucide="check" class="w-3.5 h-3.5 text-white"></i>
+                  </div>
+                  <div style="width:2px;height:12px;background:#E5E8EB;margin:2px 0;"></div>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-1.5 mb-0.5">
+                    <span class="text-[11px] font-bold text-muted">단계 1</span>
+                    <span class="vpill" style="background:#E6FAF3;color:#00875A;font-size:10px;border:1px solid #00C48C;">정상</span>
+                  </div>
+                  <div class="text-[13px] font-bold text-ink">한국 정부 발급</div>
+                  <div class="text-[11px] text-sub">KR-NTS · 2026-05-01 13:45</div>
+                </div>
+                <i data-lucide="chevron-right" class="w-4 h-4 text-muted flex-shrink-0"></i>
+              </div>
+            </div>
+            <!-- 단계 2: 번역/공증 -->
+            <div class="card mb-2" style="cursor:pointer;border:1.5px solid #E5E8EB;">
+              <div class="flex items-center gap-3">
+                <div class="flex flex-col items-center flex-shrink-0" style="width:28px;">
+                  <div class="w-7 h-7 rounded-full bg-success flex items-center justify-center">
+                    <i data-lucide="check" class="w-3.5 h-3.5 text-white"></i>
+                  </div>
+                  <div style="width:2px;height:12px;background:#E5E8EB;margin:2px 0;"></div>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-1.5 mb-0.5">
+                    <span class="text-[11px] font-bold text-muted">단계 2</span>
+                    <span class="vpill" style="background:#E6FAF3;color:#00875A;font-size:10px;border:1px solid #00C48C;">정상</span>
+                  </div>
+                  <div class="text-[13px] font-bold text-ink">번역/공증</div>
+                  <div class="text-[11px] text-sub">MyApo 공인 번역 · 2026-05-01 14:23</div>
+                </div>
+                <i data-lucide="chevron-right" class="w-4 h-4 text-muted flex-shrink-0"></i>
+              </div>
+            </div>
+            <!-- 단계 3: P1 외교부 인증 (KR-MFA) -->
+            <div class="card mb-3" style="cursor:pointer;border:1.5px solid #E5E8EB;">
+              <div class="flex items-center gap-3">
+                <div class="flex flex-col items-center flex-shrink-0" style="width:28px;">
+                  <div class="w-7 h-7 rounded-full bg-success flex items-center justify-center">
+                    <i data-lucide="check" class="w-3.5 h-3.5 text-white"></i>
+                  </div>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-1.5 mb-0.5">
+                    <span class="text-[11px] font-bold text-muted">단계 3</span>
+                    <span class="vpill" style="background:#E6FAF3;color:#00875A;font-size:10px;border:1px solid #00C48C;">정상</span>
+                  </div>
+                  <div class="text-[13px] font-bold text-ink">외교부 인증 (아포스티유)</div>
+                  <div class="text-[11px] text-sub">KR-MFA · 2026-05-01 15:50</div>
+                </div>
+                <i data-lucide="chevron-right" class="w-4 h-4 text-muted flex-shrink-0"></i>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 px-3 py-2 rounded-[8px]" style="background:#E6FAF3;border:1px solid #00C48C;">
+              <i data-lucide="shield-check" class="w-4 h-4 text-success flex-shrink-0"></i>
+              <div class="text-[12px] font-bold text-ink">전체 이력 정상이에요</div>
+            </div>
+          </div>
+          <div class="mobile-cta">
+            <div class="flex items-center justify-center mb-1">
+              <button class="text-[13px] text-danger font-medium" style="background:none;border:none;cursor:pointer;">문제가 있어요</button>
+            </div>
+          </div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- variant 2: Loading — 단계 클릭 후 그 시점 문서 복호화 중 -->
+      <div class="variant-row">
+        <span class="variant-label variant-loading">Loading / 그 시점 문서 복호화 중</span>
+        <div class="mobile-frame">
+          <div class="mobile-notch"></div>
+          <div class="app-bar">
+            <span class="app-bar-title">문서 이력</span>
+            <div class="app-bar-badges"><span class="vpill badge-testnet" style="font-size:10px;">Testnet</span></div>
+          </div>
+          <div class="mobile-content">
+            <!-- 헤더 안내 -->
+            <div class="flex flex-col items-center pt-5 pb-3 gap-3">
+              <div class="w-14 h-14 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+              <div class="text-[15px] font-bold text-ink text-center">이력 복호화 중이에요</div>
+              <div class="text-[13px] text-muted text-center">잠깐만요. 그 시점 문서를 가져오고 있어요</div>
+            </div>
+            <!-- 진행률 바 -->
+            <div class="progress-track mb-4">
+              <div class="progress-fill" style="width:60%;"></div>
+            </div>
+            <!-- 단계 카드들 비활성 표시 -->
+            <div class="text-[12px] font-bold text-ink mb-2">단계 2 · 번역/공증 확인 중</div>
+            <div class="card mb-2" style="opacity:.35;">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-full bg-success flex items-center justify-center flex-shrink-0">
+                  <i data-lucide="check" class="w-3.5 h-3.5 text-white"></i>
+                </div>
+                <div class="flex-1">
+                  <div class="text-[13px] font-bold text-ink">한국 정부 발급</div>
+                  <div class="text-[11px] text-sub">KR-NTS · 2026-05-01 13:45</div>
+                </div>
+              </div>
+            </div>
+            <div class="card mb-2" style="border:1.5px solid #3182F6;animation:pulseRing 1.5s ease-in-out infinite;">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                  <div class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <div class="flex-1">
+                  <div class="text-[13px] font-bold text-ink">번역/공증 — 복호화 중</div>
+                  <div class="text-[11px] text-sub">MyApo 공인 번역 · 2026-05-01 14:23</div>
+                </div>
+              </div>
+            </div>
+            <div class="card mb-3" style="opacity:.35;">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-full bg-success flex items-center justify-center flex-shrink-0">
+                  <i data-lucide="check" class="w-3.5 h-3.5 text-white"></i>
+                </div>
+                <div class="flex-1">
+                  <div class="text-[13px] font-bold text-ink">외교부 인증 (아포스티유)</div>
+                  <div class="text-[11px] text-sub">KR-MFA · 2026-05-01 15:50</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- variant 3: Empty — P1 복호화 완료 Bottom Sheet (다운로드 CTA) -->
+      <div class="variant-row">
+        <span class="variant-label variant-empty">Empty / P1 해외 거주 한국인 · 그 시점 문서 다운로드 (납세증명서 영문)</span>
+        <div class="mobile-frame" style="position:relative;">
+          <div class="mobile-notch"></div>
+          <div class="app-bar">
+            <span class="app-bar-title">문서 이력</span>
+            <div class="app-bar-badges"><span class="vpill badge-testnet" style="font-size:10px;">Testnet</span></div>
+          </div>
+          <div class="mobile-content" style="filter:brightness(.85);">
+            <!-- 배경 — P1 한국 정부 타임라인 흐리게 -->
+            <div class="card mb-2" style="opacity:.5;">
+              <div class="text-[13px] font-bold text-ink">납세증명서 (영문)</div>
+              <div class="text-[11px] text-sub">최종 발급일 2026-05-01 · KR-NTS</div>
+            </div>
+            <div class="card mb-2" style="opacity:.4;">
+              <div class="text-[11px] text-muted">단계 1 · 한국 정부 발급 (KR-NTS)</div>
+            </div>
+            <div class="card mb-2" style="opacity:.4;border:1.5px solid #3182F6;">
+              <div class="text-[11px] text-primary font-bold">단계 2 · 번역/공증 — 선택됨</div>
+            </div>
+            <div class="card mb-2" style="opacity:.4;">
+              <div class="text-[11px] text-muted">단계 3 · 외교부 인증 (KR-MFA)</div>
+            </div>
+          </div>
+          <!-- Bottom Sheet — P1 그 시점 문서 다운로드 -->
+          <div class="bottom-sheet-overlay">
+            <div class="bottom-sheet">
+              <div class="bottom-sheet-handle"></div>
+              <!-- 헤더: 단계 메타 -->
+              <div class="flex items-center gap-2 mb-3">
+                <div class="w-7 h-7 rounded-full bg-success flex items-center justify-center flex-shrink-0">
+                  <i data-lucide="check" class="w-3.5 h-3.5 text-white"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-[13px] font-bold text-ink">단계 1 · 한국 정부 발급 시점 문서</div>
+                  <div class="text-[11px] text-sub">KR-NTS · 2026-05-01 09:12</div>
+                </div>
+              </div>
+              <!-- 문서 카드 (마스킹 본문 대체) -->
+              <div class="rounded-[12px] px-4 py-3 mb-3" style="background:#F9FAFB;border:1px solid #E5E8EB;">
+                <div class="text-[15px] font-bold text-ink">납세증명서 (영문, 국세청 발행)</div>
+                <div class="text-[13px] text-sub mt-1">KR-NTS · 2026-05-01 09:12</div>
+                <div class="text-[12px] text-muted mt-3">이 시점의 문서를 다운로드해서 직접 확인해보세요</div>
+                <div class="text-[11px] text-muted mt-2">사용자만 복호화할 수 있는 안전한 파일이에요</div>
+              </div>
+              <!-- CTA 3 버튼 -->
+              <button class="w-full h-12 rounded-[12px] text-[15px] font-bold text-white flex items-center justify-center gap-2 mb-2" style="background:#3182F6;border:none;">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                다운로드
+              </button>
+              <button class="w-full h-11 rounded-[10px] text-[13px] font-bold flex items-center justify-center gap-2 mb-2" style="background:#FFF4DE;color:#9A6500;border:1.5px solid #FFB020;">
+                <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                이 단계에 문제 있어요
+              </button>
+              <button class="w-full text-[13px] text-sub font-medium py-1" style="background:none;border:none;cursor:pointer;">닫기</button>
+            </div>
+          </div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- variant 4: Error — 분쟁 신고 입력 (4a) + 신고 완료 (4b) -->
+      <div class="variant-row">
+        <span class="variant-label variant-error">Error / 분쟁 신고 입력 + 완료</span>
+        <div class="mobile-frame" style="height:auto;min-height:800px;">
+          <div class="mobile-notch"></div>
+          <div class="app-bar">
+            <span class="app-bar-title">분쟁 신고</span>
+            <div class="app-bar-badges"><span class="vpill badge-testnet" style="font-size:10px;">Testnet</span></div>
+          </div>
+          <!-- Sub-state 4a: 신고 입력 -->
+          <div class="px-5 pt-3 pb-2" style="border-bottom:2px dashed #E5E8EB;">
+            <div class="text-[11px] font-bold text-muted mb-2 uppercase tracking-wide">Sub-state 4a · 신고 입력</div>
+            <div class="flex items-center gap-2 p-2.5 rounded-[8px] mb-3" style="background:#FFF4DE;border:1px solid #FFB020;">
+              <i data-lucide="alert-circle" class="w-4 h-4 text-warning flex-shrink-0"></i>
+              <div class="text-[12px] text-ink font-bold">단계 2 · 번역/공증에 문제가 있어요</div>
+            </div>
+            <!-- 문제 유형 chips -->
+            <div class="text-[12px] font-bold text-ink mb-1.5">어떤 문제인가요?</div>
+            <div class="flex flex-wrap gap-1.5 mb-3">
+              <button class="px-3 py-1 rounded-pill text-[12px] font-bold" style="background:#E8F2FE;color:#1B64DA;border:1.5px solid #3182F6;">번역 오류</button>
+              <button class="px-3 py-1 rounded-pill text-[12px]" style="background:#F9FAFB;color:#4E5968;border:1.5px solid #E5E8EB;">원문과 다름</button>
+              <button class="px-3 py-1 rounded-pill text-[12px]" style="background:#F9FAFB;color:#4E5968;border:1.5px solid #E5E8EB;">기타</button>
+            </div>
+            <div class="text-[12px] font-bold text-ink mb-1.5">어떻게 잘못됐나요?</div>
+            <textarea class="w-full border border-border rounded-[8px] px-3 py-2 text-[12px] mb-2" rows="3" style="resize:none;background:#fff;" placeholder="자유롭게 적어주세요"></textarea>
+            <button class="text-[12px] text-sub font-medium mb-3" style="background:none;border:none;cursor:pointer;padding:0;">스크린샷 첨부 (선택)</button>
+            <div class="flex gap-2">
+              <button class="flex-1 h-11 rounded-[10px] text-[13px] font-bold text-white" style="background:#F04452;border:none;">분쟁 신고할게요</button>
+              <button class="flex-1 h-11 rounded-[10px] text-[13px] font-medium text-sub" style="background:#F9FAFB;border:1px solid #E5E8EB;">취소</button>
+            </div>
+          </div>
+          <!-- Sub-state 4b: 신고 완료 -->
+          <div class="px-5 pt-3 pb-4">
+            <div class="text-[11px] font-bold text-muted mb-2 uppercase tracking-wide">Sub-state 4b · 신고 완료</div>
+            <div class="flex flex-col items-center py-6 gap-3">
+              <div class="w-16 h-16 rounded-full bg-success-soft flex items-center justify-center">
+                <i data-lucide="check-circle" class="w-8 h-8 text-success"></i>
+              </div>
+              <div class="text-[17px] font-bold text-ink text-center">신고가 접수됐어요</div>
+              <div class="text-[13px] text-sub text-center">7일 안에 검토 결과를 알려드릴게요</div>
+            </div>
+            <button class="btn-primary">확인했어요</button>
+          </div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.variants-grid A-06 -->
+  </section>
+
+  <!--
+    Screen ID:     A-07
+    Name:          재발급 안내
+    Purpose:       만료된 문서 재발급 안내 (A-03 만료됨 탭에서 진입). 재발급 3단계 안내 + CTA.
+    Interactions:  "다시 발급할게요" → A-01 재진입 · "다음에 할게요" → 홈(A-03)
+    Data bindings: GET /api/credential/{id}/reissue-info → ReissueInfo (doc_type · expired_at)
+    States:        Active(P1 납세증명서 재발급 안내) · Loading · Empty · Error
+  -->
+  <section id="A-07" class="section-wrap">
+    <div class="screen-header">
+      <span class="screen-label">A-07</span>
+      <span class="text-[13px] text-sub font-medium">재발급 안내</span>
+      <span class="vpill badge-testnet ml-auto">Testnet</span>
+      <span class="vpill badge-mock">Mock</span>
+      <span class="vpill badge-precheck">Pre-Check Only</span>
+    </div>
+    <div class="variants-grid">
+
+      <!-- variant 1: Active — 재발급 3단계 안내 -->
+      <div class="variant-row">
+        <span class="variant-label variant-active">Active / P1 납세증명서 재발급 안내</span>
+        <div class="mobile-frame">
+          <div class="mobile-notch"></div>
+          <div class="app-bar">
+            <span class="app-bar-title">재발급 안내</span>
+            <div class="app-bar-badges"><span class="vpill badge-testnet" style="font-size:10px;">Testnet</span></div>
+          </div>
+          <div class="mobile-content">
+            <div class="text-[17px] font-bold text-ink mb-1">납세증명서를 다시 발급할게요</div>
+            <div class="text-[13px] text-sub mb-4">아래 3단계를 거치면 새 문서가 도착해요</div>
+            <!-- 재발급 단계 안내 카드 -->
+            <div class="card mb-2">
+              <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-full bg-primary-soft flex items-center justify-center flex-shrink-0 text-[13px] font-bold text-primary">1</div>
+                <div>
+                  <div class="text-[14px] font-bold text-ink">다시 발급 신청</div>
+                  <div class="text-[12px] text-sub">국세청 발급 신청이 자동으로 시작돼요</div>
+                </div>
+              </div>
+            </div>
+            <div class="card mb-2">
+              <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-full bg-primary-soft flex items-center justify-center flex-shrink-0 text-[13px] font-bold text-primary">2</div>
+                <div>
+                  <div class="text-[14px] font-bold text-ink">3번의 서명</div>
+                  <div class="text-[12px] text-sub">이전과 동일하게 서명 3번으로 발급돼요</div>
+                </div>
+              </div>
+            </div>
+            <div class="card mb-4">
+              <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-full bg-primary-soft flex items-center justify-center flex-shrink-0 text-[13px] font-bold text-primary">3</div>
+                <div>
+                  <div class="text-[14px] font-bold text-ink">새 문서 도착</div>
+                  <div class="text-[12px] text-sub">유효기간이 갱신된 새 문서가 지갑에 도착해요</div>
+                </div>
+              </div>
+            </div>
+            <div class="text-[11px] text-muted">사용자 디바이스 한정 보관, MyApo 서버 즉시 파기해요</div>
+          </div>
+          <div class="mobile-cta">
+            <a href="#A-01" class="block"><button class="btn-primary w-full">다시 발급할게요</button></a>
+            <a href="#A-03" class="block"><button class="btn-secondary w-full">다음에 할게요</button></a>
+          </div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- variant 2: Loading -->
+      <div class="variant-row">
+        <span class="variant-label variant-loading">Loading / 재발급 정보 불러오는 중</span>
+        <div class="mobile-frame">
+          <div class="mobile-notch"></div>
+          <div class="app-bar">
+            <span class="app-bar-title">재발급 안내</span>
+            <div class="app-bar-badges"><span class="vpill badge-testnet" style="font-size:10px;">Testnet</span></div>
+          </div>
+          <div class="mobile-content">
+            <div class="skeleton h-5 w-48 mb-2"></div>
+            <div class="skeleton h-4 w-56 mb-4"></div>
+            <div class="card mb-2"><div class="skeleton h-10 w-full"></div></div>
+            <div class="card mb-2"><div class="skeleton h-10 w-full"></div></div>
+            <div class="card mb-4"><div class="skeleton h-10 w-full"></div></div>
+            <div class="flex items-center gap-2">
+              <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+              <div class="text-[12px] text-sub">정보를 불러오는 중이에요.</div>
+            </div>
+          </div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- variant 3: Empty — 재발급 대상 문서 없음 -->
+      <div class="variant-row">
+        <span class="variant-label variant-empty">Empty / 재발급 대상 없음</span>
+        <div class="mobile-frame">
+          <div class="mobile-notch"></div>
+          <div class="app-bar">
+            <span class="app-bar-title">재발급 안내</span>
+            <div class="app-bar-badges"><span class="vpill badge-testnet" style="font-size:10px;">Testnet</span></div>
+          </div>
+          <div class="mobile-content">
+            <div class="flex flex-col items-center py-12 gap-3">
+              <div class="w-14 h-14 rounded-full bg-success-soft flex items-center justify-center">
+                <i data-lucide="shield-check" class="w-7 h-7 text-success"></i>
+              </div>
+              <div class="text-[15px] font-bold text-ink text-center">재발급할 문서가 없어요</div>
+              <div class="text-[13px] text-muted text-center">모든 문서가 유효해요</div>
+            </div>
+          </div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- variant 4: Error -->
+      <div class="variant-row">
+        <span class="variant-label variant-error">Error / 조회 실패</span>
+        <div class="mobile-frame">
+          <div class="mobile-notch"></div>
+          <div class="app-bar">
+            <span class="app-bar-title">재발급 안내</span>
+            <div class="app-bar-badges"><span class="vpill badge-testnet" style="font-size:10px;">Testnet</span></div>
+          </div>
+          <div class="mobile-content">
+            <div class="flex flex-col items-center py-10 gap-3">
+              <div class="w-14 h-14 rounded-full bg-danger-soft flex items-center justify-center">
+                <i data-lucide="server-crash" class="w-7 h-7 text-danger"></i>
+              </div>
+              <div class="text-[15px] font-bold text-ink text-center">조회하는 데 문제가 생겼어요</div>
+              <div class="text-[12px] text-muted text-center">다시 시도할 수 있어요.</div>
+            </div>
+            <div class="flex items-center gap-2 p-3 rounded-[8px]" style="background:#FDE7E9;border:1px solid #F04452;">
+              <i data-lucide="alert-triangle" class="w-4 h-4 text-danger flex-shrink-0"></i>
+              <div class="text-[12px] text-danger">API 오류 · 다시 시도할 수 있어요.</div>
+            </div>
+          </div>
+          <div class="mobile-cta"><button class="btn-primary" style="background:#F04452;">다시 시도할게요</button></div>
+          <div class="mobile-nav">
+            <i data-lucide="home"     class="w-5 h-5 text-primary"></i>
+            <i data-lucide="folder"   class="w-5 h-5 text-muted"></i>
+            <i data-lucide="settings" class="w-5 h-5 text-muted"></i>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.variants-grid A-07 -->
+  </section>
+
+  <!-- ── DisclaimerBanner (#11) 하단 ── -->
+  <footer class="max-w-[800px] mx-auto mt-8 mb-8 px-5 py-3 rounded-[12px]" style="background:#E8F2FE;">
+    <div class="flex items-start gap-2">
+      <i data-lucide="info" class="w-4 h-4 text-primary mt-0.5 flex-shrink-0"></i>
+      <div class="text-[13px] text-sub">
+        이 서비스는 KFIP MVP 데모예요. 외부 기관 연동은 모두 더미예요.
+        <span class="block text-[11px] text-muted mt-1">Testnet · 가상 인물 · Pre-Check Only · XRPL Credential Mock</span>
+      </div>
+    </div>
+  </footer>
+
+</div><!-- /.page-container -->
+
+<script>
+  lucide.createIcons();
+</script>
+</body>
+</html>
