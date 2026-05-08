@@ -1,78 +1,76 @@
 # Credential E2E Test Cases
 
 ## 0. Draft Status
-- **Status**: Draft from wireframe evidence. User approval is required before implementation.
+- **Status**: Approved for MVP 1st implementation. Scope: 5-stage pipeline, Internal JWT, mock XRPL metadata, user-facing APIs, nullable authEventId references. Excluded: operator APIs, production XRPL, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
 - **API Boundary**: All responses must use `CommonRes<T>`.
-- **Auth Boundary**: Use current temporary `X-User-Id` until Web3Auth/JWT is finalized.
+- **Auth Boundary**: Protected Credential APIs use `Authorization: Bearer <Internal JWT>` from ADR-002.
 
-## 1. User Journey: Issue Credential and View Wallet
+## 1. User Journey: Issue Credential and View Pipeline
 
-### Case: Successful issue request creation
-1. **Request**: `POST /api/v1/credentials/issue-requests` with valid `documentTypeId` and `X-User-Id`.
+### Case: Successful issue request creation with Internal JWT
+1. **Request**: `POST /api/v1/credentials/issue-requests` with `Authorization: Bearer <accessToken>` and valid `documentTypeId`.
 2. **Response**: Expect `201 Created` with `CommonRes.success(data)`.
-3. **Assert**: `data.issueRequestId` exists, `data.requiredSignatureCount` is `4`, and status is `ISSUING` or `SIGNATURE_REQUIRED`.
+3. **Assert**: `data.issueRequestId` exists and `data.pipeline` contains five stages.
 
-### Case: Sign all handovers and receive credential
-1. **Request**: Repeatedly call `POST /api/v1/credentials/issue-requests/{issueRequestId}/signatures` for required handover steps.
-2. **Response**: Each response is `CommonRes.success(data)`.
-3. **Assert**: Final response includes `credentialId` and status `ISSUED`.
-4. **Request**: `GET /api/v1/credentials`.
-5. **Response**: Credential appears in the user's wallet list with `isMock = true`.
+### Case: Reject issue request without Internal JWT
+1. **Request**: `POST /api/v1/credentials/issue-requests` without Authorization header.
+2. **Response**: Expect `401 Unauthorized`.
+3. **Assert**: No issue request is created.
 
-### Case: Issuer response error is returned safely
-1. **Request**: `POST /api/v1/credentials/issue-requests` for a document type configured to simulate issuer failure.
-2. **Response**: Expect failure response mapped by `ApiExceptionHandler`.
-3. **Assert**: Error uses `DomainError`/`ErrorCode`, not raw exception text.
+### Case: Issue request detail exposes 5-stage pipeline
+1. **Request**: `GET /api/v1/credentials/issue-requests/{issueRequestId}` with Internal JWT.
+2. **Response**: Expect `200 OK`.
+3. **Assert**: Pipeline stages match latest reference order.
 
-## 2. User Journey: Submit Credential to Institution
+## 2. User Journey: Credential Wallet
 
-### Case: Submit valid credential to existing institution request
-1. **Precondition**: User owns an `ISSUED` credential and a matching institution request exists.
-2. **Request**: `POST /api/v1/credentials/{credentialId}/submissions` with `submissionRequestId` and `consentConfirmed = true`.
-3. **Response**: Expect `201 Created` with `submissionId`.
-4. **Request**: `GET /api/v1/credentials/{credentialId}`.
-5. **Assert**: Submission history contains the recipient institution.
+### Case: List my credentials
+1. **Precondition**: User owns at least one credential.
+2. **Request**: `GET /api/v1/credentials` with Internal JWT.
+3. **Response**: Expect `200 OK` with `CommonRes.success(data)`.
+4. **Assert**: Response contains only current user's credentials and does not contain raw document, CI, JWT, or private key data.
 
-### Case: Reject submission without institution request
-1. **Precondition**: User owns an `ISSUED` credential but no matching institution request exists.
-2. **Request**: `POST /api/v1/credentials/{credentialId}/submissions`.
-3. **Response**: Expect `409 Conflict` mapped to `INSTITUTION_REQUEST_REQUIRED` or approved equivalent.
+### Case: Get credential detail with submissions
+1. **Precondition**: User owns credential with submission history.
+2. **Request**: `GET /api/v1/credentials/{credentialId}`.
+3. **Response**: Expect credential detail including submission rows.
+4. **Assert**: Each submission row includes status and optional `authEventId`.
+
+## 3. User Journey: Institution Submission
+
+### Case: Submit valid credential to institution request
+1. **Precondition**: User owns an `ISSUED` credential and matching institution request exists.
+2. **Request**: `POST /api/v1/credentials/{credentialId}/submissions` with `submissionRequestId`, `consentConfirmed = true`, and optional `authEventId`.
+3. **Response**: Expect `201 Created` with `submissionId` and status `RECEIVED` or approved initial status.
+4. **Assert**: `GET /api/v1/credentials/{credentialId}/submissions` returns the new row.
+
+### Case: One credential can have multiple institution submission rows
+1. **Precondition**: User owns one valid credential and two matching institution requests.
+2. **Request**: Submit to both requests.
+3. **Response**: Both submissions succeed or duplicate policy is applied only per request.
+4. **Assert**: Submission list has two rows for the same credential.
 
 ### Case: Reject expired credential submission
-1. **Precondition**: User owns credential with `expiresAt <= now`.
+1. **Precondition**: Credential has `expiresAt <= now`.
 2. **Request**: `POST /api/v1/credentials/{credentialId}/submissions`.
 3. **Response**: Expect `409 Conflict` mapped to `CREDENTIAL_EXPIRED` or approved equivalent.
 
-## 3. User Journey: Reissue Expired Credential
+## 4. Rejection and Dispute Context
 
-### Case: Reissue expired credential
-1. **Precondition**: User owns an expired credential.
-2. **Request**: `POST /api/v1/credentials/{credentialId}/reissue`.
-3. **Response**: Expect `201 Created` with new `issueRequestId`.
-4. **Assert**: New request requires the signature flow again.
-
-### Case: Reject reissue for another user's credential
-1. **Precondition**: Credential belongs to user A.
-2. **Request**: User B calls `POST /api/v1/credentials/{credentialId}/reissue`.
-3. **Response**: Expect `403 Forbidden` mapped to owner mismatch.
-
-## 4. Operator Journey: Revoke Credential
-
-### Case: Operator revokes credential after dispute
-- **Status**: Draft-only, blocked until Admin/Auth spec exists.
-1. **Precondition**: Operator has approved permission and credential is linked to a dispute.
-2. **Request**: `POST /api/v1/ops/credentials/{credentialId}/revoke` with reason.
-3. **Response**: Expect credential status `REVOKED`.
-4. **Assert**: Future user submission attempts fail.
+### Case: Rejected submission exposes dispute conversion context
+1. **Precondition**: Submission status is `REJECTED` with rejection reason.
+2. **Request**: Load credential detail or submission list.
+3. **Response**: Rejection reason and recipient institution are available.
+4. **Assert**: Credential response does not create/own a Dispute case automatically.
 
 ## 5. Privacy and Safety Cases
 
-### Case: Credential detail does not expose raw source document or private key
-1. **Request**: `GET /api/v1/credentials/{credentialId}`.
-2. **Response**: Expect metadata and references only.
-3. **Assert**: Response does not contain raw document file content, private key, or secret material.
-
 ### Case: Mock XRPL metadata is clearly marked
 1. **Request**: `GET /api/v1/credentials/{credentialId}` for MVP credential.
-2. **Response**: Expect `isMock = true` or approved equivalent field.
+2. **Response**: Expect `isMock = true` or approved equivalent.
 3. **Assert**: Response does not claim production XRPL finality.
+
+### Case: Credential APIs do not expose auth secrets
+1. **Request**: Any Credential API.
+2. **Response**: Inspect response body.
+3. **Assert**: No JWT, raw CI, private key, or raw source document body is present.
