@@ -1,20 +1,20 @@
-import { UserWallet } from './user-wallet.entity';
-import { VerifierType } from '../enum/verifier-type.enum';
+import { UserWallet } from "./user-wallet.entity";
+import { VerifierType } from "../enum/verifier-type.enum";
 
-describe('UserWallet Entity', () => {
+describe("UserWallet Entity", () => {
   const mockWalletArgs = {
     id: BigInt(1),
     userId: BigInt(1),
     verifier: VerifierType.GOOGLE,
-    verifierId: 'sub-123',
-    xrplAddress: 'rHb9CJA',
-    publicKey: '03ED',
+    verifierId: "sub-123",
+    xrplAddress: "rHb9CJA",
+    publicKey: "03ED",
     requestedAt: new Date(),
     activatedAt: new Date(),
     updatedAt: new Date(),
   };
 
-  it('유저 지갑 엔티티를 생성할 수 있다', () => {
+  it("유저 지갑 엔티티를 생성할 수 있다", () => {
     const wallet = new UserWallet(
       mockWalletArgs.id,
       mockWalletArgs.userId,
@@ -26,10 +26,10 @@ describe('UserWallet Entity', () => {
       mockWalletArgs.activatedAt,
       mockWalletArgs.updatedAt,
     );
-    expect(wallet.xrplAddress).toBe('rHb9CJA');
+    expect(wallet.xrplAddress).toBe("rHb9CJA");
   });
 
-  it('verifySignature()는 항상 true를 반환한다 (MVP 기준)', () => {
+  it("verifySignature()는 항상 true를 반환한다 (MVP 기준)", () => {
     const wallet = new UserWallet(
       mockWalletArgs.id,
       mockWalletArgs.userId,
@@ -41,6 +41,6 @@ describe('UserWallet Entity', () => {
       mockWalletArgs.activatedAt,
       mockWalletArgs.updatedAt,
     );
-    expect(wallet.verifySignature('msg', 'sig')).toBe(true);
+    expect(wallet.verifySignature("msg", "sig")).toBe(true);
   });
 });

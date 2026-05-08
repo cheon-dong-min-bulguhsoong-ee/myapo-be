@@ -1,10 +1,10 @@
-import { Injectable } from '@nestjs/common';
-import { PersonaType } from '../../common/enum/persona-type.enum';
-import { DomainError } from '../../common/error/domain.error';
-import { ErrorCode } from '../../common/error/error-code';
-import { UserResult, UserWalletResult } from '../dto/user.result';
-import { User } from '../entity/user.entity';
-import { UserRepository } from '../repository/user.repository';
+import { Injectable } from "@nestjs/common";
+import { PersonaType } from "../../common/enum/persona-type.enum";
+import { DomainError } from "../../common/error/domain.error";
+import { ErrorCode } from "../../common/error/error-code";
+import { UserResult, UserWalletResult } from "../dto/user.result";
+import { User } from "../entity/user.entity";
+import { UserRepository } from "../repository/user.repository";
 
 @Injectable()
 export class UserService {
@@ -45,6 +45,10 @@ export class UserService {
       const reactivatedUser = await this.userRepository.findById(
         existingUserByVerifier.id,
       );
+
+      // 로그인 정보 업데이트 (Side-effect)
+      await this.handleLoginSideEffects(reactivatedUser!, input.email);
+
       return this.mapToResult(reactivatedUser!, wallet!.xrplAddress);
     }
 
@@ -77,7 +81,41 @@ export class UserService {
       },
     });
 
+    // 신규 가입 시에도 로그인 정보 기록
+    await this.handleLoginSideEffects(newUser, input.email);
+
     return this.mapToResult(newUser, input.xrplAddress);
+  }
+
+  /**
+   * 소셜 계정 정보를 바탕으로 사용자를 조회한다. (로그인)
+   */
+  async login(
+    verifier: string,
+    verifierId: string,
+    currentEmail?: string,
+  ): Promise<UserResult> {
+    const user = await this.userRepository.findByVerifier(verifier, verifierId);
+    if (!user || user.isDelete) {
+      throw new DomainError(ErrorCode.User.USER_NOT_FOUND);
+    }
+
+    // 로그인 정보 업데이트 (이메일 동기화 및 접속 시간 기록)
+    await this.handleLoginSideEffects(user, currentEmail);
+
+    const wallet = await this.userRepository.findWalletByUserId(user.id);
+    return this.mapToResult(user, wallet!.xrplAddress);
+  }
+
+  /**
+   * 로그인 시 발생하는 사이드 이펙트(시간 기록, 데이터 동기화)를 처리한다.
+   */
+  private async handleLoginSideEffects(
+    user: User,
+    currentEmail?: string,
+  ): Promise<void> {
+    user.recordLogin(currentEmail);
+    await this.userRepository.update(user);
   }
 
   /**
@@ -96,7 +134,9 @@ export class UserService {
   /**
    * 활성 상태인 사용자를 조회한다. (Document 도메인 등에서 사용)
    */
-  async getActive(userId: bigint): Promise<User & { personaType: PersonaType }> {
+  async getActive(
+    userId: bigint,
+  ): Promise<User & { personaType: PersonaType }> {
     const user = await this.userRepository.findById(userId);
     if (!user || user.isDelete) {
       throw new DomainError(ErrorCode.User.USER_NOT_FOUND);
@@ -104,7 +144,7 @@ export class UserService {
 
     // 국적에 따른 페르소나 타입 결정
     const personaType =
-      user.nationality === 'KR' ? PersonaType.KOREAN : PersonaType.FOREIGNER;
+      user.nationality === "KR" ? PersonaType.KOREAN : PersonaType.FOREIGNER;
 
     return Object.assign(user, { personaType });
   }

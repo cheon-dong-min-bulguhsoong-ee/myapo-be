@@ -1,13 +1,14 @@
-import { Injectable } from '@nestjs/common';
-import { AuthService } from '../../domain/auth/service/auth.service';
-import { UserService } from '../../domain/user/service/user.service';
-import { RegisterUserReq } from '../../interfaces/user/req/register-user.req';
-import { UserRes } from '../../interfaces/user/res/user.res';
+import { forwardRef, Inject, Injectable } from "@nestjs/common";
+import { AuthService } from "../../domain/auth/service/auth.service";
+import { UserService } from "../../domain/user/service/user.service";
+import { RegisterUserReq } from "../../interfaces/user/req/register-user.req";
+import { UserRes } from "../../interfaces/user/res/user.res";
 
 @Injectable()
 export class UserFacade {
   constructor(
     private readonly userService: UserService,
+    @Inject(forwardRef(() => AuthService))
     private readonly authService: AuthService,
   ) {}
 

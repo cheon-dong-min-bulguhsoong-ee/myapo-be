@@ -83,6 +83,9 @@ prisma/*.db-journal
 .codex
 
 ## --- AI init contexts by environment (example: claude.local.md) ---
+CALUDE.md
+GEMINI.md
+CODEX.md
 CLAUDE.**.md
 CODEX.**.md
 GEMINI.**.md 

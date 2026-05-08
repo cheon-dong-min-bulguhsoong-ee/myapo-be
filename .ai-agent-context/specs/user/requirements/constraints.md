@@ -14,3 +14,5 @@
 | Database | Use Soft Deletes (`isDelete` flag) instead of physical deletion. | Audit & Data Integrity |
 | Security | Server must verify XRPL signatures using the stored `publicKey`. | Self-custodial Verification |
 | Auth | Authentication and VerifierID are provided by Web3Auth. | External Login Provider |
+| Session | **Layer Separation**: Distinguish between the Internal JWT (App Session) and Web3Auth (IdP Session). | Security & UX Flexibility |
+| Logout | **Stateless Disposal**: Server logout focus is on Application Session termination. External session cleanup is a client-side SDK responsibility. | Stateless Architecture |

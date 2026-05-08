@@ -22,3 +22,15 @@
 - **When** The user requests to delete their account
 - **Then** The system should mark the User and associated UserWallet as deleted (`isDelete` = true)
 - **And** The user should no longer be able to log in or access the service
+
+### Scenario: Application Session Logout (Basic)
+- **Given** An authenticated user is logged into the application
+- **When** The user requests a basic logout
+- **Then** The system should invalidate the Internal Access Token (server-side record or client-side disposal)
+- **And** The application session should be terminated, requiring re-authentication for further access
+
+### Scenario: Full Session Logout (Account Switch/Public Device)
+- **Given** An authenticated user is logged into the application via Web3Auth
+- **When** The user requests a full logout for account switching or security on a shared device
+- **Then** The system should terminate the application session
+- **And** The client should trigger the Web3Auth SDK logout to clear external identity provider sessions

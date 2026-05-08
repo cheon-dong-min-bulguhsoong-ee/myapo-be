@@ -1,5 +1,8 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { UserResult, UserWalletResult } from '../../../domain/user/dto/user.result';
+import { ApiProperty } from "@nestjs/swagger";
+import {
+  UserResult,
+  UserWalletResult,
+} from "../../../domain/user/dto/user.result";
 
 export class UserWalletRes {
   @ApiProperty()
