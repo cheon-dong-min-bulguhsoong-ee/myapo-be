@@ -5,7 +5,7 @@ import {CurrentUserId} from '../auth/current-user-id.decorator';
 import {AdvanceDocumentStageReq} from '../req/advance-document-stage.req';
 import {ApproveDocumentReq} from '../req/approve-document.req';
 import {CreateDocumentReq} from '../req/create-document.req';
-import {ListDocumentReq} from '../req/list-document.req';
+import {DocumentListReq} from '../req/document-list.req';
 import {AdvanceDocumentStageRes} from '../res/advance-document-stage.res';
 import {ApproveDocumentRes} from '../res/approve-document.res';
 import {CreateDocumentRes} from '../res/create-document.res';
@@ -64,7 +64,7 @@ export class DocumentController {
     @ListDocumentSwaggerApi()
     async findList(
         @CurrentUserId() userId: bigint,
-        @Query() request: ListDocumentReq,
+        @Query() request: DocumentListReq,
     ): Promise<CommonRes<DocumentListRes>> {
         const response = await this.documentFacade.findList(request, userId);
         return CommonRes.success(response);

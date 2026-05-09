@@ -4,7 +4,7 @@ import {UserService} from '../../domain/user/service/user.service';
 import {AdvanceDocumentStageReq} from '../../interfaces/document/req/advance-document-stage.req';
 import {ApproveDocumentReq} from '../../interfaces/document/req/approve-document.req';
 import {CreateDocumentReq} from '../../interfaces/document/req/create-document.req';
-import {ListDocumentReq} from '../../interfaces/document/req/list-document.req';
+import {DocumentListReq} from '../../interfaces/document/req/document-list.req';
 import {AdvanceDocumentStageRes} from '../../interfaces/document/res/advance-document-stage.res';
 import {ApproveDocumentRes} from '../../interfaces/document/res/approve-document.res';
 import {CreateDocumentRes} from '../../interfaces/document/res/create-document.res';
@@ -75,7 +75,7 @@ export class DocumentFacade {
      * 임시 인증 단계에서는 X-User-Id 가 활성 사용자인지만 검증한다 (RBAC 도입 시 교체).
      */
     async findList(
-        request: ListDocumentReq,
+        request: DocumentListReq,
         userId: bigint,
     ): Promise<DocumentListRes> {
         await this.userService.getActive(userId);
