@@ -4,18 +4,23 @@ import { CredentialStatus } from '../../../domain/credential/enum/credential-sta
 import { JwtAuthGuard } from '../../../infrastructure/auth/guards/jwt-auth.guard';
 import { CommonRes } from '../../common/common-res';
 import { CurrentUserId } from '../../user/auth/current-user-id.decorator';
+import { AcceptTestnetCredentialReq } from '../req/accept-testnet-credential.req';
 import { CreateCredentialIssueRequestReq } from '../req/create-credential-issue-request.req';
 import { DeleteTestnetCredentialReq } from '../req/delete-testnet-credential.req';
+import { PrepareDeleteTestnetCredentialReq } from '../req/prepare-delete-testnet-credential.req';
 import { SubmitCredentialReq } from '../req/submit-credential.req';
 import { CreateCredentialIssueRequestRes, CredentialIssueRequestRes } from '../res/credential-issue-request.res';
 import { CredentialDetailRes, ListCredentialsRes } from '../res/credential.res';
 import { ListCredentialSubmissionsRes, SubmitCredentialRes } from '../res/credential-submission.res';
 import { XrplCredentialEvidenceRes } from '../res/xrpl-credential-evidence.res';
+import { XrplCredentialTransactionRes } from '../res/xrpl-credential-transaction.res';
 import {
   AcceptTestnetCredentialSwaggerApi,
+  PrepareAcceptTestnetCredentialSwaggerApi,
   CreateCredentialIssueRequestSwaggerApi,
   CredentialApiTags,
   DeleteTestnetCredentialSwaggerApi,
+  PrepareDeleteTestnetCredentialSwaggerApi,
   GetCredentialDetailSwaggerApi,
   GetCredentialIssueRequestSwaggerApi,
   ListCredentialsSwaggerApi,
@@ -79,13 +84,35 @@ export class CredentialController {
     return CommonRes.success(response);
   }
 
+  @Post('credentials/:credentialId/xrpl/accept/prepare')
+  @PrepareAcceptTestnetCredentialSwaggerApi()
+  async prepareAcceptTestnetCredential(
+    @CurrentUserId() userId: bigint,
+    @Param('credentialId') credentialId: string,
+  ): Promise<CommonRes<XrplCredentialTransactionRes>> {
+    const response = await this.credentialFacade.prepareAcceptTestnetCredential(userId, credentialId);
+    return CommonRes.success(response);
+  }
+
   @Post('credentials/:credentialId/xrpl/accept')
   @AcceptTestnetCredentialSwaggerApi()
   async acceptTestnetCredential(
     @CurrentUserId() userId: bigint,
     @Param('credentialId') credentialId: string,
+    @Body() request: AcceptTestnetCredentialReq,
   ): Promise<CommonRes<XrplCredentialEvidenceRes>> {
-    const response = await this.credentialFacade.acceptTestnetCredential(userId, credentialId);
+    const response = await this.credentialFacade.acceptTestnetCredential(userId, credentialId, request);
+    return CommonRes.success(response);
+  }
+
+  @Post('credentials/:credentialId/xrpl/delete/prepare')
+  @PrepareDeleteTestnetCredentialSwaggerApi()
+  async prepareDeleteTestnetCredential(
+    @CurrentUserId() userId: bigint,
+    @Param('credentialId') credentialId: string,
+    @Body() request: PrepareDeleteTestnetCredentialReq,
+  ): Promise<CommonRes<XrplCredentialTransactionRes>> {
+    const response = await this.credentialFacade.prepareDeleteTestnetCredential(userId, credentialId, request);
     return CommonRes.success(response);
   }
 

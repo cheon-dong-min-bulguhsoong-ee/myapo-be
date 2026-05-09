@@ -29,7 +29,8 @@ import { IssuePipelineStageStatus } from '../enum/issue-pipeline-stage-status.en
 import { CredentialDocumentTypeRepository } from '../repository/credential-document-type.repository';
 import { CredentialRepository } from '../repository/credential.repository';
 import { XrplCredentialAdapter } from '../contract/xrpl-credential-adapter';
-import { XrplCredentialTransactionEvidenceResult } from '../dto/xrpl-credential-evidence.result';
+import { XrplCredentialTransactionEvidenceResult, XrplCredentialTransactionKind } from '../dto/xrpl-credential-evidence.result';
+import { XrplCredentialTransactionPayloadResult } from '../dto/xrpl-credential-transaction-payload.result';
 
 @Injectable()
 export class CredentialService {
@@ -206,9 +207,30 @@ export class CredentialService {
     return new ListCredentialSubmissionsResult(submissions.map((submission) => this.toSubmissionItemResult(submission)));
   }
 
+  async prepareAcceptTestnetCredential(
+    userId: bigint,
+    credentialId: string,
+  ): Promise<XrplCredentialTransactionPayloadResult> {
+    const credential = await this.loadOwnedCredential(userId, credentialId);
+    this.assertTestnetCredentialEvidenceAvailable(credential);
+    const xrplCredentialAdapter = this.getXrplCredentialAdapterOrThrow();
+    const transaction = xrplCredentialAdapter.buildCredentialAcceptTransaction({
+      subjectAddress: credential.xrplSubjectAddress,
+      issuerAddress: credential.xrplIssuerAddress,
+      credentialTypeHex: credential.xrplCredentialType,
+    });
+
+    return new XrplCredentialTransactionPayloadResult(
+      XrplCredentialTransactionKind.ACCEPT,
+      xrplCredentialAdapter.getNetworkName(),
+      transaction as unknown as Record<string, unknown>,
+    );
+  }
+
   async acceptTestnetCredential(
     userId: bigint,
     credentialId: string,
+    signedTransactionBlob: string,
   ): Promise<XrplCredentialTransactionEvidenceResult> {
     const credential = await this.loadOwnedCredential(userId, credentialId);
     this.assertTestnetCredentialEvidenceAvailable(credential);
@@ -218,6 +240,7 @@ export class CredentialService {
       subjectAddress: credential.xrplSubjectAddress,
       issuerAddress: credential.xrplIssuerAddress,
       credentialTypeHex: credential.xrplCredentialType,
+      signedTransactionBlob,
     });
     await this.credentialRepository.createXrplTransaction({
       credentialId: credential.id,
@@ -226,22 +249,44 @@ export class CredentialService {
     return evidence;
   }
 
+  async prepareDeleteTestnetCredential(
+    userId: bigint,
+    credentialId: string,
+    submitterRole: XrplCredentialDeleteSubmitterRole,
+  ): Promise<XrplCredentialTransactionPayloadResult> {
+    const credential = await this.loadOwnedCredential(userId, credentialId);
+    this.assertTestnetCredentialEvidenceAvailable(credential);
+    const xrplCredentialAdapter = this.getXrplCredentialAdapterOrThrow();
+    const transaction = xrplCredentialAdapter.buildCredentialDeleteTransaction({
+      submitterAddress: this.resolveDeleteSubmitterAddress(credential, submitterRole),
+      subjectAddress: credential.xrplSubjectAddress,
+      issuerAddress: credential.xrplIssuerAddress,
+      credentialTypeHex: credential.xrplCredentialType,
+    });
+
+    return new XrplCredentialTransactionPayloadResult(
+      XrplCredentialTransactionKind.DELETE,
+      xrplCredentialAdapter.getNetworkName(),
+      transaction as unknown as Record<string, unknown>,
+    );
+  }
+
   async deleteTestnetCredential(
     userId: bigint,
     credentialId: string,
     submitterRole: XrplCredentialDeleteSubmitterRole,
+    signedTransactionBlob: string,
   ): Promise<XrplCredentialTransactionEvidenceResult> {
     const credential = await this.loadOwnedCredential(userId, credentialId);
     this.assertTestnetCredentialEvidenceAvailable(credential);
     const xrplCredentialAdapter = this.getXrplCredentialAdapterOrThrow();
 
     const evidence = await xrplCredentialAdapter.submitCredentialDelete({
-      submitterAddress: submitterRole === XrplCredentialDeleteSubmitterRole.SUBJECT
-        ? credential.xrplSubjectAddress
-        : credential.xrplIssuerAddress,
+      submitterAddress: this.resolveDeleteSubmitterAddress(credential, submitterRole),
       subjectAddress: credential.xrplSubjectAddress,
       issuerAddress: credential.xrplIssuerAddress,
       credentialTypeHex: credential.xrplCredentialType,
+      signedTransactionBlob,
     });
     await this.credentialRepository.createXrplTransaction({
       credentialId: credential.id,
@@ -253,6 +298,16 @@ export class CredentialService {
       failureReason: null,
     });
     return evidence;
+  }
+
+
+  private resolveDeleteSubmitterAddress(
+    credential: Credential,
+    submitterRole: XrplCredentialDeleteSubmitterRole,
+  ): string {
+    return submitterRole === XrplCredentialDeleteSubmitterRole.SUBJECT
+      ? credential.xrplSubjectAddress as string
+      : credential.xrplIssuerAddress as string;
   }
 
   private async publishTestnetCredentialEvidence(

@@ -25,8 +25,12 @@ export interface BuildCredentialDeleteTransactionInput {
 }
 
 export interface SubmitCredentialCreateInput extends BuildCredentialCreateTransactionInput {}
-export interface SubmitCredentialAcceptInput extends BuildCredentialAcceptTransactionInput {}
-export interface SubmitCredentialDeleteInput extends BuildCredentialDeleteTransactionInput {}
+export interface SubmitCredentialAcceptInput extends BuildCredentialAcceptTransactionInput {
+  readonly signedTransactionBlob: string;
+}
+export interface SubmitCredentialDeleteInput extends BuildCredentialDeleteTransactionInput {
+  readonly signedTransactionBlob: string;
+}
 
 export interface GetCredentialObjectsInput {
   readonly accountAddress: string;
@@ -87,6 +91,8 @@ export abstract class XrplCredentialAdapter {
   ): Promise<XrplCredentialTransactionEvidenceResult>;
 
   abstract getCredentialObjects(input: GetCredentialObjectsInput): Promise<XrplCredentialObjectResult[]>;
+
+  abstract getNetworkName(): string;
 
   abstract encodeUriToHex(uri: string): string;
 

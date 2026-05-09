@@ -234,18 +234,18 @@ paths:
                 $ref: '#/components/schemas/CommonResListCredentialSubmissionsRes'
 ```
 
-### 3.7. Accept Testnet Credential
+### 3.7. Prepare Testnet CredentialAccept Transaction
 - **Method**: `POST`
-- **Path**: `/api/v1/credentials/{credentialId}/xrpl/accept`
+- **Path**: `/api/v1/credentials/{credentialId}/xrpl/accept/prepare`
 - **Source Level**: Hackathon Decision + XLS-70 Reference
-- **Description**: Submits XRP Testnet `CredentialAccept` evidence for a user-owned Testnet credential. XLS-70 requires `Account` to be the credential `Subject`; MVP signs with the configured subject Testnet wallet until user wallet signing is integrated. This endpoint is MVP/Testnet-only and must not claim production/mainnet finality.
+- **Description**: Returns an unsigned XRP Testnet `CredentialAccept` transaction payload for frontend wallet signing. XLS-70 requires `Account = Subject`; backend must derive Subject/Issuer/CredentialType from stored credential evidence, not from client input.
 
 ```yaml
 paths:
-  /api/v1/credentials/{credentialId}/xrpl/accept:
+  /api/v1/credentials/{credentialId}/xrpl/accept/prepare:
     post:
-      summary: Accept XRP Testnet credential
-      operationId: acceptTestnetCredential
+      summary: Prepare XRP Testnet CredentialAccept transaction
+      operationId: prepareAcceptTestnetCredential
       security:
         - InternalJwtBearer: []
       parameters:
@@ -256,11 +256,11 @@ paths:
             type: string
       responses:
         '201':
-          description: Testnet CredentialAccept evidence stored
+          description: Unsigned CredentialAccept transaction returned for frontend wallet signing
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CommonResXrplCredentialEvidenceRes'
+                $ref: '#/components/schemas/CommonResXrplCredentialTransactionRes'
         '401':
           description: Unauthorized Internal JWT
         '403':
@@ -271,17 +271,105 @@ paths:
           description: Credential has no Testnet evidence or cannot be accepted
 ```
 
-### 3.8. Delete Testnet Credential
+### 3.8. Submit Signed Testnet CredentialAccept Transaction
+- **Method**: `POST`
+- **Path**: `/api/v1/credentials/{credentialId}/xrpl/accept`
+- **Source Level**: Hackathon Decision + XLS-70 Reference
+- **Description**: Submits a frontend wallet-signed XRP Testnet `CredentialAccept` transaction blob and stores evidence. The signed transaction must match the server-prepared payload for the same credential: `Account = Subject`, `Issuer = credential.xrplIssuerAddress`, and `CredentialType = credential.xrplCredentialType`.
+
+```yaml
+paths:
+  /api/v1/credentials/{credentialId}/xrpl/accept:
+    post:
+      summary: Submit signed XRP Testnet CredentialAccept transaction
+      operationId: acceptTestnetCredential
+      security:
+        - InternalJwtBearer: []
+      parameters:
+        - in: path
+          name: credentialId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcceptTestnetCredentialReq'
+      responses:
+        '201':
+          description: Testnet CredentialAccept evidence stored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonResXrplCredentialEvidenceRes'
+        '400':
+          description: Signed transaction blob cannot be decoded or does not match expected credential transaction
+        '401':
+          description: Unauthorized Internal JWT
+        '403':
+          description: Owner mismatch
+        '404':
+          description: Credential not found
+        '409':
+          description: Credential has no Testnet evidence or cannot be accepted
+```
+
+### 3.9. Prepare Testnet CredentialDelete Transaction
+- **Method**: `POST`
+- **Path**: `/api/v1/credentials/{credentialId}/xrpl/delete/prepare`
+- **Source Level**: Hackathon Decision + XLS-70 Reference
+- **Description**: Returns an unsigned XRP Testnet `CredentialDelete` transaction payload for frontend wallet signing. XLS-70 allows `Subject` or `Issuer` to delete at any time; MVP exposes `submitterRole = SUBJECT | ISSUER`. Third-party expired cleanup is excluded until policy is approved.
+
+```yaml
+paths:
+  /api/v1/credentials/{credentialId}/xrpl/delete/prepare:
+    post:
+      summary: Prepare XRP Testnet CredentialDelete transaction
+      operationId: prepareDeleteTestnetCredential
+      security:
+        - InternalJwtBearer: []
+      parameters:
+        - in: path
+          name: credentialId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrepareDeleteTestnetCredentialReq'
+      responses:
+        '201':
+          description: Unsigned CredentialDelete transaction returned for frontend wallet signing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonResXrplCredentialTransactionRes'
+        '401':
+          description: Unauthorized Internal JWT
+        '403':
+          description: Owner mismatch
+        '404':
+          description: Credential not found
+        '409':
+          description: Credential has no Testnet evidence or cannot be deleted
+```
+
+### 3.10. Submit Signed Testnet CredentialDelete Transaction
 - **Method**: `POST`
 - **Path**: `/api/v1/credentials/{credentialId}/xrpl/delete`
 - **Source Level**: Hackathon Decision + XLS-70 Reference
-- **Description**: Submits XRP Testnet `CredentialDelete` evidence for a user-owned Testnet credential and marks the local credential `REVOKED`. XLS-70 allows the credential `Subject` or `Issuer` to delete the credential at any time; anyone can delete only after expiration. MVP exposes only `SUBJECT` and `ISSUER` submitter roles and excludes third-party expired cleanup until product policy is approved. This endpoint is MVP/Testnet-only and must not claim production/mainnet finality.
+- **Description**: Submits a frontend wallet-signed XRP Testnet `CredentialDelete` transaction blob, stores evidence, and marks the local credential `REVOKED`. The signed transaction must match the server-prepared payload for the same credential and submitter role.
 
 ```yaml
 paths:
   /api/v1/credentials/{credentialId}/xrpl/delete:
     post:
-      summary: Delete XRP Testnet credential
+      summary: Submit signed XRP Testnet CredentialDelete transaction
       operationId: deleteTestnetCredential
       security:
         - InternalJwtBearer: []
@@ -304,6 +392,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CommonResXrplCredentialEvidenceRes'
+        '400':
+          description: Signed transaction blob cannot be decoded or does not match expected credential transaction
         '401':
           description: Unauthorized Internal JWT
         '403':
@@ -314,7 +404,7 @@ paths:
           description: Credential has no Testnet evidence or cannot be deleted
 ```
 
-### 3.9. Reissue Credential
+### 3.11. Reissue Credential
 - **Method**: `POST`
 - **Path**: `/api/v1/credentials/{credentialId}/reissue`
 - **Source Level**: Reference Evidence
@@ -489,14 +579,32 @@ components:
           type: string
           nullable: true
           description: Auth-owned event id for institution_submit trigger, when available.
-    DeleteTestnetCredentialReq:
+    AcceptTestnetCredentialReq:
+      type: object
+      required: [signedTransactionBlob]
+      properties:
+        signedTransactionBlob:
+          type: string
+          description: XRPL signed transaction blob generated by the subject wallet from the prepared CredentialAccept transaction.
+    PrepareDeleteTestnetCredentialReq:
       type: object
       required: [submitterRole]
       properties:
         submitterRole:
           type: string
           enum: [SUBJECT, ISSUER]
+          description: XLS-70 CredentialDelete signer role. SUBJECT signs with the credential holder wallet; ISSUER signs with the issuer wallet.
+    DeleteTestnetCredentialReq:
+      type: object
+      required: [submitterRole, signedTransactionBlob]
+      properties:
+        submitterRole:
+          type: string
+          enum: [SUBJECT, ISSUER]
           description: XLS-70 CredentialDelete submitter. SUBJECT signs as the credential holder; ISSUER signs as the credential issuer. Third-party expired deletion is an XLS-70 capability but is outside MVP API scope.
+        signedTransactionBlob:
+          type: string
+          description: XRPL signed transaction blob generated by the selected submitter wallet from the prepared CredentialDelete transaction.
     SubmitCredentialRes:
       type: object
       properties:
@@ -522,6 +630,18 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CredentialSubmissionItem'
+
+    XrplCredentialTransactionRes:
+      type: object
+      properties:
+        transactionKind:
+          type: string
+          enum: [ACCEPT, DELETE]
+        network:
+          type: string
+        transaction:
+          type: object
+          description: Unsigned XRPL transaction JSON to sign in the frontend wallet.
 
     XrplCredentialEvidenceRes:
       type: object

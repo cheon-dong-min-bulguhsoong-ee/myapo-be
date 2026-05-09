@@ -1,6 +1,6 @@
 import { DomainError } from '../../common/error/domain.error';
 import { ErrorCode } from '../../common/error/error-code';
-import { SubmitCredentialDeleteInput, XrplCredentialAdapter } from '../contract/xrpl-credential-adapter';
+import { SubmitCredentialAcceptInput, SubmitCredentialDeleteInput, XrplCredentialAdapter } from '../contract/xrpl-credential-adapter';
 import { XrplCredentialTransactionEvidenceResult, XrplCredentialTransactionKind } from '../dto/xrpl-credential-evidence.result';
 import { CredentialDocumentType } from '../entity/credential-document-type.entity';
 import { Credential } from '../entity/credential.entity';
@@ -35,6 +35,7 @@ class FakeDocumentTypeRepository extends CredentialDocumentTypeRepository {
 
 
 class FakeXrplCredentialAdapter extends XrplCredentialAdapter {
+  lastAcceptInput: SubmitCredentialAcceptInput | null = null;
   lastDeleteInput: SubmitCredentialDeleteInput | null = null;
 
   getIssuerAddress(): string {
@@ -45,12 +46,23 @@ class FakeXrplCredentialAdapter extends XrplCredentialAdapter {
     throw new Error('not used');
   }
 
-  buildCredentialAcceptTransaction(): never {
-    throw new Error('not used');
+  buildCredentialAcceptTransaction(input: { subjectAddress: string; issuerAddress: string; credentialTypeHex: string }) {
+    return {
+      TransactionType: 'CredentialAccept' as const,
+      Account: input.subjectAddress,
+      Issuer: input.issuerAddress,
+      CredentialType: input.credentialTypeHex.toUpperCase(),
+    };
   }
 
-  buildCredentialDeleteTransaction(): never {
-    throw new Error('not used');
+  buildCredentialDeleteTransaction(input: { submitterAddress: string; subjectAddress: string | null; issuerAddress: string | null; credentialTypeHex: string }) {
+    return {
+      TransactionType: 'CredentialDelete' as const,
+      Account: input.submitterAddress,
+      ...(input.subjectAddress === null ? {} : { Subject: input.subjectAddress }),
+      ...(input.issuerAddress === null ? {} : { Issuer: input.issuerAddress }),
+      CredentialType: input.credentialTypeHex.toUpperCase(),
+    };
   }
 
   async submitCredentialCreate(): Promise<XrplCredentialTransactionEvidenceResult> {
@@ -71,7 +83,8 @@ class FakeXrplCredentialAdapter extends XrplCredentialAdapter {
     );
   }
 
-  async submitCredentialAccept(): Promise<XrplCredentialTransactionEvidenceResult> {
+  async submitCredentialAccept(input: SubmitCredentialAcceptInput): Promise<XrplCredentialTransactionEvidenceResult> {
+    this.lastAcceptInput = input;
     return new XrplCredentialTransactionEvidenceResult(
       XrplCredentialTransactionKind.ACCEPT,
       'wss://s.altnet.rippletest.net:51233',
@@ -110,6 +123,10 @@ class FakeXrplCredentialAdapter extends XrplCredentialAdapter {
 
   async getCredentialObjects(): Promise<[]> {
     return [];
+  }
+
+  getNetworkName(): string {
+    return 'wss://s.altnet.rippletest.net:51233';
   }
 
   encodeUriToHex(uri: string): string {
@@ -397,19 +414,28 @@ describe('CredentialService', () => {
 
   it('stores XRP Testnet CredentialAccept evidence for a Testnet credential', async () => {
     const repo = new FakeCredentialRepository();
+    const adapter = new FakeXrplCredentialAdapter();
     const service = new CredentialService(
       repo,
       new FakeDocumentTypeRepository(documentType),
-      new FakeXrplCredentialAdapter(),
+      adapter,
     );
     await service.createIssueRequest(BigInt(1), documentType.code, null, null, 'rSUBJECT');
 
-    const evidence = await service.acceptTestnetCredential(BigInt(1), repo.credentials[0].credentialCode);
+    const prepared = await service.prepareAcceptTestnetCredential(BigInt(1), repo.credentials[0].credentialCode);
+    const evidence = await service.acceptTestnetCredential(BigInt(1), repo.credentials[0].credentialCode, 'signed-accept');
 
+    expect(prepared.transaction).toMatchObject({
+      TransactionType: 'CredentialAccept',
+      Account: 'rSUBJECT',
+      Issuer: 'rISSUER',
+      CredentialType: 'AA',
+    });
     expect(evidence.transactionKind).toBe(XrplCredentialTransactionKind.ACCEPT);
     expect(evidence.transactionHash).toBe('B'.repeat(64));
     expect(repo.xrplTransactions).toHaveLength(2);
     expect(repo.xrplTransactions[1].evidence.transactionKind).toBe(XrplCredentialTransactionKind.ACCEPT);
+    expect(adapter.lastAcceptInput?.signedTransactionBlob).toBe('signed-accept');
   });
 
   it('stores XRP Testnet CredentialDelete evidence with subject submitter and revokes the credential', async () => {
@@ -426,9 +452,18 @@ describe('CredentialService', () => {
       BigInt(1),
       repo.credentials[0].credentialCode,
       XrplCredentialDeleteSubmitterRole.SUBJECT,
+      'signed-delete-subject',
     );
 
+    const prepared = await service.prepareDeleteTestnetCredential(
+      BigInt(1),
+      repo.credentials[0].credentialCode,
+      XrplCredentialDeleteSubmitterRole.SUBJECT,
+    );
+
+    expect(prepared.transaction).toMatchObject({ Account: 'rSUBJECT', Subject: 'rSUBJECT', Issuer: 'rISSUER' });
     expect(adapter.lastDeleteInput?.submitterAddress).toBe('rSUBJECT');
+    expect(adapter.lastDeleteInput?.signedTransactionBlob).toBe('signed-delete-subject');
     expect(evidence.transactionKind).toBe(XrplCredentialTransactionKind.DELETE);
     expect(evidence.account).toBe('rSUBJECT');
     expect(evidence.transactionHash).toBe('C'.repeat(64));
@@ -452,9 +487,11 @@ describe('CredentialService', () => {
       BigInt(1),
       repo.credentials[0].credentialCode,
       XrplCredentialDeleteSubmitterRole.ISSUER,
+      'signed-delete-issuer',
     );
 
     expect(adapter.lastDeleteInput?.submitterAddress).toBe('rISSUER');
+    expect(adapter.lastDeleteInput?.signedTransactionBlob).toBe('signed-delete-issuer');
     expect(evidence.transactionKind).toBe(XrplCredentialTransactionKind.DELETE);
     expect(evidence.account).toBe('rISSUER');
     expect(repo.xrplTransactions[1].evidence.transactionKind).toBe(XrplCredentialTransactionKind.DELETE);
@@ -466,7 +503,7 @@ describe('CredentialService', () => {
     await service.createIssueRequest(BigInt(1), documentType.code, null, null, 'rUserWallet');
 
     await expect(
-      service.acceptTestnetCredential(BigInt(1), repo.credentials[0].credentialCode),
+      service.acceptTestnetCredential(BigInt(1), repo.credentials[0].credentialCode, 'signed-accept'),
     ).rejects.toMatchObject({ errorCode: ErrorCode.Credential.XRPL_EVIDENCE_REQUIRED });
   });
 
