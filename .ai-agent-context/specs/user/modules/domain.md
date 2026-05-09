@@ -7,9 +7,11 @@
     - `email`: User's email address (Unique)
     - `name`: User's full name
     - `nationality`: ISO 3166-1 alpha-2 country code (Immutable after creation)
+    - `role`: 시스템 권한 (USER, ADMIN, INSTITUTION)
     - `isDelete`: Soft delete flag
 - **Business Logic**:
     - `validateNationality()`: 국적 코드가 올바른 ISO 포맷인지 검증.
+    - `changeRole(newRole)`: 사용자의 권한을 변경.
     - `markAsDeleted()`: `isDelete` 플래그를 true로 설정.
 
 ## 2. UserWallet Entity

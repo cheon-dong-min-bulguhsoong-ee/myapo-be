@@ -1,5 +1,6 @@
 import { User } from "./user.entity";
 import { DomainError } from "../../common/error/domain.error";
+import { UserRole } from "../enum/user-role.enum";
 
 describe("User Entity", () => {
   const mockUserArgs = {
@@ -7,6 +8,7 @@ describe("User Entity", () => {
     email: "test@example.com",
     name: "Test User",
     nationality: "KR",
+    role: UserRole.USER,
     createdAt: new Date(),
     updatedAt: new Date(),
     lastLoginAt: null,
@@ -19,6 +21,7 @@ describe("User Entity", () => {
       mockUserArgs.email,
       mockUserArgs.name,
       mockUserArgs.nationality,
+      mockUserArgs.role,
       mockUserArgs.createdAt,
       mockUserArgs.updatedAt,
       mockUserArgs.lastLoginAt,
@@ -34,6 +37,7 @@ describe("User Entity", () => {
         mockUserArgs.email,
         mockUserArgs.name,
         "ABC",
+        mockUserArgs.role,
         mockUserArgs.createdAt,
         mockUserArgs.updatedAt,
         mockUserArgs.lastLoginAt,
@@ -48,6 +52,7 @@ describe("User Entity", () => {
       mockUserArgs.email,
       mockUserArgs.name,
       mockUserArgs.nationality,
+      mockUserArgs.role,
       mockUserArgs.createdAt,
       mockUserArgs.updatedAt,
       null,
@@ -63,6 +68,7 @@ describe("User Entity", () => {
       mockUserArgs.email,
       mockUserArgs.name,
       mockUserArgs.nationality,
+      mockUserArgs.role,
       mockUserArgs.createdAt,
       mockUserArgs.updatedAt,
       null,
@@ -78,6 +84,7 @@ describe("User Entity", () => {
       "old@a.com",
       mockUserArgs.name,
       mockUserArgs.nationality,
+      mockUserArgs.role,
       mockUserArgs.createdAt,
       mockUserArgs.updatedAt,
       null,

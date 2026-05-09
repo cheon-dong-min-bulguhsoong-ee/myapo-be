@@ -33,3 +33,13 @@ export const DeleteAccountSwaggerApi = (): MethodDecorator =>
     }),
     ApiCommonRes(Object), // No specific response body for 204
   );
+
+export const ChangeUserRoleSwaggerApi = (): MethodDecorator =>
+  applyDecorators(
+    ApiOperation({
+      summary: "사용자 권한 변경 (Admin 전용)",
+      description:
+        "특정 사용자의 권한을 변경합니다. 관리자(ADMIN) 권한이 필요합니다.",
+    }),
+    ApiCommonRes(UserRes),
+  );

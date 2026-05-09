@@ -27,6 +27,7 @@ export class AuthFacade {
     const accessToken = await this.authService.issueAccessToken(
       BigInt(result.id),
       result.email,
+      result.role,
     );
 
     return AuthRes.fromResult(result, accessToken);
