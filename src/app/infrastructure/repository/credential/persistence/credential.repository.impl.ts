@@ -20,6 +20,8 @@ import {
   CreateCredentialXrplTransactionInput,
   CreateCredentialSubmissionInput,
   CredentialRepository,
+  MarkCredentialIssueRequestFailedInput,
+  MarkCredentialRevokedInput,
 } from '../../../../domain/credential/repository/credential.repository';
 import { PrismaService } from '../../../prisma/prisma.service';
 
@@ -41,6 +43,18 @@ export class CredentialRepositoryImpl extends CredentialRepository {
         currentSubstep: input.currentSubstep,
         authEventId: input.authEventId,
         requestedAt: input.requestedAt,
+      },
+    });
+    return this.toIssueRequestEntity(row);
+  }
+
+  async markIssueRequestFailed(input: MarkCredentialIssueRequestFailedInput): Promise<CredentialIssueRequest> {
+    const row = await this.prisma.credentialIssueRequest.update({
+      where: { id: input.issueRequestId },
+      data: {
+        status: CredentialIssueRequestStatus.FAILED,
+        failedAt: input.failedAt,
+        failureReason: input.failureReason,
       },
     });
     return this.toIssueRequestEntity(row);
@@ -91,6 +105,17 @@ export class CredentialRepositoryImpl extends CredentialRepository {
     return this.toCredentialEntity(row);
   }
 
+  async markCredentialRevoked(input: MarkCredentialRevokedInput): Promise<Credential> {
+    const row = await this.prisma.credential.update({
+      where: { id: input.credentialId },
+      data: {
+        status: CredentialStatus.REVOKED,
+        revokedAt: input.revokedAt,
+        failureReason: input.failureReason,
+      },
+    });
+    return this.toCredentialEntity(row);
+  }
 
   async createXrplTransaction(input: CreateCredentialXrplTransactionInput): Promise<void> {
     const evidence = input.evidence;

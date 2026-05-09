@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Client, Wallet } from 'xrpl';
+import { Client, Wallet, decode } from 'xrpl';
 import { DomainError } from '../../domain/common/error/domain.error';
 import { ErrorCode } from '../../domain/common/error/error-code';
 import {
@@ -127,14 +127,15 @@ export class Xls70CredentialAdapterImpl extends XrplCredentialAdapter {
   async submitCredentialAccept(
     input: SubmitCredentialAcceptInput,
   ): Promise<XrplCredentialTransactionEvidenceResult> {
-    const transaction = this.buildCredentialAcceptTransaction(input);
-    const evidence = await this.submitTransaction(
-      transaction,
-      this.getSubjectWallet(),
+    const expectedTransaction = this.buildCredentialAcceptTransaction(input);
+    this.assertSignedTransactionMatches(input.signedTransactionBlob, expectedTransaction);
+    const evidence = await this.submitSignedTransaction(
+      input.signedTransactionBlob,
       XrplCredentialTransactionKind.ACCEPT,
-      transaction.Issuer,
-      transaction.Account,
-      transaction.CredentialType,
+      expectedTransaction.Account,
+      expectedTransaction.Issuer,
+      expectedTransaction.Account,
+      expectedTransaction.CredentialType,
     );
     return this.withObjectSnapshot(evidence, input.subjectAddress, input.issuerAddress, input.credentialTypeHex);
   }
@@ -142,14 +143,15 @@ export class Xls70CredentialAdapterImpl extends XrplCredentialAdapter {
   async submitCredentialDelete(
     input: SubmitCredentialDeleteInput,
   ): Promise<XrplCredentialTransactionEvidenceResult> {
-    const transaction = this.buildCredentialDeleteTransaction(input);
-    return this.submitTransaction(
-      transaction,
-      this.getIssuerWallet(),
+    const expectedTransaction = this.buildCredentialDeleteTransaction(input);
+    this.assertSignedTransactionMatches(input.signedTransactionBlob, expectedTransaction);
+    return this.submitSignedTransaction(
+      input.signedTransactionBlob,
       XrplCredentialTransactionKind.DELETE,
-      transaction.Issuer ?? null,
-      transaction.Subject ?? null,
-      transaction.CredentialType,
+      expectedTransaction.Account,
+      expectedTransaction.Issuer ?? null,
+      expectedTransaction.Subject ?? null,
+      expectedTransaction.CredentialType,
     );
   }
 
@@ -210,6 +212,24 @@ export class Xls70CredentialAdapterImpl extends XrplCredentialAdapter {
       const signed = wallet.sign(prepared);
       const response = await client.submitAndWait(signed.tx_blob);
       return this.toTransactionEvidence(response, transactionKind, transaction.Account, issuer, subject, credentialType);
+    } finally {
+      await client.disconnect();
+    }
+  }
+
+  private async submitSignedTransaction(
+    signedTransactionBlob: string,
+    transactionKind: XrplCredentialTransactionKind,
+    account: string,
+    issuer: string | null,
+    subject: string | null,
+    credentialType: string,
+  ): Promise<XrplCredentialTransactionEvidenceResult> {
+    const client = this.createClient();
+    await client.connect();
+    try {
+      const response = await client.submitAndWait(signedTransactionBlob);
+      return this.toTransactionEvidence(response, transactionKind, account, issuer, subject, credentialType);
     } finally {
       await client.disconnect();
     }
@@ -316,11 +336,39 @@ export class Xls70CredentialAdapterImpl extends XrplCredentialAdapter {
       && (input.credentialTypeHex === null || object.credentialType === input.credentialTypeHex.toUpperCase());
   }
 
+
+  private assertSignedTransactionMatches(
+    signedTransactionBlob: string,
+    expectedTransaction: XrplCredentialAcceptTransaction | XrplCredentialDeleteTransaction,
+  ): void {
+    let decodedTransaction: Record<string, unknown>;
+    try {
+      decodedTransaction = decode(signedTransactionBlob);
+    } catch (error) {
+      throw new DomainError(ErrorCode.Common.BAD_REQUEST, {
+        fieldName: 'signedTransactionBlob',
+        reason: 'decode_failed',
+      });
+    }
+
+    for (const [key, expectedValue] of Object.entries(expectedTransaction)) {
+      if (decodedTransaction[key] !== expectedValue) {
+        throw new DomainError(ErrorCode.Common.BAD_REQUEST, {
+          fieldName: 'signedTransactionBlob',
+          reason: 'transaction_mismatch',
+          key,
+          expectedValue,
+          actualValue: decodedTransaction[key] ?? null,
+        });
+      }
+    }
+  }
+
   private createClient(): Client {
     return new Client(this.getTestnetUrl());
   }
 
-  private getNetworkName(): string {
+  getNetworkName(): string {
     return this.getTestnetUrl();
   }
 
@@ -329,12 +377,13 @@ export class Xls70CredentialAdapterImpl extends XrplCredentialAdapter {
   }
 
   private getIssuerWallet(): Wallet {
-    return Wallet.fromSeed(this.getRequiredConfig('XRP_SEED'));
+    return Wallet.fromSeed(this.getRequiredConfig('WALLET_SEED'));
   }
 
   private getSubjectWallet(): Wallet {
     return Wallet.fromSeed(this.getRequiredConfig('XRP_SUBJECT_SEED'));
   }
+
 
   private getRequiredConfig(key: string): string {
     const value = this.getConfig(key);

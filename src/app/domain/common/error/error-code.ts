@@ -153,6 +153,11 @@ export const ErrorCode = {
             500,
             'XRPL Testnet 설정이 누락되었습니다.',
         ),
+        XRPL_EVIDENCE_REQUIRED: define(
+            'CREDENTIAL_XRPL_EVIDENCE_REQUIRED',
+            409,
+            'XRPL Testnet 증적이 있는 크리덴셜에서만 수행할 수 있습니다.',
+        ),
         XRPL_TESTNET_PUBLISH_FAILED: define(
             'CREDENTIAL_XRPL_TESTNET_PUBLISH_FAILED',
             502,
