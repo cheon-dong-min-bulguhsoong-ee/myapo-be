@@ -377,7 +377,7 @@ export class Xls70CredentialAdapterImpl extends XrplCredentialAdapter {
   }
 
   private getIssuerWallet(): Wallet {
-    return Wallet.fromSeed(this.getRequiredConfig('XRP_SEED'));
+    return Wallet.fromSeed(this.getRequiredConfig('WALLET_SEED'));
   }
 
   private getSubjectWallet(): Wallet {

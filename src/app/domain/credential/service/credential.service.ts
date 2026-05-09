@@ -356,7 +356,7 @@ export class CredentialService {
 
   private getXrplCredentialAdapterOrThrow(): XrplCredentialAdapter {
     if (this.xrplCredentialAdapter === undefined) {
-      throw new DomainError(ErrorCode.Credential.XRPL_CONFIG_MISSING, { key: 'XRP_SEED' });
+      throw new DomainError(ErrorCode.Credential.XRPL_CONFIG_MISSING, { key: 'WALLET_SEED' });
     }
     return this.xrplCredentialAdapter;
   }
