@@ -14,7 +14,7 @@ import {DocumentStatus} from '../../../domain/document/enum/document-status.enum
  *   - page     : 1-based, 기본 1
  *   - limit    : 기본 20, 최대 100
  */
-export class ListDocumentReq {
+export class DocumentListReq {
     @ApiPropertyOptional({
         enum: DocumentStatus,
         description: '문서 상태 필터 — 와이어프레임 탭(progress/valid/expired/revoked/failed) 과 매핑.',
