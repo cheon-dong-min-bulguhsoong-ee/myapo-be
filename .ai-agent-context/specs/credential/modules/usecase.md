@@ -102,3 +102,32 @@
 3. **Idempotency Guard**: If already revoked, return existing result.
 4. **Revoke**: Mark status `REVOKED` and create `CredentialRevocationRecord`.
 5. **Block Submission**: Ensure future submissions are rejected.
+
+
+## 9. AcceptTestnetCredential
+- **Actor**: Authenticated User
+- **Trigger**: User or hackathon reviewer flow requests XRP Testnet `CredentialAccept` evidence for an issued credential.
+- **Scope Gate**: MVP/Testnet-only; production/mainnet finality remains out of scope.
+
+### Service Flow
+1. **Auth Context**: Use JWT `userId`.
+2. **Load Credential**: Verify the credential exists and is owned by the user.
+3. **Evidence Guard**: Reject mock credentials or credentials without Testnet issuer/subject/credentialType evidence.
+4. **Submit Accept**: Call the XLS-70 adapter `CredentialAccept` contract with `Account = Subject`, `Issuer = credential.xrplIssuerAddress`, and `CredentialType = credential.xrplCredentialType`. MVP signs with the configured subject Testnet wallet.
+5. **Persist Evidence**: Save one `CredentialXrplTransaction` row with `transactionKind = ACCEPT`.
+6. **Output**: Return transaction hash, ledger index, validation result, and object snapshot when available.
+
+## 10. DeleteTestnetCredential
+- **Actor**: Authenticated User
+- **Trigger**: User or hackathon reviewer flow requests XRP Testnet `CredentialDelete` evidence for an issued credential.
+- **Scope Gate**: MVP/Testnet-only; production/mainnet finality remains out of scope.
+
+### Service Flow
+1. **Auth Context**: Use JWT `userId`.
+2. **Load Credential**: Verify the credential exists and is owned by the user.
+3. **Evidence Guard**: Reject mock credentials or credentials without Testnet issuer/subject/credentialType evidence.
+4. **Authorize XRPL Submitter Role**: Require `submitterRole` to be `SUBJECT` or `ISSUER`. XLS-70 also allows anyone to delete after expiration, but third-party expired cleanup is outside MVP API scope.
+5. **Submit Delete**: Call the XLS-70 adapter `CredentialDelete` contract with `Account = Subject` for `SUBJECT` submitter or `Account = Issuer` for `ISSUER` submitter; include both `Subject` and `Issuer` to target the exact credential.
+6. **Persist Evidence**: Save one `CredentialXrplTransaction` row with `transactionKind = DELETE`.
+7. **Local Lifecycle**: Mark the local credential `REVOKED` and retain the transaction evidence.
+8. **Output**: Return transaction hash, ledger index, validation result, and object snapshot when available.

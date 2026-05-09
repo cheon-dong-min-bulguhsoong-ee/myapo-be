@@ -1,6 +1,6 @@
 import { DomainError } from '../../common/error/domain.error';
 import { ErrorCode } from '../../common/error/error-code';
-import { XrplCredentialAdapter } from '../contract/xrpl-credential-adapter';
+import { SubmitCredentialDeleteInput, XrplCredentialAdapter } from '../contract/xrpl-credential-adapter';
 import { XrplCredentialTransactionEvidenceResult, XrplCredentialTransactionKind } from '../dto/xrpl-credential-evidence.result';
 import { CredentialDocumentType } from '../entity/credential-document-type.entity';
 import { Credential } from '../entity/credential.entity';
@@ -9,6 +9,7 @@ import { CredentialSubmission } from '../entity/credential-submission.entity';
 import { CredentialIssueRequestStatus } from '../enum/credential-issue-request-status.enum';
 import { CredentialStatus } from '../enum/credential-status.enum';
 import { CredentialSubmissionStatus } from '../enum/credential-submission-status.enum';
+import { XrplCredentialDeleteSubmitterRole } from '../enum/xrpl-credential-delete-submitter-role.enum';
 import { IssuePipelineStage } from '../enum/issue-pipeline-stage.enum';
 import { CredentialDocumentTypeRepository } from '../repository/credential-document-type.repository';
 import {
@@ -34,6 +35,8 @@ class FakeDocumentTypeRepository extends CredentialDocumentTypeRepository {
 
 
 class FakeXrplCredentialAdapter extends XrplCredentialAdapter {
+  lastDeleteInput: SubmitCredentialDeleteInput | null = null;
+
   getIssuerAddress(): string {
     return 'rISSUER';
   }
@@ -86,7 +89,8 @@ class FakeXrplCredentialAdapter extends XrplCredentialAdapter {
     );
   }
 
-  async submitCredentialDelete(): Promise<XrplCredentialTransactionEvidenceResult> {
+  async submitCredentialDelete(input: SubmitCredentialDeleteInput): Promise<XrplCredentialTransactionEvidenceResult> {
+    this.lastDeleteInput = input;
     return new XrplCredentialTransactionEvidenceResult(
       XrplCredentialTransactionKind.DELETE,
       'wss://s.altnet.rippletest.net:51233',
@@ -95,10 +99,10 @@ class FakeXrplCredentialAdapter extends XrplCredentialAdapter {
       BigInt(125),
       true,
       '12',
-      'rISSUER',
-      'rISSUER',
-      'rSUBJECT',
-      'AA',
+      input.submitterAddress,
+      input.issuerAddress,
+      input.subjectAddress,
+      input.credentialTypeHex,
       null,
       null,
     );
@@ -408,23 +412,52 @@ describe('CredentialService', () => {
     expect(repo.xrplTransactions[1].evidence.transactionKind).toBe(XrplCredentialTransactionKind.ACCEPT);
   });
 
-  it('stores XRP Testnet CredentialDelete evidence and revokes the credential', async () => {
+  it('stores XRP Testnet CredentialDelete evidence with subject submitter and revokes the credential', async () => {
     const repo = new FakeCredentialRepository();
+    const adapter = new FakeXrplCredentialAdapter();
     const service = new CredentialService(
       repo,
       new FakeDocumentTypeRepository(documentType),
-      new FakeXrplCredentialAdapter(),
+      adapter,
     );
     await service.createIssueRequest(BigInt(1), documentType.code, null, null, 'rSUBJECT');
 
-    const evidence = await service.deleteTestnetCredential(BigInt(1), repo.credentials[0].credentialCode);
+    const evidence = await service.deleteTestnetCredential(
+      BigInt(1),
+      repo.credentials[0].credentialCode,
+      XrplCredentialDeleteSubmitterRole.SUBJECT,
+    );
 
+    expect(adapter.lastDeleteInput?.submitterAddress).toBe('rSUBJECT');
     expect(evidence.transactionKind).toBe(XrplCredentialTransactionKind.DELETE);
+    expect(evidence.account).toBe('rSUBJECT');
     expect(evidence.transactionHash).toBe('C'.repeat(64));
     expect(repo.xrplTransactions).toHaveLength(2);
     expect(repo.xrplTransactions[1].evidence.transactionKind).toBe(XrplCredentialTransactionKind.DELETE);
     expect(repo.credentials[0].status).toBe(CredentialStatus.REVOKED);
     expect(repo.credentials[0].revokedAt).not.toBeNull();
+  });
+
+  it('stores XRP Testnet CredentialDelete evidence with issuer submitter', async () => {
+    const repo = new FakeCredentialRepository();
+    const adapter = new FakeXrplCredentialAdapter();
+    const service = new CredentialService(
+      repo,
+      new FakeDocumentTypeRepository(documentType),
+      adapter,
+    );
+    await service.createIssueRequest(BigInt(1), documentType.code, null, null, 'rSUBJECT');
+
+    const evidence = await service.deleteTestnetCredential(
+      BigInt(1),
+      repo.credentials[0].credentialCode,
+      XrplCredentialDeleteSubmitterRole.ISSUER,
+    );
+
+    expect(adapter.lastDeleteInput?.submitterAddress).toBe('rISSUER');
+    expect(evidence.transactionKind).toBe(XrplCredentialTransactionKind.DELETE);
+    expect(evidence.account).toBe('rISSUER');
+    expect(repo.xrplTransactions[1].evidence.transactionKind).toBe(XrplCredentialTransactionKind.DELETE);
   });
 
   it('blocks Testnet accept for mock fallback credentials', async () => {

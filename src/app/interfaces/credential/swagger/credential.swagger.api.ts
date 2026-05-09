@@ -1,9 +1,11 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ApiCommonRes } from '../../common/api-common-res.decorator';
+import { DeleteTestnetCredentialReq } from '../req/delete-testnet-credential.req';
 import { CreateCredentialIssueRequestRes, CredentialIssueRequestRes } from '../res/credential-issue-request.res';
 import { CredentialDetailRes, ListCredentialsRes } from '../res/credential.res';
 import { ListCredentialSubmissionsRes, SubmitCredentialRes } from '../res/credential-submission.res';
+import { XrplCredentialEvidenceRes } from '../res/xrpl-credential-evidence.res';
 
 export const CredentialApiTags = (): ClassDecorator => ApiTags('Credentials');
 
@@ -38,3 +40,13 @@ export const SubmitCredentialSwaggerApi = (): MethodDecorator =>
 
 export const ListCredentialSubmissionsSwaggerApi = (): MethodDecorator =>
   withBearer(applyDecorators(ApiOperation({ summary: '내 크리덴셜 제출 이력 조회' }), ApiCommonRes(ListCredentialSubmissionsRes)));
+
+export const AcceptTestnetCredentialSwaggerApi = (): MethodDecorator =>
+  withBearer(applyDecorators(ApiOperation({ summary: 'XRP Testnet CredentialAccept 실행' }), ApiCommonRes(XrplCredentialEvidenceRes)));
+
+export const DeleteTestnetCredentialSwaggerApi = (): MethodDecorator =>
+  withBearer(applyDecorators(
+    ApiOperation({ summary: 'XRP Testnet CredentialDelete 실행' }),
+    ApiBody({ type: DeleteTestnetCredentialReq }),
+    ApiCommonRes(XrplCredentialEvidenceRes),
+  ));

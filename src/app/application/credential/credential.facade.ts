@@ -3,10 +3,12 @@ import { CredentialService } from '../../domain/credential/service/credential.se
 import { CredentialStatus } from '../../domain/credential/enum/credential-status.enum';
 import { UserService } from '../../domain/user/service/user.service';
 import { CreateCredentialIssueRequestReq } from '../../interfaces/credential/req/create-credential-issue-request.req';
+import { DeleteTestnetCredentialReq } from '../../interfaces/credential/req/delete-testnet-credential.req';
 import { SubmitCredentialReq } from '../../interfaces/credential/req/submit-credential.req';
 import { CreateCredentialIssueRequestRes, CredentialIssueRequestRes } from '../../interfaces/credential/res/credential-issue-request.res';
 import { CredentialDetailRes, ListCredentialsRes } from '../../interfaces/credential/res/credential.res';
 import { ListCredentialSubmissionsRes, SubmitCredentialRes } from '../../interfaces/credential/res/credential-submission.res';
+import { XrplCredentialEvidenceRes } from '../../interfaces/credential/res/xrpl-credential-evidence.res';
 
 @Injectable()
 export class CredentialFacade {
@@ -63,5 +65,19 @@ export class CredentialFacade {
   async listSubmissions(userId: bigint, credentialId?: string): Promise<ListCredentialSubmissionsRes> {
     const result = await this.credentialService.listSubmissions(userId, credentialId);
     return ListCredentialSubmissionsRes.from(result);
+  }
+
+  async acceptTestnetCredential(userId: bigint, credentialId: string): Promise<XrplCredentialEvidenceRes> {
+    const result = await this.credentialService.acceptTestnetCredential(userId, credentialId);
+    return XrplCredentialEvidenceRes.from(result);
+  }
+
+  async deleteTestnetCredential(
+    userId: bigint,
+    credentialId: string,
+    req: DeleteTestnetCredentialReq,
+  ): Promise<XrplCredentialEvidenceRes> {
+    const result = await this.credentialService.deleteTestnetCredential(userId, credentialId, req.submitterRole);
+    return XrplCredentialEvidenceRes.from(result);
   }
 }

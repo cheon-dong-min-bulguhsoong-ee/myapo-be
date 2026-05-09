@@ -19,6 +19,7 @@ import { CredentialSubmission } from '../entity/credential-submission.entity';
 import { CredentialIssueRequestStatus } from '../enum/credential-issue-request-status.enum';
 import { CredentialStatus } from '../enum/credential-status.enum';
 import { CredentialSubmissionStatus } from '../enum/credential-submission-status.enum';
+import { XrplCredentialDeleteSubmitterRole } from '../enum/xrpl-credential-delete-submitter-role.enum';
 import {
   issuePipelineStageLabels,
   issuePipelineStages,
@@ -228,13 +229,16 @@ export class CredentialService {
   async deleteTestnetCredential(
     userId: bigint,
     credentialId: string,
+    submitterRole: XrplCredentialDeleteSubmitterRole,
   ): Promise<XrplCredentialTransactionEvidenceResult> {
     const credential = await this.loadOwnedCredential(userId, credentialId);
     this.assertTestnetCredentialEvidenceAvailable(credential);
     const xrplCredentialAdapter = this.getXrplCredentialAdapterOrThrow();
 
     const evidence = await xrplCredentialAdapter.submitCredentialDelete({
-      submitterAddress: credential.xrplIssuerAddress,
+      submitterAddress: submitterRole === XrplCredentialDeleteSubmitterRole.SUBJECT
+        ? credential.xrplSubjectAddress
+        : credential.xrplIssuerAddress,
       subjectAddress: credential.xrplSubjectAddress,
       issuerAddress: credential.xrplIssuerAddress,
       credentialTypeHex: credential.xrplCredentialType,

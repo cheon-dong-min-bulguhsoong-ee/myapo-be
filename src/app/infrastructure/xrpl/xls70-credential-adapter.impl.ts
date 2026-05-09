@@ -145,7 +145,7 @@ export class Xls70CredentialAdapterImpl extends XrplCredentialAdapter {
     const transaction = this.buildCredentialDeleteTransaction(input);
     return this.submitTransaction(
       transaction,
-      this.getIssuerWallet(),
+      this.getDeleteSubmitterWallet(transaction.Account),
       XrplCredentialTransactionKind.DELETE,
       transaction.Issuer ?? null,
       transaction.Subject ?? null,
@@ -334,6 +334,23 @@ export class Xls70CredentialAdapterImpl extends XrplCredentialAdapter {
 
   private getSubjectWallet(): Wallet {
     return Wallet.fromSeed(this.getRequiredConfig('XRP_SUBJECT_SEED'));
+  }
+
+  private getDeleteSubmitterWallet(submitterAddress: string): Wallet {
+    const issuerWallet = this.getIssuerWallet();
+    if (issuerWallet.address === submitterAddress) {
+      return issuerWallet;
+    }
+
+    const subjectWallet = this.getSubjectWallet();
+    if (subjectWallet.address === submitterAddress) {
+      return subjectWallet;
+    }
+
+    throw new DomainError(ErrorCode.Credential.XRPL_ACCOUNT_INVALID, {
+      fieldName: 'submitterAddress',
+      reason: 'configured_wallet_mismatch',
+    });
   }
 
   private getRequiredConfig(key: string): string {

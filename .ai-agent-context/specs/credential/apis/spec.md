@@ -234,7 +234,87 @@ paths:
                 $ref: '#/components/schemas/CommonResListCredentialSubmissionsRes'
 ```
 
-### 3.7. Reissue Credential
+### 3.7. Accept Testnet Credential
+- **Method**: `POST`
+- **Path**: `/api/v1/credentials/{credentialId}/xrpl/accept`
+- **Source Level**: Hackathon Decision + XLS-70 Reference
+- **Description**: Submits XRP Testnet `CredentialAccept` evidence for a user-owned Testnet credential. XLS-70 requires `Account` to be the credential `Subject`; MVP signs with the configured subject Testnet wallet until user wallet signing is integrated. This endpoint is MVP/Testnet-only and must not claim production/mainnet finality.
+
+```yaml
+paths:
+  /api/v1/credentials/{credentialId}/xrpl/accept:
+    post:
+      summary: Accept XRP Testnet credential
+      operationId: acceptTestnetCredential
+      security:
+        - InternalJwtBearer: []
+      parameters:
+        - in: path
+          name: credentialId
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Testnet CredentialAccept evidence stored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonResXrplCredentialEvidenceRes'
+        '401':
+          description: Unauthorized Internal JWT
+        '403':
+          description: Owner mismatch
+        '404':
+          description: Credential not found
+        '409':
+          description: Credential has no Testnet evidence or cannot be accepted
+```
+
+### 3.8. Delete Testnet Credential
+- **Method**: `POST`
+- **Path**: `/api/v1/credentials/{credentialId}/xrpl/delete`
+- **Source Level**: Hackathon Decision + XLS-70 Reference
+- **Description**: Submits XRP Testnet `CredentialDelete` evidence for a user-owned Testnet credential and marks the local credential `REVOKED`. XLS-70 allows the credential `Subject` or `Issuer` to delete the credential at any time; anyone can delete only after expiration. MVP exposes only `SUBJECT` and `ISSUER` submitter roles and excludes third-party expired cleanup until product policy is approved. This endpoint is MVP/Testnet-only and must not claim production/mainnet finality.
+
+```yaml
+paths:
+  /api/v1/credentials/{credentialId}/xrpl/delete:
+    post:
+      summary: Delete XRP Testnet credential
+      operationId: deleteTestnetCredential
+      security:
+        - InternalJwtBearer: []
+      parameters:
+        - in: path
+          name: credentialId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteTestnetCredentialReq'
+      responses:
+        '201':
+          description: Testnet CredentialDelete evidence stored and local credential revoked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonResXrplCredentialEvidenceRes'
+        '401':
+          description: Unauthorized Internal JWT
+        '403':
+          description: Owner mismatch
+        '404':
+          description: Credential not found
+        '409':
+          description: Credential has no Testnet evidence or cannot be deleted
+```
+
+### 3.9. Reissue Credential
 - **Method**: `POST`
 - **Path**: `/api/v1/credentials/{credentialId}/reissue`
 - **Source Level**: Reference Evidence
@@ -409,6 +489,14 @@ components:
           type: string
           nullable: true
           description: Auth-owned event id for institution_submit trigger, when available.
+    DeleteTestnetCredentialReq:
+      type: object
+      required: [submitterRole]
+      properties:
+        submitterRole:
+          type: string
+          enum: [SUBJECT, ISSUER]
+          description: XLS-70 CredentialDelete submitter. SUBJECT signs as the credential holder; ISSUER signs as the credential issuer. Third-party expired deletion is an XLS-70 capability but is outside MVP API scope.
     SubmitCredentialRes:
       type: object
       properties:
@@ -434,6 +522,43 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CredentialSubmissionItem'
+
+    XrplCredentialEvidenceRes:
+      type: object
+      properties:
+        transactionKind:
+          type: string
+          enum: [CREATE, ACCEPT, DELETE]
+        network:
+          type: string
+        transactionHash:
+          type: string
+        engineResult:
+          type: string
+        ledgerIndex:
+          type: string
+          nullable: true
+        validated:
+          type: boolean
+        feeDrops:
+          type: string
+          nullable: true
+        account:
+          type: string
+        issuer:
+          type: string
+          nullable: true
+        subject:
+          type: string
+          nullable: true
+        credentialType:
+          type: string
+        flags:
+          type: integer
+          nullable: true
+        objectSnapshot:
+          type: object
+          nullable: true
     CredentialSubmissionItem:
       type: object
       properties:
@@ -469,6 +594,7 @@ components:
 | `CREDENTIAL_REVOKED` | 409 | Credential was revoked. |
 | `CREDENTIAL_NOT_SUBMITTABLE` | 409 | Credential status is failed or otherwise not valid. |
 | `CREDENTIAL_ALREADY_SUBMITTED` | 409 | Duplicate submission for same institution request. |
+| `CREDENTIAL_XRPL_EVIDENCE_REQUIRED` | 409 | Testnet Accept/Delete requested for mock or non-XRPL credential. |
 | `ISSUE_REQUEST_NOT_FOUND` | 404 | Issue request id does not exist. |
 | `ISSUE_REQUEST_NOT_ADVANCEABLE` | 409 | Issue request cannot advance in current state. |
 | `INSTITUTION_SUBMISSION_REQUEST_NOT_FOUND` | 404 | No matching institution request exists. |

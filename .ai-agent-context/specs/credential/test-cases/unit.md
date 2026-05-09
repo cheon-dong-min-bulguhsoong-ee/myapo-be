@@ -107,3 +107,30 @@
 - **Input**: Credential issue/submission action
 - **Expected Outcome**: No access token or session token is persisted in Credential objects
 - **Logic**: ADR-002 prohibits server-side JWT session storage.
+
+
+## 5. XRPL Testnet Evidence API Tests
+
+### Scenario: Accept Testnet credential stores ACCEPT evidence
+- **Target**: `CredentialService.acceptTestnetCredential(...)` / public accept endpoint
+- **Input**: User-owned credential with Testnet issuer, subject, and credentialType evidence
+- **Expected Outcome**: One `CredentialXrplTransaction` is stored with `transactionKind = ACCEPT`; XRPL payload uses `Account = Subject`; response returns tx hash, ledger index, validation result, and snapshot when available
+- **Logic**: XLS-70 `CredentialAccept` is subject-owned acceptance and hackathon review requires auditable Testnet evidence.
+
+### Scenario: Delete Testnet credential stores DELETE evidence and revokes locally
+- **Target**: `CredentialService.deleteTestnetCredential(...)` / public delete endpoint
+- **Input**: User-owned credential with Testnet issuer, subject, credentialType evidence, and `submitterRole = SUBJECT`
+- **Expected Outcome**: One `CredentialXrplTransaction` is stored with `transactionKind = DELETE`; XRPL payload uses `Account = Subject`; local credential status becomes `REVOKED`
+- **Logic**: XLS-70 lets the subject delete its credential and future submissions must be blocked.
+
+### Scenario: Delete Testnet credential can be submitted by issuer
+- **Target**: `CredentialService.deleteTestnetCredential(...)` / public delete endpoint
+- **Input**: User-owned credential with Testnet issuer, subject, credentialType evidence, and `submitterRole = ISSUER`
+- **Expected Outcome**: One `CredentialXrplTransaction` is stored with `transactionKind = DELETE`; XRPL payload uses `Account = Issuer`; local credential status becomes `REVOKED`
+- **Logic**: XLS-70 lets the issuer delete the credential it issued.
+
+### Scenario: Mock credential cannot be accepted or deleted as Testnet evidence
+- **Target**: `CredentialService.acceptTestnetCredential(...)`, `CredentialService.deleteTestnetCredential(...)`
+- **Input**: MVP fallback credential with `isMock = true` or missing Testnet evidence fields
+- **Expected Outcome**: Throws `CREDENTIAL_XRPL_EVIDENCE_REQUIRED`
+- **Logic**: Mock fallback must not be confused with validated Testnet evidence.

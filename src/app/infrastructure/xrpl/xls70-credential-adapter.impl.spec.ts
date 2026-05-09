@@ -52,6 +52,21 @@ describe('Xls70CredentialAdapterImpl', () => {
     });
   });
 
+  it('builds an XLS-70 CredentialDelete transaction payload with subject as submitter', () => {
+    expect(adapter.buildCredentialDeleteTransaction({
+      submitterAddress: 'rALICE',
+      subjectAddress: 'rALICE',
+      issuerAddress: 'rISABEL',
+      credentialTypeHex: '4B5943',
+    })).toEqual({
+      TransactionType: 'CredentialDelete',
+      Account: 'rALICE',
+      Subject: 'rALICE',
+      Issuer: 'rISABEL',
+      CredentialType: '4B5943',
+    });
+  });
+
   it('rejects CredentialDelete without a subject or issuer target', () => {
     expect(() => adapter.buildCredentialDeleteTransaction({
       submitterAddress: 'rISABEL',

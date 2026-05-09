@@ -5,13 +5,17 @@ import { JwtAuthGuard } from '../../../infrastructure/auth/guards/jwt-auth.guard
 import { CommonRes } from '../../common/common-res';
 import { CurrentUserId } from '../../user/auth/current-user-id.decorator';
 import { CreateCredentialIssueRequestReq } from '../req/create-credential-issue-request.req';
+import { DeleteTestnetCredentialReq } from '../req/delete-testnet-credential.req';
 import { SubmitCredentialReq } from '../req/submit-credential.req';
 import { CreateCredentialIssueRequestRes, CredentialIssueRequestRes } from '../res/credential-issue-request.res';
 import { CredentialDetailRes, ListCredentialsRes } from '../res/credential.res';
 import { ListCredentialSubmissionsRes, SubmitCredentialRes } from '../res/credential-submission.res';
+import { XrplCredentialEvidenceRes } from '../res/xrpl-credential-evidence.res';
 import {
+  AcceptTestnetCredentialSwaggerApi,
   CreateCredentialIssueRequestSwaggerApi,
   CredentialApiTags,
+  DeleteTestnetCredentialSwaggerApi,
   GetCredentialDetailSwaggerApi,
   GetCredentialIssueRequestSwaggerApi,
   ListCredentialsSwaggerApi,
@@ -72,6 +76,27 @@ export class CredentialController {
     @Param('credentialId') credentialId: string,
   ): Promise<CommonRes<CredentialDetailRes>> {
     const response = await this.credentialFacade.getCredentialDetail(userId, credentialId);
+    return CommonRes.success(response);
+  }
+
+  @Post('credentials/:credentialId/xrpl/accept')
+  @AcceptTestnetCredentialSwaggerApi()
+  async acceptTestnetCredential(
+    @CurrentUserId() userId: bigint,
+    @Param('credentialId') credentialId: string,
+  ): Promise<CommonRes<XrplCredentialEvidenceRes>> {
+    const response = await this.credentialFacade.acceptTestnetCredential(userId, credentialId);
+    return CommonRes.success(response);
+  }
+
+  @Post('credentials/:credentialId/xrpl/delete')
+  @DeleteTestnetCredentialSwaggerApi()
+  async deleteTestnetCredential(
+    @CurrentUserId() userId: bigint,
+    @Param('credentialId') credentialId: string,
+    @Body() request: DeleteTestnetCredentialReq,
+  ): Promise<CommonRes<XrplCredentialEvidenceRes>> {
+    const response = await this.credentialFacade.deleteTestnetCredential(userId, credentialId, request);
     return CommonRes.success(response);
   }
 
