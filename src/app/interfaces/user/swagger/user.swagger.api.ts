@@ -1,9 +1,10 @@
 import { applyDecorators } from "@nestjs/common";
-import { ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { ApiCommonRes } from "../../common/api-common-res.decorator";
 import { RegisterUserRes, UserRes } from "../res/user.res";
 
-export const UserApiTags = (): ClassDecorator => ApiTags("Users");
+export const UserApiTags = (): ClassDecorator =>
+  applyDecorators(ApiTags("Users"), ApiBearerAuth("InternalJwtBearer"));
 
 export const RegisterUserSwaggerApi = (): MethodDecorator =>
   applyDecorators(
@@ -13,6 +14,7 @@ export const RegisterUserSwaggerApi = (): MethodDecorator =>
         "Web3Auth 인증 후 사용자 정보를 등록하거나 탈퇴한 계정을 복구합니다. " +
         "성공 시 MyApo 자체 Access Token(JWT)을 반환합니다.",
     }),
+    ApiBearerAuth("ExternalJwtBearer"), // Override global InternalJwtBearer
     ApiCommonRes(RegisterUserRes),
   );
 

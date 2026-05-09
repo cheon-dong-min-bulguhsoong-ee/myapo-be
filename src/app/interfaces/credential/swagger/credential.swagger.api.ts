@@ -13,7 +13,7 @@ import { XrplCredentialTransactionRes } from '../res/xrpl-credential-transaction
 export const CredentialApiTags = (): ClassDecorator => ApiTags('Credentials');
 
 const withBearer = <T extends MethodDecorator>(decorator: T): MethodDecorator =>
-  applyDecorators(ApiBearerAuth(), decorator);
+  applyDecorators(ApiBearerAuth('InternalJwtBearer'), decorator);
 
 export const CreateCredentialIssueRequestSwaggerApi = (): MethodDecorator =>
   withBearer(
