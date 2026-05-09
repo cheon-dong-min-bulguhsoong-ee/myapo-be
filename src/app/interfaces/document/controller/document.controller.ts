@@ -1,6 +1,5 @@
-import {Body, Controller, Get, Param, Post, Query, Req, StreamableFile, UploadedFile, UseGuards, UseInterceptors} from '@nestjs/common';
+import {Body, Controller, Get, Param, Post, Query, StreamableFile, UploadedFile, UseGuards, UseInterceptors} from '@nestjs/common';
 import {FileInterceptor} from '@nestjs/platform-express';
-import {Request} from 'express';
 import {DocumentFacade} from '../../../application/document/document.facade';
 import {DocumentFileService} from '../../../domain/document/service/document-file.service';
 import {JwtAuthGuard} from '../../../infrastructure/auth/guards/jwt-auth.guard';
@@ -11,6 +10,7 @@ import {ApproveDocumentReq} from '../req/approve-document.req';
 import {CreateDocumentReq} from '../req/create-document.req';
 import {DocumentListReq} from '../req/document-list.req';
 import {UploadEncryptedPdfReq} from '../req/upload-encrypted-pdf.req';
+import {UploadFileReq} from '../req/upload-file.req';
 import {AdvanceDocumentStageRes} from '../res/advance-document-stage.res';
 import {ApproveDocumentRes} from '../res/approve-document.res';
 import {CreateDocumentRes} from '../res/create-document.res';
@@ -80,43 +80,45 @@ export class DocumentController {
     }
 
     /**
-     * 일반 파일 업로드 — multipart/form-data 의 `file` 필드 1개를 받는다.
+     * 일반 파일 업로드 — `file` + `stage`. userPk 는 JWT 에서.
      */
     @Post('files/upload')
     @UseInterceptors(FileInterceptor('file', {limits: {fileSize: DocumentFileService.MAX_FILE_BYTES}}))
     @UploadDocumentFileSwaggerApi()
     async uploadFile(
+        @CurrentUserId() userId: bigint,
         @UploadedFile() file: Express.Multer.File,
+        @Body() request: UploadFileReq,
     ): Promise<CommonRes<UploadFileRes>> {
-        const response = await this.documentFacade.uploadFile(file);
+        const response = await this.documentFacade.uploadFile(file, request, userId);
         return CommonRes.success(response);
     }
 
     /**
-     * PDF 암호화 업로드 — `file` + `userPassword`(필수) + `ownerPassword`(옵션).
+     * PDF 암호화 업로드 — `file` + `stage` + `userPassword`. userPk 는 JWT 에서.
      */
     @Post('files/upload-encrypted')
     @UseInterceptors(FileInterceptor('file', {limits: {fileSize: DocumentFileService.MAX_FILE_BYTES}}))
     @UploadEncryptedPdfSwaggerApi()
     async uploadEncryptedPdf(
+        @CurrentUserId() userId: bigint,
         @UploadedFile() file: Express.Multer.File,
         @Body() request: UploadEncryptedPdfReq,
     ): Promise<CommonRes<UploadFileRes>> {
-        const response = await this.documentFacade.uploadEncryptedPdf(file, request);
+        const response = await this.documentFacade.uploadEncryptedPdf(file, request, userId);
         return CommonRes.success(response);
     }
 
     /**
-     * 파일 다운로드 프록시 — wildcard 라우트.
+     * 파일 다운로드 프록시.
      *
-     * 업로드 응답의 `downloadUri` (`/api/v1/documents/files/documents/2026/05/<uuid>.pdf`)
-     * 를 그대로 GET 호출하면 됨. URL 인코딩 / 디코딩 신경 쓸 일 없음.
-     * Express 4 wildcard 캡처는 `req.params[0]` 로 들어온다.
+     * 라우트는 `files/:fileKey(.*)` — `(.*)` 정규식이 슬래시까지 캡처해
+     * `documents/<STAGE>/<userPk>/<uuid>.pdf` 같은 multi-segment key 를 한 번에 받는다.
+     * 업로드 응답의 `downloadUri` 그대로 GET 호출하면 됨.
      */
-    @Get('files/*')
+    @Get('files/:fileKey(.*)')
     @DownloadDocumentFileSwaggerApi()
-    async download(@Req() req: Request): Promise<StreamableFile> {
-        const fileKey = (req.params as Record<string, string>)['0'] ?? '';
+    async download(@Param('fileKey') fileKey: string): Promise<StreamableFile> {
         return this.documentFacade.downloadFile(fileKey);
     }
 
