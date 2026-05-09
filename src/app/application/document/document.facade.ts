@@ -4,9 +4,12 @@ import {UserService} from '../../domain/user/service/user.service';
 import {AdvanceDocumentStageReq} from '../../interfaces/document/req/advance-document-stage.req';
 import {ApproveDocumentReq} from '../../interfaces/document/req/approve-document.req';
 import {CreateDocumentReq} from '../../interfaces/document/req/create-document.req';
+import {ListDocumentReq} from '../../interfaces/document/req/list-document.req';
 import {AdvanceDocumentStageRes} from '../../interfaces/document/res/advance-document-stage.res';
 import {ApproveDocumentRes} from '../../interfaces/document/res/approve-document.res';
 import {CreateDocumentRes} from '../../interfaces/document/res/create-document.res';
+import {DocumentDetailRes} from '../../interfaces/document/res/document-detail.res';
+import {DocumentListRes} from '../../interfaces/document/res/document-list.res';
 
 /**
  * 문서 도메인 Facade — 컨텍스트의 모든 유스케이스 메서드를 모은다.
@@ -63,5 +66,39 @@ export class DocumentFacade {
             request.documentCode,
         );
         return AdvanceDocumentStageRes.from(result);
+    }
+
+    /**
+     * 문서 관리 페이지 리스트.
+     *
+     * 콘솔(운영자) 뷰 — 본인 소유 필터 없이 전체 조회.
+     * 임시 인증 단계에서는 X-User-Id 가 활성 사용자인지만 검증한다 (RBAC 도입 시 교체).
+     */
+    async findList(
+        request: ListDocumentReq,
+        userId: bigint,
+    ): Promise<DocumentListRes> {
+        await this.userService.getActive(userId);
+        const result = await this.documentService.findList({
+            status: request.status,
+            documentTypeCode: request.documentTypeCode,
+            countryCode: request.countryCode,
+            q: request.q,
+            page: request.page ?? 1,
+            limit: request.limit ?? 20,
+        });
+        return DocumentListRes.from(result);
+    }
+
+    /**
+     * 문서 관리 행 펼침 상세.
+     */
+    async findDetail(
+        documentCode: string,
+        userId: bigint,
+    ): Promise<DocumentDetailRes> {
+        await this.userService.getActive(userId);
+        const result = await this.documentService.findDetail(documentCode);
+        return DocumentDetailRes.from(result);
     }
 }
