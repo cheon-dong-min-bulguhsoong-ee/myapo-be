@@ -205,6 +205,51 @@ export class CredentialService {
     return new ListCredentialSubmissionsResult(submissions.map((submission) => this.toSubmissionItemResult(submission)));
   }
 
+  async acceptTestnetCredential(
+    userId: bigint,
+    credentialId: string,
+  ): Promise<XrplCredentialTransactionEvidenceResult> {
+    const credential = await this.loadOwnedCredential(userId, credentialId);
+    this.assertTestnetCredentialEvidenceAvailable(credential);
+    const xrplCredentialAdapter = this.getXrplCredentialAdapterOrThrow();
+
+    const evidence = await xrplCredentialAdapter.submitCredentialAccept({
+      subjectAddress: credential.xrplSubjectAddress,
+      issuerAddress: credential.xrplIssuerAddress,
+      credentialTypeHex: credential.xrplCredentialType,
+    });
+    await this.credentialRepository.createXrplTransaction({
+      credentialId: credential.id,
+      evidence,
+    });
+    return evidence;
+  }
+
+  async deleteTestnetCredential(
+    userId: bigint,
+    credentialId: string,
+  ): Promise<XrplCredentialTransactionEvidenceResult> {
+    const credential = await this.loadOwnedCredential(userId, credentialId);
+    this.assertTestnetCredentialEvidenceAvailable(credential);
+    const xrplCredentialAdapter = this.getXrplCredentialAdapterOrThrow();
+
+    const evidence = await xrplCredentialAdapter.submitCredentialDelete({
+      submitterAddress: credential.xrplIssuerAddress,
+      subjectAddress: credential.xrplSubjectAddress,
+      issuerAddress: credential.xrplIssuerAddress,
+      credentialTypeHex: credential.xrplCredentialType,
+    });
+    await this.credentialRepository.createXrplTransaction({
+      credentialId: credential.id,
+      evidence,
+    });
+    await this.credentialRepository.markCredentialRevoked({
+      credentialId: credential.id,
+      revokedAt: new Date(),
+      failureReason: null,
+    });
+    return evidence;
+  }
 
   private async publishTestnetCredentialEvidence(
     subjectAddress: string,
@@ -248,6 +293,32 @@ export class CredentialService {
       return error.message;
     }
     return 'UNKNOWN_CREDENTIAL_ISSUE_FAILURE';
+  }
+
+  private getXrplCredentialAdapterOrThrow(): XrplCredentialAdapter {
+    if (this.xrplCredentialAdapter === undefined) {
+      throw new DomainError(ErrorCode.Credential.XRPL_CONFIG_MISSING, { key: 'XRP_SEED' });
+    }
+    return this.xrplCredentialAdapter;
+  }
+
+  private assertTestnetCredentialEvidenceAvailable(
+    credential: Credential,
+  ): asserts credential is Credential & {
+    xrplIssuerAddress: string;
+    xrplSubjectAddress: string;
+    xrplCredentialType: string;
+  } {
+    if (
+      credential.isMock
+      || credential.xrplIssuerAddress === null
+      || credential.xrplSubjectAddress === null
+      || credential.xrplCredentialType === null
+    ) {
+      throw new DomainError(ErrorCode.Credential.XRPL_EVIDENCE_REQUIRED, {
+        credentialId: credential.credentialCode,
+      });
+    }
   }
 
   private async loadOwnedIssueRequest(userId: bigint, issueRequestCode: string): Promise<CredentialIssueRequest> {

@@ -51,6 +51,12 @@ export interface MarkCredentialIssueRequestFailedInput {
   failureReason: string;
 }
 
+export interface MarkCredentialRevokedInput {
+  credentialId: bigint;
+  revokedAt: Date;
+  failureReason: string | null;
+}
+
 export interface CreateCredentialXrplTransactionInput {
   credentialId: bigint;
   evidence: XrplCredentialTransactionEvidenceResult;
@@ -75,6 +81,7 @@ export abstract class CredentialRepository {
   abstract findIssueRequestByCode(issueRequestCode: string): Promise<CredentialIssueRequest | null>;
   abstract findCredentialByIssueRequestId(issueRequestId: bigint): Promise<Credential | null>;
   abstract createCredential(input: CreateCredentialInput): Promise<Credential>;
+  abstract markCredentialRevoked(input: MarkCredentialRevokedInput): Promise<Credential>;
   abstract createXrplTransaction(input: CreateCredentialXrplTransactionInput): Promise<void>;
   abstract findCredentialByCode(credentialCode: string): Promise<Credential | null>;
   abstract listCredentialsByUserId(userId: bigint, status?: CredentialStatus): Promise<Credential[]>;
