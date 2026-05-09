@@ -7,6 +7,7 @@ import {ApproveDocumentReq} from '../../interfaces/document/req/approve-document
 import {CreateDocumentReq} from '../../interfaces/document/req/create-document.req';
 import {DocumentListReq} from '../../interfaces/document/req/document-list.req';
 import {UploadEncryptedPdfReq} from '../../interfaces/document/req/upload-encrypted-pdf.req';
+import {UploadFileReq} from '../../interfaces/document/req/upload-file.req';
 import {AdvanceDocumentStageRes} from '../../interfaces/document/res/advance-document-stage.res';
 import {ApproveDocumentRes} from '../../interfaces/document/res/approve-document.res';
 import {CreateDocumentRes} from '../../interfaces/document/res/create-document.res';
@@ -36,28 +37,39 @@ export class DocumentFacade {
 
     /**
      * 일반 파일 업로드 — 객체 스토리지에 평문으로 저장.
+     * 키 형식: `documents/<STAGE>/<userPk>/<UUID>.<ext>`
      */
-    async uploadFile(file: Express.Multer.File | undefined): Promise<UploadFileRes> {
+    async uploadFile(
+        file: Express.Multer.File | undefined,
+        request: UploadFileReq,
+        userId: bigint,
+    ): Promise<UploadFileRes> {
         const result = await this.documentFileService.uploadPlain({
             body: file?.buffer ?? Buffer.alloc(0),
             originalFileName: file?.originalname ?? '',
             contentType: file?.mimetype ?? 'application/octet-stream',
+            stage: request.stage,
+            userPk: userId,
         });
         return UploadFileRes.from(result);
     }
 
     /**
      * PDF 암호화 업로드 — open-password 부착 후 저장.
+     * 키 형식: `documents/<STAGE>/<userPk>/<UUID>.pdf`
      */
     async uploadEncryptedPdf(
         file: Express.Multer.File | undefined,
         request: UploadEncryptedPdfReq,
+        userId: bigint,
     ): Promise<UploadFileRes> {
         const result = await this.documentFileService.uploadEncryptedPdf({
             body: file?.buffer ?? Buffer.alloc(0),
             originalFileName: file?.originalname ?? '',
             contentType: file?.mimetype ?? 'application/pdf',
             userPassword: request.userPassword,
+            stage: request.stage,
+            userPk: userId,
         });
         return UploadFileRes.from(result);
     }

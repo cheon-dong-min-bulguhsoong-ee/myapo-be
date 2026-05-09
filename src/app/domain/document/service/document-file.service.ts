@@ -6,6 +6,7 @@ import {ErrorCode} from '../../common/error/error-code';
 import {FileStorage} from '../contract/file-storage';
 import {PdfEncryptor} from '../contract/pdf-encryptor';
 import {UploadFileResult} from '../dto/upload-file.result';
+import {DocumentStage} from '../enum/document-stage.enum';
 
 /**
  * 문서 첨부 파일 도메인 서비스.
@@ -35,14 +36,18 @@ export class DocumentFileService {
         this.assertFileExists(input);
 
         const safeOriginalName = this.sanitizeOriginalName(input.originalFileName);
-        const key = this.buildObjectKey(safeOriginalName);
+        const key = this.buildObjectKey(input.stage, input.userPk, safeOriginalName);
 
         const stored = await this.fileStorage.upload({
             key,
             body: input.body,
             contentType: input.contentType,
             contentDisposition: this.toContentDisposition(safeOriginalName),
-            metadata: {'original-filename': encodeURIComponent(safeOriginalName)},
+            metadata: {
+                'original-filename': encodeURIComponent(safeOriginalName),
+                stage: input.stage,
+                'user-pk': input.userPk.toString(),
+            },
         });
 
         return new UploadFileResult(
@@ -67,7 +72,7 @@ export class DocumentFileService {
             userPassword: input.userPassword,
         });
 
-        const key = this.buildObjectKey(safeOriginalName);
+        const key = this.buildObjectKey(input.stage, input.userPk, safeOriginalName);
         const stored = await this.fileStorage.upload({
             key,
             body: encryptedBuffer,
@@ -76,6 +81,8 @@ export class DocumentFileService {
             metadata: {
                 'original-filename': encodeURIComponent(safeOriginalName),
                 encryption: 'pdf-password',
+                stage: input.stage,
+                'user-pk': input.userPk.toString(),
             },
         });
 
@@ -148,12 +155,11 @@ export class DocumentFileService {
         return cleaned.length === 0 ? 'file' : cleaned;
     }
 
-    private buildObjectKey(originalFileName: string): string {
-        const now = new Date();
-        const yyyy = now.getUTCFullYear();
-        const mm = String(now.getUTCMonth() + 1).padStart(2, '0');
+    private buildObjectKey(stage: DocumentStage, userPk: bigint, originalFileName: string): string {
+        // 와이어프레임 폴더 규약: documents/<STAGE>/<userPk>/<UUID>.<ext>
+        // 같은 사용자가 동일 stage 에 여러 번 올려도 UUID 로 충돌 방지.
         const ext = this.extractExtension(originalFileName);
-        return `${DocumentFileService.KEY_PREFIX}/${yyyy}/${mm}/${randomUUID()}${ext}`;
+        return `${DocumentFileService.KEY_PREFIX}/${stage}/${userPk.toString()}/${randomUUID()}${ext}`;
     }
 
     private extractExtension(name: string): string {
@@ -178,6 +184,8 @@ export interface UploadPlainInput {
     readonly body: Buffer;
     readonly originalFileName: string;
     readonly contentType: string;
+    readonly stage: DocumentStage;
+    readonly userPk: bigint;
 }
 
 export interface UploadEncryptedPdfInput extends UploadPlainInput {
