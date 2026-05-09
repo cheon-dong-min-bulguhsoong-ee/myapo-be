@@ -4,12 +4,15 @@ import { XrplCredentialAdapter } from '../domain/credential/contract/xrpl-creden
 import { CredentialDocumentTypeRepository } from '../domain/credential/repository/credential-document-type.repository';
 import { CredentialRepository } from '../domain/credential/repository/credential.repository';
 import { DisputeRepository } from "../domain/dispute/repository/dispute.repository";
+import { FileStorage } from "../domain/document/contract/file-storage";
+import { PdfEncryptor } from "../domain/document/contract/pdf-encryptor";
 import { DocumentApprovalRepository } from "../domain/document/repository/document-approval.repository";
 import { DocumentStageRepository } from "../domain/document/repository/document-stage.repository";
 import { DocumentTypeRepository } from "../domain/document/repository/document-type.repository";
 import { DocumentRepository } from "../domain/document/repository/document.repository";
 import { UserRepository } from "../domain/user/repository/user.repository";
 import { TokenProviderImpl } from "./auth/token/token-provider.impl";
+import { QpdfPdfEncryptorAdapter } from "./pdf/qpdf-pdf-encryptor.adapter";
 import { PrismaModule } from "./prisma/prisma.module";
 import { Xls70CredentialAdapterImpl } from './xrpl/xls70-credential-adapter.impl';
 import { CredentialDocumentTypeRepositoryImpl } from './repository/credential/persistence/credential-document-type.repository.impl';
@@ -20,6 +23,7 @@ import { DocumentStageRepositoryImpl } from "./repository/document/persistence/d
 import { DocumentTypeRepositoryImpl } from "./repository/document/persistence/document-type.repository.impl";
 import { DocumentRepositoryImpl } from "./repository/document/persistence/document.repository.impl";
 import { UserRepositoryImpl } from "./repository/user/persistence/user.repository.impl";
+import { S3FileStorageAdapter } from "./storage/s3-file-storage.adapter";
 
 @Global()
 @Module({
@@ -38,6 +42,8 @@ import { UserRepositoryImpl } from "./repository/user/persistence/user.repositor
       provide: DocumentApprovalRepository,
       useClass: DocumentApprovalRepositoryImpl,
     },
+    { provide: FileStorage, useClass: S3FileStorageAdapter },
+    { provide: PdfEncryptor, useClass: QpdfPdfEncryptorAdapter },
   ],
   exports: [
     PrismaModule,
@@ -51,6 +57,8 @@ import { UserRepositoryImpl } from "./repository/user/persistence/user.repositor
     DocumentStageRepository,
     DocumentTypeRepository,
     DocumentApprovalRepository,
+    FileStorage,
+    PdfEncryptor,
   ],
 })
 export class InfrastructureModule {}
