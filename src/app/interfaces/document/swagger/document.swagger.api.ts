@@ -1,5 +1,5 @@
 import {applyDecorators} from '@nestjs/common';
-import {ApiHeader, ApiOperation, ApiParam, ApiTags} from '@nestjs/swagger';
+import {ApiBearerAuth, ApiOperation, ApiParam, ApiTags} from '@nestjs/swagger';
 import {ApiCommonRes} from '../../common/api-common-res.decorator';
 import {AdvanceDocumentStageRes} from '../res/advance-document-stage.res';
 import {ApproveDocumentRes} from '../res/approve-document.res';
@@ -10,6 +10,9 @@ import {DocumentListRes} from '../res/document-list.res';
 /**
  * 컨트롤러 비즈니스 데코레이터를 한 곳에 모아서 컨트롤러 본문을 얇게 유지한다.
  * 새 엔드포인트가 생기면 여기에 X<XSwaggerApi>() 형태로 추가.
+ *
+ * 인증: 모든 엔드포인트는 JwtAuthGuard 로 보호 — `Authorization: Bearer <token>` 필수.
+ * (X-User-Id 헤더는 가드 미통과 시의 fallback 으로만 동작 — 일반 사용 X.)
  */
 
 export const DocumentApiTags = (): ClassDecorator => ApiTags('Documents');
@@ -23,17 +26,9 @@ export const CreateDocumentSwaggerApi = (): MethodDecorator =>
                 '한 트랜잭션으로 Document(status=PROGRESS, currentStage=AUTHORITY_ISSUED) 행과 ' +
                 '첫 DocumentStage 이벤트(stage=AUTHORITY_ISSUED, status=PENDING) 가 함께 INSERT 된다. ' +
                 '이후 단계는 별도 워커가 순차적으로 처리한다.\n\n' +
-                '*임시 인증*: 현재는 `X-User-Id` 헤더로 사용자를 식별한다. ' +
-                '로그인/JWT 가드 도입 시 헤더 대신 인증 토큰에서 추출되도록 교체될 예정.',
+                '*인증*: `Authorization: Bearer <accessToken>` 필수 (JwtAuthGuard).',
         }),
-        ApiHeader({
-            name: 'X-User-Id',
-            description:
-                '사용자 ID (임시 인증). JWT 가드 도입 시 제거 예정. ' +
-                '시드 SQL 의 기본 사용자는 id=1.',
-            required: true,
-            example: '1',
-        }),
+        ApiBearerAuth(),
         ApiCommonRes(CreateDocumentRes),
     );
 
@@ -49,15 +44,9 @@ export const ApproveDocumentSwaggerApi = (): MethodDecorator =>
                 '(1) 본인이 신청한 문서만 승인 가능. ' +
                 '(2) 이미 마지막 단계(WALLET_STORED) 에 도달한 문서는 거부. ' +
                 '(3) 같은 단계 중복 승인은 (document_id, stage) UNIQUE 제약으로 차단.\n\n' +
-                '*임시 인증*: 현재는 `X-User-Id` 헤더로 사용자를 식별. JWT 가드 도입 시 제거 예정.',
+                '*인증*: `Authorization: Bearer <accessToken>` 필수.',
         }),
-        ApiHeader({
-            name: 'X-User-Id',
-            description:
-                '사용자 ID (임시 인증). JWT 가드 도입 시 제거 예정. 시드 SQL 의 기본 사용자는 id=1.',
-            required: true,
-            example: '1',
-        }),
+        ApiBearerAuth(),
         ApiCommonRes(ApproveDocumentRes),
     );
 
@@ -79,15 +68,9 @@ export const AdvanceDocumentStageSwaggerApi = (): MethodDecorator =>
                 '(2) 이미 마지막 단계(WALLET_STORED) 에 도달한 문서는 거부. ' +
                 '(3) 다음 stage 에 대한 DocumentApproval 행이 없으면 거부 ' +
                 '(승인 없이 전이 불가).\n\n' +
-                '*임시 인증*: 현재는 `X-User-Id` 헤더로 사용자를 식별. JWT 가드 도입 시 제거 예정.',
+                '*인증*: `Authorization: Bearer <accessToken>` 필수.',
         }),
-        ApiHeader({
-            name: 'X-User-Id',
-            description:
-                '사용자 ID (임시 인증). JWT 가드 도입 시 제거 예정.',
-            required: true,
-            example: '1',
-        }),
+        ApiBearerAuth(),
         ApiCommonRes(AdvanceDocumentStageRes),
     );
 
@@ -104,14 +87,10 @@ export const ListDocumentSwaggerApi = (): MethodDecorator =>
                 '- `countryCode` — 발급기관 국가 (ISO 3166-1 alpha-2)\n' +
                 '- `q` — documentCode / 요청자 이름 / 이메일 부분일치 (대소문자 무시)\n\n' +
                 '정렬은 `requestedAt DESC` 고정. ' +
-                '*콘솔 운영자 뷰* 라서 본인 소유 필터링은 적용하지 않는다.',
+                '*콘솔 운영자 뷰* 라서 본인 소유 필터링은 적용하지 않는다.\n\n' +
+                '*인증*: `Authorization: Bearer <accessToken>` 필수.',
         }),
-        ApiHeader({
-            name: 'X-User-Id',
-            description: '사용자 ID (임시 인증). JWT 가드 도입 시 제거 예정.',
-            required: true,
-            example: '1',
-        }),
+        ApiBearerAuth(),
         ApiCommonRes(DocumentListRes),
     );
 
@@ -131,18 +110,14 @@ export const GetDocumentDetailSwaggerApi = (): MethodDecorator =>
                 '클라이언트는 `approvals` 에 stage=X 가 있으면 ' +
                 '"X 단계로의 사용자 승인이 완료" 로, ' +
                 '`stages[i].status` 가 채워져 있으면 "i 단계 크리덴셜 이벤트가 시작/진행/완료/실패" 로 ' +
-                '와이어프레임 substep 표시(✓ / 진행 중 / 미진행) 매핑하면 된다.',
+                '와이어프레임 substep 표시(✓ / 진행 중 / 미진행) 매핑하면 된다.\n\n' +
+                '*인증*: `Authorization: Bearer <accessToken>` 필수.',
         }),
         ApiParam({
             name: 'documentCode',
             description: '발급 문서 외부 노출 코드 (UUID).',
             example: '9f2b1a3c-4d5e-6f7a-8b9c-0d1e2f3a4b5c',
         }),
-        ApiHeader({
-            name: 'X-User-Id',
-            description: '사용자 ID (임시 인증). JWT 가드 도입 시 제거 예정.',
-            required: true,
-            example: '1',
-        }),
+        ApiBearerAuth(),
         ApiCommonRes(DocumentDetailRes),
     );

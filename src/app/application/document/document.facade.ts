@@ -47,7 +47,6 @@ export class DocumentFacade {
         request: ApproveDocumentReq,
         userId: bigint,
     ): Promise<ApproveDocumentRes> {
-        await this.userService.getActive(userId);
         const result = await this.documentService.approve(
             userId,
             request.documentCode,
@@ -60,7 +59,6 @@ export class DocumentFacade {
         request: AdvanceDocumentStageReq,
         userId: bigint,
     ): Promise<AdvanceDocumentStageRes> {
-        await this.userService.getActive(userId);
         const result = await this.documentService.advanceStage(
             userId,
             request.documentCode,
@@ -72,13 +70,9 @@ export class DocumentFacade {
      * 문서 관리 페이지 리스트.
      *
      * 콘솔(운영자) 뷰 — 본인 소유 필터 없이 전체 조회.
-     * 임시 인증 단계에서는 X-User-Id 가 활성 사용자인지만 검증한다 (RBAC 도입 시 교체).
+     * 인증은 JwtAuthGuard 가 담당하므로 facade 까지 userId 를 들고 올 필요 없다.
      */
-    async findList(
-        request: DocumentListReq,
-        userId: bigint,
-    ): Promise<DocumentListRes> {
-        await this.userService.getActive(userId);
+    async findList(request: DocumentListReq): Promise<DocumentListRes> {
         const result = await this.documentService.findList({
             status: request.status,
             documentTypeCode: request.documentTypeCode,
@@ -93,11 +87,7 @@ export class DocumentFacade {
     /**
      * 문서 관리 행 펼침 상세.
      */
-    async findDetail(
-        documentCode: string,
-        userId: bigint,
-    ): Promise<DocumentDetailRes> {
-        await this.userService.getActive(userId);
+    async findDetail(documentCode: string): Promise<DocumentDetailRes> {
         const result = await this.documentService.findDetail(documentCode);
         return DocumentDetailRes.from(result);
     }
