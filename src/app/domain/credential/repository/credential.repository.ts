@@ -89,4 +89,5 @@ export abstract class CredentialRepository {
   abstract createSubmission(input: CreateCredentialSubmissionInput): Promise<CredentialSubmission>;
   abstract listSubmissionsByCredentialId(credentialId: bigint): Promise<CredentialSubmission[]>;
   abstract listSubmissionsByUserId(userId: bigint): Promise<CredentialSubmission[]>;
+  abstract updateCredential(credential: Credential): Promise<void>;
 }

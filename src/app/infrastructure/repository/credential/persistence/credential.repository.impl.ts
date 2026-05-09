@@ -210,6 +210,17 @@ export class CredentialRepositoryImpl extends CredentialRepository {
     return rows.map((row) => this.toSubmissionEntity(row));
   }
 
+  async updateCredential(credential: Credential): Promise<void> {
+    await this.prisma.credential.update({
+      where: { id: credential.id },
+      data: {
+        status: credential.status,
+        revokedAt: credential.revokedAt,
+        authEventId: credential.authEventId,
+      },
+    });
+  }
+
   private toIssueRequestEntity(row: CredentialIssueRequestRow): CredentialIssueRequest {
     return new CredentialIssueRequest(
       row.id,

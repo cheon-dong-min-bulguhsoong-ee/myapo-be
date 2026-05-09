@@ -32,4 +32,10 @@ export class Credential {
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
   ) {}
+
+  public revoke(authEventId: string | null): void {
+    (this as any).status = CredentialStatus.REVOKED;
+    (this as any).revokedAt = new Date();
+    (this as any).authEventId = authEventId;
+  }
 }

@@ -41,6 +41,7 @@ export const ErrorCode = {
             400,
             '입력값 검증에 실패했습니다.',
         ),
+        FORBIDDEN: define('FORBIDDEN', 403, '권한이 없습니다.'),
     },
     Auth: {
         USER_HEADER_MISSING: define(

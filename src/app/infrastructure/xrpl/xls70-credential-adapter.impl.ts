@@ -155,6 +155,20 @@ export class Xls70CredentialAdapterImpl extends XrplCredentialAdapter {
     );
   }
 
+  async submitCredentialDeleteByIssuer(
+    input: BuildCredentialDeleteTransactionInput,
+  ): Promise<XrplCredentialTransactionEvidenceResult> {
+    const transaction = this.buildCredentialDeleteTransaction(input);
+    return this.submitTransaction(
+      transaction,
+      this.getIssuerWallet(),
+      XrplCredentialTransactionKind.DELETE,
+      transaction.Issuer ?? null,
+      transaction.Subject ?? null,
+      transaction.CredentialType,
+    );
+  }
+
   async getCredentialObjects(input: GetCredentialObjectsInput): Promise<XrplCredentialObjectResult[]> {
     this.assertAccountAddress(input.accountAddress, 'accountAddress');
     const client = this.createClient();

@@ -3,6 +3,7 @@ import { TokenProvider } from "../domain/common/contract/token-provider";
 import { XrplCredentialAdapter } from '../domain/credential/contract/xrpl-credential-adapter';
 import { CredentialDocumentTypeRepository } from '../domain/credential/repository/credential-document-type.repository';
 import { CredentialRepository } from '../domain/credential/repository/credential.repository';
+import { DisputeRepository } from "../domain/dispute/repository/dispute.repository";
 import { DocumentApprovalRepository } from "../domain/document/repository/document-approval.repository";
 import { DocumentStageRepository } from "../domain/document/repository/document-stage.repository";
 import { DocumentTypeRepository } from "../domain/document/repository/document-type.repository";
@@ -13,6 +14,7 @@ import { PrismaModule } from "./prisma/prisma.module";
 import { Xls70CredentialAdapterImpl } from './xrpl/xls70-credential-adapter.impl';
 import { CredentialDocumentTypeRepositoryImpl } from './repository/credential/persistence/credential-document-type.repository.impl';
 import { CredentialRepositoryImpl } from './repository/credential/persistence/credential.repository.impl';
+import { DisputeRepositoryImpl } from "./repository/dispute/persistence/dispute.repository.impl";
 import { DocumentApprovalRepositoryImpl } from "./repository/document/persistence/document-approval.repository.impl";
 import { DocumentStageRepositoryImpl } from "./repository/document/persistence/document-stage.repository.impl";
 import { DocumentTypeRepositoryImpl } from "./repository/document/persistence/document-type.repository.impl";
@@ -27,6 +29,7 @@ import { UserRepositoryImpl } from "./repository/user/persistence/user.repositor
     { provide: UserRepository, useClass: UserRepositoryImpl },
     { provide: DocumentRepository, useClass: DocumentRepositoryImpl },
     { provide: CredentialRepository, useClass: CredentialRepositoryImpl },
+    { provide: DisputeRepository, useClass: DisputeRepositoryImpl },
     { provide: XrplCredentialAdapter, useClass: Xls70CredentialAdapterImpl },
     { provide: CredentialDocumentTypeRepository, useClass: CredentialDocumentTypeRepositoryImpl },
     { provide: DocumentStageRepository, useClass: DocumentStageRepositoryImpl },
@@ -40,6 +43,7 @@ import { UserRepositoryImpl } from "./repository/user/persistence/user.repositor
     PrismaModule,
     TokenProvider,
     UserRepository,
+    DisputeRepository,
     DocumentRepository,
     CredentialRepository,
     XrplCredentialAdapter,

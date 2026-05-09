@@ -10,5 +10,6 @@ import { CredentialController } from './controller/credential.controller';
   imports: [AuthModule],
   controllers: [CredentialController],
   providers: [CredentialService, UserService, CredentialFacade, RolesGuard],
+  exports: [CredentialService],
 })
 export class CredentialModule {}
