@@ -118,6 +118,45 @@ components:
           type: string
         nationality:
           type: string
+        role:
+          type: string
+          enum: [USER, ADMIN, INSTITUTION]
+        wallet:
+          type: object
+          properties:
+            xrplAddress:
+              type: string
+        createdAt:
+          type: string
+          format: date-time
+```
+      - nationality
+        - xrplAddress
+        - publicKey
+      properties:
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        nationality:
+          type: string
+          example: "KR"
+        xrplAddress:
+          type: string
+        publicKey:
+          type: string
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        nationality:
+          type: string
         wallet:
           type: object
           properties:

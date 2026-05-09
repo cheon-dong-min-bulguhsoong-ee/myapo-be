@@ -35,3 +35,12 @@
     1. (Server) Internal Access Token의 유효성을 검증하고 세션 종료를 기록(필요시).
     2. (Client-side Requirement) 클라이언트는 저장된 JWT를 폐기해야 함.
     3. (Optional) "계정 전환" 또는 "완전 로그아웃" 시 클라이언트에서 Web3Auth SDK의 `logout()`을 호출하여 외부 세션을 정리함.
+
+## 5. ChangeUserRoleUseCase (Admin Only)
+- **Actor**: Admin
+- **Input**: `targetUserId`, `newRole`
+- **Output**: Updated `User` entity
+- **Flow**:
+    1. 요청자(Actor)의 권한이 `ADMIN`인지 확인.
+    2. `targetUserId`로 사용자 존재 여부 확인.
+    3. 사용자의 `role`을 `newRole`로 변경 및 저장.

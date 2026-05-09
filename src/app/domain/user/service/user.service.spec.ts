@@ -6,6 +6,7 @@ import { ErrorCode } from "../../common/error/error-code";
 import { User } from "../entity/user.entity";
 import { UserWallet } from "../entity/user-wallet.entity";
 import { VerifierType } from "../enum/verifier-type.enum";
+import { UserRole } from "../enum/user-role.enum";
 
 describe("UserService", () => {
   let service: UserService;
@@ -56,6 +57,7 @@ describe("UserService", () => {
           input.email,
           input.name,
           input.nationality,
+          UserRole.USER,
           new Date(),
           new Date(),
           null,
@@ -77,6 +79,7 @@ describe("UserService", () => {
           input.email,
           input.name,
           input.nationality,
+          UserRole.USER,
           new Date(),
           new Date(),
           null,
@@ -95,6 +98,7 @@ describe("UserService", () => {
         input.email,
         input.name,
         input.nationality,
+        UserRole.USER,
         new Date(),
         new Date(),
         null,
@@ -121,6 +125,7 @@ describe("UserService", () => {
           input.email,
           input.name,
           input.nationality,
+          UserRole.USER,
           new Date(),
           new Date(),
           null,
@@ -141,6 +146,7 @@ describe("UserService", () => {
         input.email,
         input.name,
         input.nationality,
+        UserRole.USER,
         new Date(),
         new Date(),
         null,
@@ -174,6 +180,7 @@ describe("UserService", () => {
         "test@example.com",
         "Test",
         "KR",
+        UserRole.USER,
         new Date(),
         new Date(),
         null,
@@ -218,6 +225,7 @@ describe("UserService", () => {
         "test@example.com",
         "Test",
         "KR",
+        UserRole.USER,
         new Date(),
         new Date(),
         null,
@@ -238,6 +246,7 @@ describe("UserService", () => {
         "a@a.com",
         "N",
         "KR",
+        UserRole.USER,
         new Date(),
         new Date(),
         null,
@@ -269,6 +278,7 @@ describe("UserService", () => {
         "a@a.com",
         "N",
         "KR",
+        UserRole.USER,
         new Date(),
         new Date(),
         null,
@@ -289,6 +299,7 @@ describe("UserService", () => {
         "a@a.com",
         "N",
         "KR",
+        UserRole.USER,
         new Date(),
         new Date(),
         null,

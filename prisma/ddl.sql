@@ -38,6 +38,7 @@ CREATE TABLE tosalpee.users (
     email         VARCHAR(255)  NOT NULL,
     name          VARCHAR(50)   NOT NULL,
     nationality   VARCHAR(2)    NOT NULL,
+    role          VARCHAR(20)   NOT NULL DEFAULT 'USER',
     status        VARCHAR(20)   NOT NULL DEFAULT 'ACTIVE',
     last_login_at TIMESTAMPTZ(0),
     created_at    TIMESTAMPTZ(0) NOT NULL DEFAULT now(),
@@ -558,5 +559,8 @@ COMMENT ON COLUMN tosalpee.credential_submissions.is_delete                  IS 
 SELECT table_name, COUNT(*) AS column_count
 FROM information_schema.columns
 WHERE table_schema = 'tosalpee'
+GROUP BY table_name
+ORDER BY table_name;
+a = 'tosalpee'
 GROUP BY table_name
 ORDER BY table_name;

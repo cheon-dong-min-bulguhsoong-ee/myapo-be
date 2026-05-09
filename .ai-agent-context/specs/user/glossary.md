@@ -13,5 +13,6 @@
 - **XRPL Address**: A unique account address on the XRP Ledger.
 - **Public Key**: The cryptographic public key associated with the User's XRPL address, used for server-side signature verification.
 - **Nationality**: An ISO 3166-1 alpha-2 country code representing the user's nationality.
+- **Role**: 시스템 내 사용자의 권한 등급 (e.g., USER, ADMIN, INSTITUTION).
 - **Apostille**: A form of authentication issued to documents for use in countries that participate in the Hague Convention of 1961.
 

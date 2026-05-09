@@ -77,6 +77,9 @@ components:
           type: string
         nationality:
           type: string
+        role:
+          type: string
+          enum: [USER, ADMIN, INSTITUTION]
         wallet:
           type: object
           properties:

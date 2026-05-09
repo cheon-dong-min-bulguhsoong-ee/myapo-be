@@ -1,5 +1,6 @@
 import { DomainError } from "../../common/error/domain.error";
 import { ErrorCode } from "../../common/error/error-code";
+import { UserRole } from "../enum/user-role.enum";
 
 /**
  * 시스템 사용자 엔티티.
@@ -10,6 +11,7 @@ export class User {
     public readonly email: string,
     public readonly name: string,
     public readonly nationality: string,
+    private _role: UserRole,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
     private _lastLoginAt: Date | null,
@@ -24,6 +26,17 @@ export class User {
 
   get lastLoginAt(): Date | null {
     return this._lastLoginAt;
+  }
+
+  get role(): UserRole {
+    return this._role;
+  }
+
+  /**
+   * 사용자의 권한을 변경한다.
+   */
+  public changeRole(newRole: UserRole): void {
+    this._role = newRole;
   }
 
   /**

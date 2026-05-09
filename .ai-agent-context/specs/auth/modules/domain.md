@@ -5,6 +5,7 @@
 - **Attributes**:
     - `userId`: MyApo 시스템의 사용자 고유 ID (sub)
     - `email`: 사용자의 이메일
+    - `role`: 사용자의 권한 등급
     - `iat`: 토큰 발행 시각
     - `exp`: 토큰 만료 시각 (보통 발행 후 1시간)
 

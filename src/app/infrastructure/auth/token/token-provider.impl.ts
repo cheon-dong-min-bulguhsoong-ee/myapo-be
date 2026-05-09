@@ -17,16 +17,17 @@ export class TokenProviderImpl implements TokenProvider {
     this.expiresIn = this.configService.get<string>("JWT_EXPIRES_IN") || "1h";
   }
 
-  issueToken(payload: { sub: string; email: string }): string {
+  issueToken(payload: { sub: string; email: string; role: string }): string {
     return jwt.sign(payload, this.secret, { expiresIn: this.expiresIn as any });
   }
 
-  verifyToken(token: string): { sub: string; email: string } {
+  verifyToken(token: string): { sub: string; email: string; role: string } {
     try {
       const decoded = jwt.verify(token, this.secret) as any;
       return {
         sub: decoded.sub,
         email: decoded.email,
+        role: decoded.role,
       };
     } catch (error) {
       if (error instanceof jwt.TokenExpiredError) {

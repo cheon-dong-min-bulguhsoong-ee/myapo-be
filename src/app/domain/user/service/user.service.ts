@@ -4,6 +4,7 @@ import { DomainError } from "../../common/error/domain.error";
 import { ErrorCode } from "../../common/error/error-code";
 import { UserResult, UserWalletResult } from "../dto/user.result";
 import { User } from "../entity/user.entity";
+import { UserRole } from "../enum/user-role.enum";
 import { UserRepository } from "../repository/user.repository";
 
 @Injectable()
@@ -162,12 +163,29 @@ export class UserService {
     await this.userRepository.update(user);
   }
 
+  /**
+   * 사용자의 권한을 변경한다. (Admin 전용 기능의 내부 로직)
+   */
+  async changeRole(userId: bigint, newRole: UserRole): Promise<UserResult> {
+    const user = await this.userRepository.findById(userId);
+    if (!user || user.isDelete) {
+      throw new DomainError(ErrorCode.User.USER_NOT_FOUND);
+    }
+
+    user.changeRole(newRole);
+    await this.userRepository.update(user);
+
+    const wallet = await this.userRepository.findWalletByUserId(userId);
+    return this.mapToResult(user, wallet!.xrplAddress);
+  }
+
   private mapToResult(user: User, xrplAddress: string): UserResult {
     return new UserResult(
       user.id.toString(),
       user.email,
       user.name,
       user.nationality,
+      user.role,
       user.createdAt,
       new UserWalletResult(xrplAddress),
     );

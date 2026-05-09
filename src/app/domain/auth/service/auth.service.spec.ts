@@ -26,11 +26,12 @@ describe("AuthService", () => {
 
   it("사용자 정보를 바탕으로 토큰을 발행한다", async () => {
     tokenProvider.issueToken.mockReturnValue("test-token");
-    const token = await service.issueAccessToken(BigInt(1), "test@test.com");
+    const token = await service.issueAccessToken(BigInt(1), "test@test.com", "USER");
     expect(token).toBe("test-token");
     expect(tokenProvider.issueToken).toHaveBeenCalledWith({
       sub: "1",
       email: "test@test.com",
+      role: "USER",
     });
   });
 
@@ -38,9 +39,11 @@ describe("AuthService", () => {
     tokenProvider.verifyToken.mockReturnValue({
       sub: "1",
       email: "test@test.com",
+      role: "USER",
     });
     const payload = await service.verifyAccessToken("test-token");
     expect(payload.userId).toBe(BigInt(1));
     expect(payload.email).toBe("test@test.com");
+    expect(payload.role).toBe("USER");
   });
 });

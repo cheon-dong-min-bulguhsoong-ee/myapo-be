@@ -28,6 +28,9 @@ export class UserRes {
   @ApiProperty()
   readonly nationality!: string;
 
+  @ApiProperty({ enum: ["USER", "ADMIN", "INSTITUTION"] })
+  readonly role!: string;
+
   @ApiProperty()
   readonly createdAt!: string;
 
@@ -40,6 +43,7 @@ export class UserRes {
       email: result.email,
       name: result.name,
       nationality: result.nationality,
+      role: result.role,
       createdAt: result.createdAt.toISOString(),
       wallet: UserWalletRes.from(result.wallet),
     };

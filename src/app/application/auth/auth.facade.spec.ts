@@ -44,6 +44,7 @@ describe("AuthFacade", () => {
         "test@test.com",
         "Test",
         "KR",
+        "USER",
         new Date(),
         new UserWalletResult("rAddress"),
       );
@@ -68,6 +69,7 @@ describe("AuthFacade", () => {
       expect(authService.issueAccessToken).toHaveBeenCalledWith(
         BigInt(1),
         "test@test.com",
+        "USER",
       );
     });
   });

@@ -6,10 +6,18 @@ export abstract class TokenProvider {
   /**
    * 사용자 정보를 기반으로 액세스 토큰을 발행한다.
    */
-  abstract issueToken(payload: { sub: string; email: string }): string;
+  abstract issueToken(payload: {
+    sub: string;
+    email: string;
+    role: string;
+  }): string;
 
   /**
    * 토큰의 유효성을 검증하고 페이로드를 반환한다.
    */
-  abstract verifyToken(token: string): { sub: string; email: string };
+  abstract verifyToken(token: string): {
+    sub: string;
+    email: string;
+    role: string;
+  };
 }
