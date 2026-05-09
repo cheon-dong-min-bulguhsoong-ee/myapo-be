@@ -354,11 +354,52 @@ model CredentialXrplTransaction {
   updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
   isDelete       Boolean  @default(false) @map("is_delete")
 
-  credential Credential @relation(fields: [credentialId], references: [id])
+  credential         Credential @relation(fields: [credentialId], references: [id])
 
   @@unique([txHash], map: "uniq_credential_xrpl_transactions_tx_hash")
   @@index([credentialId, transactionKind], map: "idx_credential_xrpl_transactions_credential_kind")
   @@index([network, ledgerIndex], map: "idx_credential_xrpl_transactions_network_ledger")
   @@map("credential_xrpl_transactions")
   @@schema("tosalpee")
-}
+  }
+
+  // ─────────────────────────────────────────────────────────────────────
+  // Dispute · 분쟁 관리 (ADR-003)
+  // ─────────────────────────────────────────────────────────────────────
+
+  model Dispute {
+  id            String   @id @map("id") @db.VarChar(20)
+  status        String   @db.VarChar(20)
+  type          String   @db.VarChar(20)
+  requestId     String   @map("request_id") @db.VarChar(40)
+  requesterId   BigInt   @map("requester_id")
+  operatorId    BigInt?  @map("operator_id")
+  slaDeadline   DateTime @map("sla_deadline") @db.Timestamptz(0)
+  isSlaPaused   Boolean  @default(false) @map("is_sla_paused")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(0)
+
+  timeline DisputeTimeline[]
+
+  @@index([requesterId], map: "idx_disputes_requester")
+  @@index([operatorId, status], map: "idx_disputes_operator_status")
+  @@map("disputes")
+  @@schema("tosalpee")
+  }
+
+  model DisputeTimeline {
+  id         BigInt   @id @default(autoincrement())
+  disputeId  String   @map("dispute_id") @db.VarChar(20)
+  status     String   @db.VarChar(20)
+  note       String?  @db.Text
+  operatorId BigInt?  @map("operator_id")
+  isInternal Boolean  @default(false) @map("is_internal")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(0)
+
+  dispute Dispute @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+
+  @@index([disputeId, createdAt], map: "idx_dispute_timeline_dispute_time")
+  @@map("dispute_timeline")
+  @@schema("tosalpee")
+  }
+

@@ -561,6 +561,62 @@ FROM information_schema.columns
 WHERE table_schema = 'tosalpee'
 GROUP BY table_name
 ORDER BY table_name;
+
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 12) disputes — 분쟁 관리
+-- ═══════════════════════════════════════════════════════════════════════════
+CREATE TABLE tosalpee.disputes (
+    id            VARCHAR(20)   PRIMARY KEY,
+    status        VARCHAR(20)   NOT NULL,
+    type          VARCHAR(20)   NOT NULL,
+    request_id    VARCHAR(40)   NOT NULL,
+    requester_id  BIGINT        NOT NULL,
+    operator_id   BIGINT,
+    sla_deadline  TIMESTAMPTZ(0) NOT NULL,
+    is_sla_paused BOOLEAN       NOT NULL DEFAULT false,
+    created_at    TIMESTAMPTZ(0) NOT NULL DEFAULT now(),
+    updated_at    TIMESTAMPTZ(0) NOT NULL DEFAULT now(),
+
+    CONSTRAINT disputes_requester_fk FOREIGN KEY (requester_id) REFERENCES tosalpee.users(id)
+);
+
+CREATE INDEX idx_disputes_requester ON tosalpee.disputes (requester_id);
+CREATE INDEX idx_disputes_operator_status ON tosalpee.disputes (operator_id, status);
+
+COMMENT ON TABLE  tosalpee.disputes               IS '분쟁(Dispute) 마스터 테이블.';
+COMMENT ON COLUMN tosalpee.disputes.id            IS '분쟁 ID (DSP-YYYY-NNNN).';
+COMMENT ON COLUMN tosalpee.disputes.status        IS '분쟁 상태 (RECEIVED | ASSIGNED | IN_REVIEW | INFO_REQUESTED | RESOLVED | REJECTED).';
+COMMENT ON COLUMN tosalpee.disputes.type          IS '분쟁 유형 (TYPO | IDENTITY_MISMATCH | DOCUMENT_INVALID | OTHER).';
+COMMENT ON COLUMN tosalpee.disputes.request_id    IS '원문 발급 요청 코드 (issue_request_code).';
+COMMENT ON COLUMN tosalpee.disputes.requester_id  IS '분쟁 제기 사용자 ID (FK).';
+COMMENT ON COLUMN tosalpee.disputes.operator_id   IS '담당 운영자 ID (FK).';
+COMMENT ON COLUMN tosalpee.disputes.sla_deadline  IS 'SLA 처리 마감 시각.';
+COMMENT ON COLUMN tosalpee.disputes.is_sla_paused IS 'SLA 일시정지 여부 (INFO_REQUESTED 시 true).';
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 13) dispute_timeline — 분쟁 타임라인/로그
+-- ═══════════════════════════════════════════════════════════════════════════
+CREATE TABLE tosalpee.dispute_timeline (
+    id          BIGSERIAL PRIMARY KEY,
+    dispute_id  VARCHAR(20)   NOT NULL,
+    status      VARCHAR(20)   NOT NULL,
+    note        TEXT,
+    operator_id BIGINT,
+    is_internal BOOLEAN       NOT NULL DEFAULT false,
+    created_at  TIMESTAMPTZ(0) NOT NULL DEFAULT now(),
+
+    CONSTRAINT dispute_timeline_dispute_fk FOREIGN KEY (dispute_id) REFERENCES tosalpee.disputes(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_dispute_timeline_dispute_time ON tosalpee.dispute_timeline (dispute_id, created_at);
+
+COMMENT ON TABLE  tosalpee.dispute_timeline               IS '분쟁 타임라인 및 처리 이력.';
+COMMENT ON COLUMN tosalpee.dispute_timeline.dispute_id    IS '대상 분쟁 ID (FK).';
+COMMENT ON COLUMN tosalpee.dispute_timeline.status        IS '기록 시점의 상태.';
+COMMENT ON COLUMN tosalpee.dispute_timeline.note          IS '처리 메모 또는 사유.';
+COMMENT ON COLUMN tosalpee.dispute_timeline.operator_id   IS '작성 운영자 ID.';
+COMMENT ON COLUMN tosalpee.dispute_timeline.is_internal   IS '내부 전용 여부 (true면 사용자에게 비노출).';
 a = 'tosalpee'
 GROUP BY table_name
 ORDER BY table_name;

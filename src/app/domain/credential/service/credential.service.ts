@@ -207,6 +207,34 @@ export class CredentialService {
     return new ListCredentialSubmissionsResult(submissions.map((submission) => this.toSubmissionItemResult(submission)));
   }
 
+  /**
+   * 크리덴셜을 취소(Revoke)한다. (Dispute 처리 시 호출됨)
+   */
+  async revoke(credentialCode: string, authEventId: string | null): Promise<void> {
+    const credential = await this.credentialRepository.findCredentialByCode(credentialCode);
+    if (credential === null) {
+      throw new DomainError(ErrorCode.Credential.NOT_FOUND, { credentialId: credentialCode });
+    }
+
+    if (credential.status === CredentialStatus.REVOKED) {
+      return;
+    }
+
+    // 1. XRPL 취소 (Mock이 아닌 경우)
+    if (!credential.isMock && this.xrplCredentialAdapter) {
+      await this.xrplCredentialAdapter.submitCredentialDeleteByIssuer({
+        submitterAddress: this.xrplCredentialAdapter.getIssuerAddress(),
+        issuerAddress: credential.xrplIssuerAddress,
+        subjectAddress: credential.xrplSubjectAddress,
+        credentialTypeHex: credential.xrplCredentialType!,
+      });
+    }
+
+    // 2. DB 상태 변경
+    credential.revoke(authEventId);
+    await this.credentialRepository.updateCredential(credential);
+  }
+
   async prepareAcceptTestnetCredential(
     userId: bigint,
     credentialId: string,
@@ -299,7 +327,6 @@ export class CredentialService {
     });
     return evidence;
   }
-
 
   private resolveDeleteSubmitterAddress(
     credential: Credential,

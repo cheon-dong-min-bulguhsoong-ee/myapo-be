@@ -90,6 +90,10 @@ export abstract class XrplCredentialAdapter {
     input: SubmitCredentialDeleteInput,
   ): Promise<XrplCredentialTransactionEvidenceResult>;
 
+  abstract submitCredentialDeleteByIssuer(
+    input: BuildCredentialDeleteTransactionInput,
+  ): Promise<XrplCredentialTransactionEvidenceResult>;
+
   abstract getCredentialObjects(input: GetCredentialObjectsInput): Promise<XrplCredentialObjectResult[]>;
 
   abstract getNetworkName(): string;

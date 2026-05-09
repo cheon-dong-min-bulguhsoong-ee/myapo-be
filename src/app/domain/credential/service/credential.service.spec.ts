@@ -1,6 +1,6 @@
 import { DomainError } from '../../common/error/domain.error';
 import { ErrorCode } from '../../common/error/error-code';
-import { SubmitCredentialAcceptInput, SubmitCredentialDeleteInput, XrplCredentialAdapter } from '../contract/xrpl-credential-adapter';
+import { BuildCredentialDeleteTransactionInput, SubmitCredentialAcceptInput, SubmitCredentialDeleteInput, XrplCredentialAdapter } from '../contract/xrpl-credential-adapter';
 import { XrplCredentialTransactionEvidenceResult, XrplCredentialTransactionKind } from '../dto/xrpl-credential-evidence.result';
 import { CredentialDocumentType } from '../entity/credential-document-type.entity';
 import { Credential } from '../entity/credential.entity';
@@ -110,6 +110,24 @@ class FakeXrplCredentialAdapter extends XrplCredentialAdapter {
       'C'.repeat(64),
       'tesSUCCESS',
       BigInt(125),
+      true,
+      '12',
+      input.submitterAddress,
+      input.issuerAddress,
+      input.subjectAddress,
+      input.credentialTypeHex,
+      null,
+      null,
+    );
+  }
+
+  async submitCredentialDeleteByIssuer(input: BuildCredentialDeleteTransactionInput): Promise<XrplCredentialTransactionEvidenceResult> {
+    return new XrplCredentialTransactionEvidenceResult(
+      XrplCredentialTransactionKind.DELETE,
+      'wss://s.altnet.rippletest.net:51233',
+      'D'.repeat(64),
+      'tesSUCCESS',
+      BigInt(126),
       true,
       '12',
       input.submitterAddress,
@@ -331,6 +349,13 @@ class FakeCredentialRepository extends CredentialRepository {
 
   async listSubmissionsByUserId(userId: bigint): Promise<CredentialSubmission[]> {
     return this.submissions.filter((submission) => submission.userId === userId);
+  }
+
+  async updateCredential(credential: Credential): Promise<void> {
+    const index = this.credentials.findIndex((c) => c.id === credential.id);
+    if (index !== -1) {
+      this.credentials[index] = credential;
+    }
   }
 }
 
