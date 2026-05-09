@@ -6,13 +6,23 @@ import {ErrorCode} from '../../common/error/error-code';
 import {AdvanceDocumentStageResult} from '../dto/advance-document-stage.result';
 import {ApproveDocumentResult} from '../dto/approve-document.result';
 import {CreateDocumentResult} from '../dto/create-document.result';
+import {
+    DocumentDetailResult,
+    DocumentSubstep,
+} from '../dto/document-detail.result';
+import {
+    DocumentListResult,
+} from '../dto/document-list-item.result';
 import {DocumentStage, nextDocumentStage} from '../enum/document-stage.enum';
 import {DocumentStageStatus} from '../enum/document-stage-status.enum';
 import {DocumentStatus} from '../enum/document-status.enum';
 import {DocumentApprovalRepository} from '../repository/document-approval.repository';
 import {DocumentStageRepository} from '../repository/document-stage.repository';
 import {DocumentTypeRepository} from '../repository/document-type.repository';
-import {DocumentRepository} from '../repository/document.repository';
+import {
+    DocumentRepository,
+    FindDocumentListInput,
+} from '../repository/document.repository';
 
 /**
  * 문서 도메인 서비스.
@@ -224,5 +234,74 @@ export class DocumentService {
             updated.status,
             updated.issuedAt,
         );
+    }
+
+    /**
+     * 문서 관리 페이지의 리스트 조회 — 와이어프레임 console.html docs 탭의 8컬럼.
+     * 필터 (status / docType / country / q) + page · limit 기반 페이지네이션.
+     * 정렬은 requestedAt DESC 고정 (탭별로 "신규 → 오래된" 순).
+     */
+    async findList(input: FindDocumentListInput): Promise<DocumentListResult> {
+        const {items, total} = await this.documentRepository.findList(input);
+        return new DocumentListResult(items, total, input.page, input.limit);
+    }
+
+    /**
+     * 문서 관리 행 펼침에 쓰는 상세 조회.
+     *
+     * Repository 가 채워준 Document + 5단계 stages + approvals 위에
+     * `currentSubstep` 만 service 에서 계산해 얹는다.
+     *
+     * 계산 규칙 (와이어프레임 connector substep 모델):
+     *   - currentStage 가 종착(WALLET_STORED) 이면 substep 없음 → null
+     *   - status 가 terminal(VALID / EXPIRED / REVOKED / FAILED) 이면 → null
+     *   - status === AWAITING_APPROVAL → 사용자 승인 대기 (AWAITING_USER_APPROVAL)
+     *   - status === PROGRESS → 서버가 크리덴셜 준비 중 (CREDENTIAL_GENERATING)
+     */
+    async findDetail(documentCode: string): Promise<DocumentDetailResult> {
+        const detail = await this.documentRepository.findDetailByCode(documentCode);
+        if (detail === null) {
+            throw new DomainError(ErrorCode.Document.NOT_FOUND, {documentCode});
+        }
+        const currentSubstep = this.computeCurrentSubstep(
+            detail.status,
+            detail.currentStage,
+        );
+        return new DocumentDetailResult(
+            detail.documentCode,
+            detail.memberCode,
+            detail.requesterName,
+            detail.requesterEmail,
+            detail.documentTypeCode,
+            detail.documentTypeName,
+            detail.countryCode,
+            detail.requestedAt,
+            detail.issuedAt,
+            detail.status,
+            detail.currentStage,
+            currentSubstep,
+            detail.stages,
+            detail.approvals,
+        );
+    }
+
+    private computeCurrentSubstep(
+        status: DocumentStatus,
+        currentStage: DocumentStage,
+    ): DocumentSubstep | null {
+        if (nextDocumentStage(currentStage) === null) {
+            return null;
+        }
+        switch (status) {
+            case DocumentStatus.AWAITING_APPROVAL:
+                return 'AWAITING_USER_APPROVAL';
+            case DocumentStatus.PROGRESS:
+                return 'CREDENTIAL_GENERATING';
+            case DocumentStatus.VALID:
+            case DocumentStatus.EXPIRED:
+            case DocumentStatus.REVOKED:
+            case DocumentStatus.FAILED:
+                return null;
+        }
     }
 }
