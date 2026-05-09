@@ -1,15 +1,18 @@
-import {Injectable} from '@nestjs/common';
+import {Injectable, StreamableFile} from '@nestjs/common';
+import {DocumentFileService} from '../../domain/document/service/document-file.service';
 import {DocumentService} from '../../domain/document/service/document.service';
 import {UserService} from '../../domain/user/service/user.service';
 import {AdvanceDocumentStageReq} from '../../interfaces/document/req/advance-document-stage.req';
 import {ApproveDocumentReq} from '../../interfaces/document/req/approve-document.req';
 import {CreateDocumentReq} from '../../interfaces/document/req/create-document.req';
 import {DocumentListReq} from '../../interfaces/document/req/document-list.req';
+import {UploadEncryptedPdfReq} from '../../interfaces/document/req/upload-encrypted-pdf.req';
 import {AdvanceDocumentStageRes} from '../../interfaces/document/res/advance-document-stage.res';
 import {ApproveDocumentRes} from '../../interfaces/document/res/approve-document.res';
 import {CreateDocumentRes} from '../../interfaces/document/res/create-document.res';
 import {DocumentDetailRes} from '../../interfaces/document/res/document-detail.res';
 import {DocumentListRes} from '../../interfaces/document/res/document-list.res';
+import {UploadFileRes} from '../../interfaces/document/res/upload-file.res';
 
 /**
  * 문서 도메인 Facade — 컨텍스트의 모든 유스케이스 메서드를 모은다.
@@ -26,8 +29,50 @@ import {DocumentListRes} from '../../interfaces/document/res/document-list.res';
 export class DocumentFacade {
     constructor(
         private readonly documentService: DocumentService,
-        private readonly userService: UserService
+        private readonly userService: UserService,
+        private readonly documentFileService: DocumentFileService,
     ) {
+    }
+
+    /**
+     * 일반 파일 업로드 — 객체 스토리지에 평문으로 저장.
+     */
+    async uploadFile(file: Express.Multer.File | undefined): Promise<UploadFileRes> {
+        const result = await this.documentFileService.uploadPlain({
+            body: file?.buffer ?? Buffer.alloc(0),
+            originalFileName: file?.originalname ?? '',
+            contentType: file?.mimetype ?? 'application/octet-stream',
+        });
+        return UploadFileRes.from(result);
+    }
+
+    /**
+     * PDF 암호화 업로드 — open-password 부착 후 저장.
+     */
+    async uploadEncryptedPdf(
+        file: Express.Multer.File | undefined,
+        request: UploadEncryptedPdfReq,
+    ): Promise<UploadFileRes> {
+        const result = await this.documentFileService.uploadEncryptedPdf({
+            body: file?.buffer ?? Buffer.alloc(0),
+            originalFileName: file?.originalname ?? '',
+            contentType: file?.mimetype ?? 'application/pdf',
+            userPassword: request.userPassword,
+        });
+        return UploadFileRes.from(result);
+    }
+
+    /**
+     * 다운로드 프록시 — StreamableFile 로 wrapping.
+     * NestJS 가 type/disposition/length 헤더 세팅 + 에러 핸들링까지 처리.
+     */
+    async downloadFile(fileKey: string): Promise<StreamableFile> {
+        const file = await this.documentFileService.getDownloadStream(fileKey);
+        return new StreamableFile(file.stream, {
+            type: file.contentType,
+            disposition: file.contentDisposition ?? undefined,
+            length: file.size > 0 ? file.size : undefined,
+        });
     }
 
     async create(
