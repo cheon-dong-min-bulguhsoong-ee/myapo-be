@@ -4,9 +4,12 @@ import {UserService} from '../../domain/user/service/user.service';
 import {AdvanceDocumentStageReq} from '../../interfaces/document/req/advance-document-stage.req';
 import {ApproveDocumentReq} from '../../interfaces/document/req/approve-document.req';
 import {CreateDocumentReq} from '../../interfaces/document/req/create-document.req';
+import {DocumentListReq} from '../../interfaces/document/req/document-list.req';
 import {AdvanceDocumentStageRes} from '../../interfaces/document/res/advance-document-stage.res';
 import {ApproveDocumentRes} from '../../interfaces/document/res/approve-document.res';
 import {CreateDocumentRes} from '../../interfaces/document/res/create-document.res';
+import {DocumentDetailRes} from '../../interfaces/document/res/document-detail.res';
+import {DocumentListRes} from '../../interfaces/document/res/document-list.res';
 
 /**
  * 문서 도메인 Facade — 컨텍스트의 모든 유스케이스 메서드를 모은다.
@@ -44,7 +47,6 @@ export class DocumentFacade {
         request: ApproveDocumentReq,
         userId: bigint,
     ): Promise<ApproveDocumentRes> {
-        await this.userService.getActive(userId);
         const result = await this.documentService.approve(
             userId,
             request.documentCode,
@@ -57,11 +59,36 @@ export class DocumentFacade {
         request: AdvanceDocumentStageReq,
         userId: bigint,
     ): Promise<AdvanceDocumentStageRes> {
-        await this.userService.getActive(userId);
         const result = await this.documentService.advanceStage(
             userId,
             request.documentCode,
         );
         return AdvanceDocumentStageRes.from(result);
+    }
+
+    /**
+     * 문서 관리 페이지 리스트.
+     *
+     * 콘솔(운영자) 뷰 — 본인 소유 필터 없이 전체 조회.
+     * 인증은 JwtAuthGuard 가 담당하므로 facade 까지 userId 를 들고 올 필요 없다.
+     */
+    async findList(request: DocumentListReq): Promise<DocumentListRes> {
+        const result = await this.documentService.findList({
+            status: request.status,
+            documentTypeCode: request.documentTypeCode,
+            countryCode: request.countryCode,
+            q: request.q,
+            page: request.page ?? 1,
+            limit: request.limit ?? 20,
+        });
+        return DocumentListRes.from(result);
+    }
+
+    /**
+     * 문서 관리 행 펼침 상세.
+     */
+    async findDetail(documentCode: string): Promise<DocumentDetailRes> {
+        const result = await this.documentService.findDetail(documentCode);
+        return DocumentDetailRes.from(result);
     }
 }
