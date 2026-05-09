@@ -8,10 +8,15 @@ export class AuthService {
   /**
    * 사용자 ID와 이메일을 바탕으로 내부 Access Token을 발행한다.
    */
-  async issueAccessToken(userId: bigint, email: string): Promise<string> {
+  async issueAccessToken(
+    userId: bigint,
+    email: string,
+    role: string,
+  ): Promise<string> {
     return this.tokenProvider.issueToken({
       sub: userId.toString(),
       email,
+      role,
     });
   }
 
@@ -20,11 +25,12 @@ export class AuthService {
    */
   async verifyAccessToken(
     token: string,
-  ): Promise<{ userId: bigint; email: string }> {
+  ): Promise<{ userId: bigint; email: string; role: string }> {
     const payload = this.tokenProvider.verifyToken(token);
     return {
       userId: BigInt(payload.sub),
       email: payload.email,
+      role: payload.role,
     };
   }
 

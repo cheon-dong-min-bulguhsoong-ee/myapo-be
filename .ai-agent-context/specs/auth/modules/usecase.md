@@ -28,7 +28,7 @@
 ## 3. VerifyInternalTokenUseCase (System)
 - **Actor**: System Guard
 - **Input**: `accessToken`
-- **Output**: Verified user payload (`userId`, `email`)
+- **Output**: Verified user payload (`userId`, `email`, `role`)
 - **Flow**:
     1.  Validates the token's signature and expiration.
     2.  Returns the payload if valid, throws an error otherwise.

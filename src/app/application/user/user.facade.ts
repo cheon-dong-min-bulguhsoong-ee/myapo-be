@@ -32,12 +32,27 @@ export class UserFacade {
     const accessToken = await this.authService.issueAccessToken(
       BigInt(result.id),
       result.email,
+      result.role,
     );
 
     return {
       ...UserRes.from(result),
       accessToken,
     };
+  }
+
+  /**
+   * 사용자 권한 변경 (Admin 전용).
+   */
+  async changeUserRole(
+    targetUserId: bigint,
+    newRole: string,
+  ): Promise<UserRes> {
+    const result = await this.userService.changeRole(
+      targetUserId,
+      newRole as any,
+    );
+    return UserRes.from(result);
   }
 
   /**

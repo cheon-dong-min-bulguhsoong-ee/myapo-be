@@ -11,6 +11,7 @@ export class UserResult {
     public readonly email: string,
     public readonly name: string,
     public readonly nationality: string,
+    public readonly role: string,
     public readonly createdAt: Date,
     public readonly wallet: UserWalletResult,
   ) {}

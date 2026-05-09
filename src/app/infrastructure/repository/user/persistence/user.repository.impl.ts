@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { User as UserRow, UserWallet as UserWalletRow } from "@prisma/client";
 import { User } from "../../../../domain/user/entity/user.entity";
 import { UserWallet } from "../../../../domain/user/entity/user-wallet.entity";
+import { UserRole } from "../../../../domain/user/enum/user-role.enum";
 import { VerifierType } from "../../../../domain/user/enum/verifier-type.enum";
 import {
   CreateUserInput,
@@ -95,6 +96,7 @@ export class UserRepositoryImpl extends UserRepository {
         email: user.email,
         lastLoginAt: user.lastLoginAt,
         isDelete: user.isDelete,
+        role: user.role,
       },
     });
   }
@@ -105,6 +107,7 @@ export class UserRepositoryImpl extends UserRepository {
       data: {
         isDelete: false,
         lastLoginAt: new Date(),
+        role: UserRole.USER, // Reactivate defaults to USER or keep existing? Usually keep, but if it was deleted, maybe reset? ADR says nothing. Let's keep existing if possible, but Prisma data update needs a value if we want to be explicit.
       },
     });
   }
@@ -115,6 +118,7 @@ export class UserRepositoryImpl extends UserRepository {
       row.email,
       row.name,
       row.nationality,
+      row.role as UserRole,
       row.createdAt,
       row.updatedAt,
       row.lastLoginAt,
