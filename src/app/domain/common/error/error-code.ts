@@ -201,5 +201,40 @@ export const ErrorCode = {
             409,
             '다음 단계에 대한 사용자 승인이 아직 없습니다.',
         ),
+        FILE_REQUIRED: define(
+            'DOCUMENT_FILE_REQUIRED',
+            400,
+            '업로드할 파일이 필요합니다.',
+        ),
+        FILE_TOO_LARGE: define(
+            'DOCUMENT_FILE_TOO_LARGE',
+            413,
+            '허용된 최대 파일 크기를 초과했습니다.',
+        ),
+        FILE_NOT_PDF: define(
+            'DOCUMENT_FILE_NOT_PDF',
+            400,
+            'PDF 파일만 암호화 업로드할 수 있습니다.',
+        ),
+        FILE_PASSWORD_REQUIRED: define(
+            'DOCUMENT_FILE_PASSWORD_REQUIRED',
+            400,
+            'PDF 보호 비밀번호가 필요합니다.',
+        ),
+        FILE_NOT_FOUND: define(
+            'DOCUMENT_FILE_NOT_FOUND',
+            404,
+            '해당 파일을 찾을 수 없습니다.',
+        ),
+        FILE_STORAGE_FAILURE: define(
+            'DOCUMENT_FILE_STORAGE_FAILURE',
+            502,
+            '파일 저장소와의 통신 중 오류가 발생했습니다.',
+        ),
+        FILE_ENCRYPTION_FAILURE: define(
+            'DOCUMENT_FILE_ENCRYPTION_FAILURE',
+            500,
+            'PDF 암호화 처리 중 오류가 발생했습니다.',
+        ),
     },
 } as const;

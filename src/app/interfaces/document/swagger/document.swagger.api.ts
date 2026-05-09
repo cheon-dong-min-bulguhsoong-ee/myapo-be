@@ -1,11 +1,12 @@
 import {applyDecorators} from '@nestjs/common';
-import {ApiBearerAuth, ApiOperation, ApiParam, ApiTags} from '@nestjs/swagger';
+import {ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiProduces, ApiResponse, ApiTags} from '@nestjs/swagger';
 import {ApiCommonRes} from '../../common/api-common-res.decorator';
 import {AdvanceDocumentStageRes} from '../res/advance-document-stage.res';
 import {ApproveDocumentRes} from '../res/approve-document.res';
 import {CreateDocumentRes} from '../res/create-document.res';
 import {DocumentDetailRes} from '../res/document-detail.res';
 import {DocumentListRes} from '../res/document-list.res';
+import {UploadFileRes} from '../res/upload-file.res';
 
 /**
  * 컨트롤러 비즈니스 데코레이터를 한 곳에 모아서 컨트롤러 본문을 얇게 유지한다.
@@ -92,6 +93,103 @@ export const ListDocumentSwaggerApi = (): MethodDecorator =>
         }),
         ApiBearerAuth(),
         ApiCommonRes(DocumentListRes),
+    );
+
+export const UploadDocumentFileSwaggerApi = (): MethodDecorator =>
+    applyDecorators(
+        ApiOperation({
+            summary: '문서 첨부 파일 업로드 (일반 — 평문 그대로 저장)',
+            description:
+                '`multipart/form-data` 로 임의 바이너리 1개를 받아 객체 스토리지(R2)에 저장한다. ' +
+                '응답의 `downloadUri` 는 백엔드 프록시 다운로드 경로 — 버킷은 private 유지.\n\n' +
+                '*제약*: ' +
+                '(1) 단일 파일 필드명 `file`. ' +
+                '(2) 최대 50 MiB. ' +
+                '(3) 빈 파일 거부.\n\n' +
+                '*인증*: `Authorization: Bearer <accessToken>` 필수.',
+        }),
+        ApiBearerAuth(),
+        ApiConsumes('multipart/form-data'),
+        ApiBody({
+            schema: {
+                type: 'object',
+                required: ['file'],
+                properties: {
+                    file: {
+                        type: 'string',
+                        format: 'binary',
+                        description: '업로드할 파일(최대 50 MiB)',
+                    },
+                },
+            },
+        }),
+        ApiCommonRes(UploadFileRes),
+    );
+
+export const UploadEncryptedPdfSwaggerApi = (): MethodDecorator =>
+    applyDecorators(
+        ApiOperation({
+            summary: '문서 첨부 PDF 암호화 업로드 (open-password 부착 후 저장)',
+            description:
+                '`multipart/form-data` 로 PDF 1개 + `userPassword` 텍스트 필드를 받아 ' +
+                'AES-256 open-password 가 걸린 PDF 로 변환해 객체 스토리지에 저장한다. ' +
+                '뷰어가 다운받아도 비밀번호 없이는 열람 불가. ' +
+                '내부적으로 owner password 도 동일 값으로 설정 — 외부에는 단일 비밀번호 개념만 노출.\n\n' +
+                '*검증*: ' +
+                '(1) Content-Type 또는 확장자가 PDF. ' +
+                '(2) 매직 바이트 `%PDF-` 가 일치해야 함(위조 방지). ' +
+                '(3) `userPassword` 4~64자.\n\n' +
+                '*인증*: `Authorization: Bearer <accessToken>` 필수.',
+        }),
+        ApiBearerAuth(),
+        ApiConsumes('multipart/form-data'),
+        ApiBody({
+            schema: {
+                type: 'object',
+                required: ['file', 'userPassword'],
+                properties: {
+                    file: {
+                        type: 'string',
+                        format: 'binary',
+                        description: '업로드할 PDF (최대 50 MiB).',
+                    },
+                    userPassword: {
+                        type: 'string',
+                        minLength: 4,
+                        maxLength: 64,
+                        description: 'PDF 열람 비밀번호. owner password 도 동일 값으로 내부 설정.',
+                        example: 'A1b2!c3d4',
+                    },
+                },
+            },
+        }),
+        ApiCommonRes(UploadFileRes),
+    );
+
+export const DownloadDocumentFileSwaggerApi = (): MethodDecorator =>
+    applyDecorators(
+        ApiOperation({
+            summary: '문서 첨부 파일 다운로드 프록시',
+            description:
+                '업로드 응답에서 받은 `fileKey` 를 path param 으로 전달하면, ' +
+                '서버가 R2 에서 객체를 받아 그대로 스트리밍한다. ' +
+                '암호화 PDF 는 다운로드는 받을 수 있지만 PDF 뷰어에서 비밀번호 입력이 필요하다.\n\n' +
+                '*인증*: `Authorization: Bearer <accessToken>` 필수.',
+        }),
+        ApiBearerAuth(),
+        ApiParam({
+            name: 'fileKey',
+            description: '업로드 응답의 `fileKey` 를 그대로 path 에 붙여 호출. wildcard 라우트라 슬래시 인코딩 불필요.',
+            example: 'documents/2026/05/9f2b1a3c-4d5e-6f7a-8b9c-0d1e2f3a4b5c.pdf',
+        }),
+        ApiProduces('application/octet-stream', 'application/pdf'),
+        ApiResponse({
+            status: 200,
+            description: '파일 바이너리 스트림.',
+            content: {
+                'application/octet-stream': {schema: {type: 'string', format: 'binary'}},
+            },
+        }),
     );
 
 export const GetDocumentDetailSwaggerApi = (): MethodDecorator =>

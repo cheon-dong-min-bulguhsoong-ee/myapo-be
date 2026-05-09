@@ -1,5 +1,6 @@
 import {Module} from '@nestjs/common';
 import {DocumentFacade} from '../../application/document/document.facade';
+import {DocumentFileService} from '../../domain/document/service/document-file.service';
 import {DocumentService} from '../../domain/document/service/document.service';
 import {UserService} from '../../domain/user/service/user.service';
 import {AuthModule} from '../auth/auth.module';
@@ -9,17 +10,18 @@ import {DocumentController} from './controller/document.controller';
  * 문서 도메인 wiring.
  *
  * - imports: AuthModule — JwtAuthGuard 가 의존하는 AuthService 를 받기 위함.
- * - controllers: 이 도메인의 HTTP 진입점
+ * - controllers: 이 도메인의 HTTP 진입점 (모두 JWT-보호)
  * - providers: facade 가 의존하는 도메인 서비스들 + 컨텍스트 Facade
- *   · DocumentService — 자기 컨텍스트
- *   · UserService     — 다른 컨텍스트지만 facade 가 의존하므로 등록
+ *   · DocumentService     — 자기 컨텍스트(파이프라인)
+ *   · DocumentFileService — 자기 컨텍스트(첨부 파일 업/다운)
+ *   · UserService         — 다른 컨텍스트지만 facade 가 의존하므로 등록
  *
- * Repository 포트 → impl binding 은 InfrastructureModule (Global) 에서 일괄 처리.
+ * Repository / FileStorage / PdfEncryptor 포트 → impl binding 은 InfrastructureModule (Global) 에서 일괄 처리.
  */
 @Module({
     imports: [AuthModule],
     controllers: [DocumentController],
-    providers: [DocumentService, UserService, DocumentFacade],
+    providers: [DocumentService, DocumentFileService, UserService, DocumentFacade],
 })
 export class DocumentModule {
 }
