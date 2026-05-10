@@ -30,7 +30,7 @@ export const CreateDocumentSwaggerApi = (): MethodDecorator =>
                 '이후 단계는 별도 워커가 순차적으로 처리한다.\n\n' +
                 '*인증*: `Authorization: Bearer <accessToken>` 필수 (JwtAuthGuard).',
         }),
-        ApiBearerAuth(),
+        ApiBearerAuth('InternalJwtBearer'),
         ApiCommonRes(CreateDocumentRes),
     );
 
@@ -48,7 +48,7 @@ export const ApproveDocumentSwaggerApi = (): MethodDecorator =>
                 '(3) 같은 단계 중복 승인은 (document_id, stage) UNIQUE 제약으로 차단.\n\n' +
                 '*인증*: `Authorization: Bearer <accessToken>` 필수.',
         }),
-        ApiBearerAuth(),
+        ApiBearerAuth('InternalJwtBearer'),
         ApiCommonRes(ApproveDocumentRes),
     );
 
@@ -72,7 +72,7 @@ export const AdvanceDocumentStageSwaggerApi = (): MethodDecorator =>
                 '(승인 없이 전이 불가).\n\n' +
                 '*인증*: `Authorization: Bearer <accessToken>` 필수.',
         }),
-        ApiBearerAuth(),
+        ApiBearerAuth('InternalJwtBearer'),
         ApiCommonRes(AdvanceDocumentStageRes),
     );
 
@@ -92,7 +92,7 @@ export const ListDocumentSwaggerApi = (): MethodDecorator =>
                 '*콘솔 운영자 뷰* 라서 본인 소유 필터링은 적용하지 않는다.\n\n' +
                 '*인증*: `Authorization: Bearer <accessToken>` 필수.',
         }),
-        ApiBearerAuth(),
+        ApiBearerAuth('InternalJwtBearer'),
         ApiCommonRes(DocumentListRes),
     );
 
@@ -109,7 +109,7 @@ export const UploadDocumentFileSwaggerApi = (): MethodDecorator =>
                 '(3) 빈 파일 거부.\n\n' +
                 '*인증*: `Authorization: Bearer <accessToken>` 필수.',
         }),
-        ApiBearerAuth(),
+        ApiBearerAuth('InternalJwtBearer'),
         ApiConsumes('multipart/form-data'),
         ApiBody({
             schema: {
@@ -154,7 +154,7 @@ export const UploadEncryptedPdfSwaggerApi = (): MethodDecorator =>
                 '(3) `userPassword` 4~64자.\n\n' +
                 '*인증*: `Authorization: Bearer <accessToken>` 필수.',
         }),
-        ApiBearerAuth(),
+        ApiBearerAuth('InternalJwtBearer'),
         ApiConsumes('multipart/form-data'),
         ApiBody({
             schema: {
@@ -204,7 +204,7 @@ export const DownloadDocumentFileSwaggerApi = (): MethodDecorator =>
                 '(2) 해당 stage 에 업로드된 파일이 없으면 `ERR_DOCUMENT_FILE_NOT_FOUND`.\n\n' +
                 '*인증*: `Authorization: Bearer <accessToken>` 필수.',
         }),
-        ApiBearerAuth(),
+        ApiBearerAuth('InternalJwtBearer'),
         ApiParam({
             name: 'documentCode',
             description: '대상 Document 의 외부 노출 코드 (UUID).',
@@ -250,6 +250,6 @@ export const GetDocumentDetailSwaggerApi = (): MethodDecorator =>
             description: '발급 문서 외부 노출 코드 (UUID).',
             example: '9f2b1a3c-4d5e-6f7a-8b9c-0d1e2f3a4b5c',
         }),
-        ApiBearerAuth(),
+        ApiBearerAuth('InternalJwtBearer'),
         ApiCommonRes(DocumentDetailRes),
     );
