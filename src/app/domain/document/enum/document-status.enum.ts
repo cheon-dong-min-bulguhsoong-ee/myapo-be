@@ -9,10 +9,10 @@
  *   → FAILED              — terminal (어느 단계에서든 실패)
  */
 export enum DocumentStatus {
-  PROGRESS = 'PROGRESS',
-  AWAITING_APPROVAL = 'AWAITING_APPROVAL',
-  VALID = 'VALID',
-  EXPIRED = 'EXPIRED',
-  REVOKED = 'REVOKED',
-  FAILED = 'FAILED',
+  PROGRESS = "PROGRESS",
+  AWAITING_APPROVAL = "AWAITING_APPROVAL",
+  VALID = "VALID",
+  EXPIRED = "EXPIRED",
+  REVOKED = "REVOKED",
+  FAILED = "FAILED",
 }

@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import { DisputeService } from '../../domain/dispute/service/dispute.service';
-import { CredentialService } from '../../domain/credential/service/credential.service';
-import { DisputeResult } from '../../domain/dispute/dto/dispute.result';
-import { DisputeStatus } from '../../domain/dispute/enum/dispute-status.enum';
-import { DisputeType } from '../../domain/dispute/enum/dispute-type.enum';
+import { Injectable } from "@nestjs/common";
+import { DisputeService } from "../../domain/dispute/service/dispute.service";
+import { CredentialService } from "../../domain/credential/service/credential.service";
+import { DisputeResult } from "../../domain/dispute/dto/dispute.result";
+import { DisputeStatus } from "../../domain/dispute/enum/dispute-status.enum";
+import { DisputeType } from "../../domain/dispute/enum/dispute-type.enum";
 
 @Injectable()
 export class DisputeFacade {
@@ -33,7 +33,10 @@ export class DisputeFacade {
   /**
    * 운영자를 배정한다 (Admin 전용).
    */
-  async assignOperator(disputeId: string, adminId: bigint): Promise<DisputeResult> {
+  async assignOperator(
+    disputeId: string,
+    adminId: bigint,
+  ): Promise<DisputeResult> {
     return this.disputeService.assignOperator(disputeId, adminId);
   }
 
@@ -53,7 +56,10 @@ export class DisputeFacade {
     // ADR-003: RESOLVED 상태가 되면 시스템이 직접 크리덴셜 취소 실행
     if (input.newStatus === DisputeStatus.RESOLVED && input.credentialCode) {
       // CredentialService의 revoke API 사용
-      await this.credentialService.revoke(input.credentialCode, `DISPUTE:${input.id}`);
+      await this.credentialService.revoke(
+        input.credentialCode,
+        `DISPUTE:${input.id}`,
+      );
     }
 
     return result;

@@ -1,5 +1,5 @@
-import {DocumentStage} from '../enum/document-stage.enum';
-import {DocumentStatus} from '../enum/document-status.enum';
+import { DocumentStage } from "../enum/document-stage.enum";
+import { DocumentStatus } from "../enum/document-status.enum";
 
 /**
  * 문서 단계 전이 결과.
@@ -10,11 +10,10 @@ import {DocumentStatus} from '../enum/document-status.enum';
  * - issuedAt: WALLET_STORED 도달 시점에만 채워짐 (그 외 null)
  */
 export class AdvanceDocumentStageResult {
-    constructor(
-        public readonly documentCode: string,
-        public readonly currentStage: DocumentStage,
-        public readonly status: DocumentStatus,
-        public readonly issuedAt: Date | null,
-    ) {
-    }
+  constructor(
+    public readonly documentCode: string,
+    public readonly currentStage: DocumentStage,
+    public readonly status: DocumentStatus,
+    public readonly issuedAt: Date | null,
+  ) {}
 }

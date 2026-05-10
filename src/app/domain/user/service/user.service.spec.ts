@@ -36,6 +36,139 @@ describe("UserService", () => {
     repository = module.get(UserRepository);
   });
 
+  describe("signIn", () => {
+    const input = {
+      email: "test@example.com",
+      verifier: "google",
+      verifierId: "sub-123",
+      name: "Test",
+      nationality: "KR",
+      xrplAddress: "rAddress",
+      publicKey: "pubKey",
+    };
+
+    it("기존 유저가 있으면 로그인 처리한다", async () => {
+      const user = new User(
+        BigInt(1),
+        "old@example.com",
+        "Old",
+        "KR",
+        UserRole.USER,
+        new Date(),
+        new Date(),
+        null,
+        false,
+      );
+      const wallet = new UserWallet(
+        BigInt(1),
+        BigInt(1),
+        VerifierType.GOOGLE,
+        "sub-123",
+        "rAddress",
+        "pubKey",
+        new Date(),
+        new Date(),
+        new Date(),
+      );
+
+      repository.findByVerifier.mockResolvedValue(user);
+      repository.findWalletByUserId.mockResolvedValue(wallet);
+      repository.update.mockResolvedValue(undefined);
+
+      const result = await service.signIn(input);
+
+      expect(result.id).toBe("1");
+      expect(user.email).toBe(input.email); // 이메일 동기화
+      expect(repository.update).toHaveBeenCalled();
+    });
+
+    it("유저가 없으면 신규 가입 처리한다", async () => {
+      repository.findByVerifier.mockResolvedValue(null);
+      repository.findByEmail.mockResolvedValue(null);
+      repository.findByXrplAddress.mockResolvedValue(null);
+      repository.create.mockResolvedValue(
+        new User(
+          BigInt(2),
+          input.email,
+          input.name,
+          input.nationality,
+          UserRole.USER,
+          new Date(),
+          new Date(),
+          null,
+          false,
+        ),
+      );
+      repository.update.mockResolvedValue(undefined);
+
+      const result = await service.signIn(input);
+
+      expect(result.id).toBe("2");
+      expect(repository.create).toHaveBeenCalled();
+    });
+
+    it("유저가 없고 가입 메타데이터가 부족하면 에러를 던진다", async () => {
+      repository.findByVerifier.mockResolvedValue(null);
+
+      await expect(
+        service.signIn({
+          email: "t@t.com",
+          verifier: "v",
+          verifierId: "vId",
+        }),
+      ).rejects.toThrow(
+        new DomainError(ErrorCode.Common.BAD_REQUEST),
+      );
+    });
+
+    it("삭제된 유저면 복구를 시도한다", async () => {
+      const deletedUser = new User(
+        BigInt(1),
+        input.email,
+        input.name,
+        input.nationality,
+        UserRole.USER,
+        new Date(),
+        new Date(),
+        null,
+        true,
+      );
+      const wallet = new UserWallet(
+        BigInt(1),
+        BigInt(1),
+        VerifierType.GOOGLE,
+        input.verifierId,
+        input.xrplAddress,
+        input.publicKey,
+        new Date(),
+        new Date(),
+        new Date(),
+      );
+
+      repository.findByVerifier.mockResolvedValue(deletedUser);
+      repository.findWalletByUserId.mockResolvedValue(wallet);
+      repository.reactivate.mockResolvedValue(undefined);
+      repository.findById.mockResolvedValue(
+        new User(
+          BigInt(1),
+          input.email,
+          input.name,
+          input.nationality,
+          UserRole.USER,
+          new Date(),
+          new Date(),
+          null,
+          false,
+        ),
+      );
+      repository.update.mockResolvedValue(undefined);
+
+      const result = await service.signIn(input);
+      expect(repository.reactivate).toHaveBeenCalled();
+      expect(result.id).toBe("1");
+    });
+  });
+
   describe("register", () => {
     const input = {
       email: "test@example.com",

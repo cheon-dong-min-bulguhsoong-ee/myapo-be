@@ -1,11 +1,10 @@
-import { Injectable } from '@nestjs/common';
-import { DocumentType as DocumentTypeRow } from '@prisma/client';
-import { PersonaType } from '../../../../domain/common/enum/persona-type.enum';
-import { DocumentType } from '../../../../domain/document/entity/document-type.entity';
-import { DocumentTypeStatus } from '../../../../domain/document/enum/document-type-status.enum';
-import { DocumentTypeRepository } from '../../../../domain/document/repository/document-type.repository';
-import { PrismaService } from '../../../prisma/prisma.service';
-
+import { Injectable } from "@nestjs/common";
+import { DocumentType as DocumentTypeRow } from "@prisma/client";
+import { PersonaType } from "../../../../domain/common/enum/persona-type.enum";
+import { DocumentType } from "../../../../domain/document/entity/document-type.entity";
+import { DocumentTypeStatus } from "../../../../domain/document/enum/document-type-status.enum";
+import { DocumentTypeRepository } from "../../../../domain/document/repository/document-type.repository";
+import { PrismaService } from "../../../prisma/prisma.service";
 
 @Injectable()
 export class DocumentTypeRepositoryImpl extends DocumentTypeRepository {

@@ -12,6 +12,78 @@ export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
 
   /**
+   * 통합 로그인/회원가입.
+   * 사용자가 존재하면 로그인 처리를, 없으면 회원가입 처리를 수행한다.
+   */
+  async signIn(input: {
+    email: string;
+    verifier: string;
+    verifierId: string;
+    // 회원가입용 선택적 필드
+    name?: string;
+    nationality?: string;
+    xrplAddress?: string;
+    publicKey?: string;
+  }): Promise<UserResult> {
+    const existingUser = await this.userRepository.findByVerifier(
+      input.verifier,
+      input.verifierId,
+    );
+
+    if (existingUser) {
+      if (existingUser.isDelete) {
+        // 탈퇴한 계정인 경우 복구 시도 (회원가입 메타데이터 필요)
+        if (!input.xrplAddress) {
+          throw new DomainError(ErrorCode.User.USER_NOT_FOUND, {
+            message: "Reactivation requires wallet info",
+          });
+        }
+        const wallet = await this.userRepository.findWalletByUserId(
+          existingUser.id,
+        );
+        if (wallet && wallet.xrplAddress !== input.xrplAddress) {
+          throw new DomainError(ErrorCode.User.REACTIVATION_BLOCKED);
+        }
+        await this.userRepository.reactivate(existingUser.id);
+        const reactivatedUser = await this.userRepository.findById(
+          existingUser.id,
+        );
+        await this.handleLoginSideEffects(reactivatedUser!, input.email);
+        return this.mapToResult(reactivatedUser!, wallet!.xrplAddress);
+      }
+
+      // 일반 로그인
+      await this.handleLoginSideEffects(existingUser, input.email);
+      const wallet = await this.userRepository.findWalletByUserId(
+        existingUser.id,
+      );
+      return this.mapToResult(existingUser, wallet!.xrplAddress);
+    }
+
+    // 사용자 없음 -> 회원가입 시도
+    if (
+      !input.name ||
+      !input.nationality ||
+      !input.xrplAddress ||
+      !input.publicKey
+    ) {
+      throw new DomainError(ErrorCode.Common.BAD_REQUEST, {
+        message: "Registration metadata required for new user",
+      });
+    }
+
+    return this.register({
+      email: input.email,
+      name: input.name,
+      nationality: input.nationality,
+      verifier: input.verifier,
+      verifierId: input.verifierId,
+      xrplAddress: input.xrplAddress,
+      publicKey: input.publicKey,
+    });
+  }
+
+  /**
    * 사용자를 등록하거나 탈퇴한 계정을 복구한다.
    */
   async register(input: {

@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import { DocumentType as DocumentTypeRow } from '@prisma/client';
-import { CredentialDocumentType } from '../../../../domain/credential/entity/credential-document-type.entity';
-import { CredentialDocumentTypeRepository } from '../../../../domain/credential/repository/credential-document-type.repository';
-import { DocumentTypeStatus } from '../../../../domain/document/enum/document-type-status.enum';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { Injectable } from "@nestjs/common";
+import { DocumentType as DocumentTypeRow } from "@prisma/client";
+import { CredentialDocumentType } from "../../../../domain/credential/entity/credential-document-type.entity";
+import { CredentialDocumentTypeRepository } from "../../../../domain/credential/repository/credential-document-type.repository";
+import { DocumentTypeStatus } from "../../../../domain/document/enum/document-type-status.enum";
+import { PrismaService } from "../../../prisma/prisma.service";
 
 @Injectable()
 export class CredentialDocumentTypeRepositoryImpl extends CredentialDocumentTypeRepository {
@@ -19,6 +19,11 @@ export class CredentialDocumentTypeRepositoryImpl extends CredentialDocumentType
   }
 
   private toEntity(row: DocumentTypeRow): CredentialDocumentType {
-    return new CredentialDocumentType(row.code, row.name, row.issuerCode, row.defaultTtlMonths);
+    return new CredentialDocumentType(
+      row.code,
+      row.name,
+      row.issuerCode,
+      row.defaultTtlMonths,
+    );
   }
 }

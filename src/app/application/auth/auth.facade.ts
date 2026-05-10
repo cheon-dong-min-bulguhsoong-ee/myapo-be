@@ -11,18 +11,26 @@ export class AuthFacade {
   ) {}
 
   /**
-   * 소셜 계정 정보를 확인하여 로그인 처리하고 자체 JWT를 발행한다.
+   * 소셜 계정 정보를 확인하여 통합 로그인(로그인/회원가입) 처리하고 자체 JWT를 발행한다.
    */
-  async login(auth: {
+  async signIn(input: {
     email: string;
     verifier: string;
     verifierId: string;
+    name?: string;
+    nationality?: string;
+    xrplAddress?: string;
+    publicKey?: string;
   }): Promise<AuthRes> {
-    const result = await this.userService.login(
-      auth.verifier,
-      auth.verifierId,
-      auth.email,
-    );
+    const result = await this.userService.signIn({
+      email: input.email,
+      verifier: input.verifier,
+      verifierId: input.verifierId,
+      name: input.name,
+      nationality: input.nationality,
+      xrplAddress: input.xrplAddress,
+      publicKey: input.publicKey,
+    });
 
     const accessToken = await this.authService.issueAccessToken(
       BigInt(result.id),

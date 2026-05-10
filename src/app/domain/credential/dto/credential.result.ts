@@ -1,8 +1,8 @@
-import { CredentialIssueRequestStatus } from '../enum/credential-issue-request-status.enum';
-import { CredentialStatus } from '../enum/credential-status.enum';
-import { CredentialSubmissionStatus } from '../enum/credential-submission-status.enum';
-import { IssuePipelineStage } from '../enum/issue-pipeline-stage.enum';
-import { IssuePipelineStageStatus } from '../enum/issue-pipeline-stage-status.enum';
+import { CredentialIssueRequestStatus } from "../enum/credential-issue-request-status.enum";
+import { CredentialStatus } from "../enum/credential-status.enum";
+import { CredentialSubmissionStatus } from "../enum/credential-submission-status.enum";
+import { IssuePipelineStage } from "../enum/issue-pipeline-stage.enum";
+import { IssuePipelineStageStatus } from "../enum/issue-pipeline-stage-status.enum";
 
 export class IssuePipelineStageItemResult {
   constructor(
@@ -35,7 +35,14 @@ export class CredentialIssueRequestResult extends CreateCredentialIssueRequestRe
     public readonly credentialId: string | null,
     public readonly submissionCount: number,
   ) {
-    super(issueRequestId, status, pipeline, currentStage, currentSubstep, authEventId);
+    super(
+      issueRequestId,
+      status,
+      pipeline,
+      currentStage,
+      currentSubstep,
+      authEventId,
+    );
   }
 }
 

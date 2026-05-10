@@ -6,10 +6,10 @@
  * 구현체가 어떤 도구(qpdf, muhammara, ...) 를 쓰는지는 도메인이 알 필요 없다.
  */
 export abstract class PdfEncryptor {
-    abstract protectWithPassword(input: PdfEncryptorInput): Promise<Buffer>;
+  abstract protectWithPassword(input: PdfEncryptorInput): Promise<Buffer>;
 }
 
 export interface PdfEncryptorInput {
-    readonly source: Buffer;
-    readonly userPassword: string;
+  readonly source: Buffer;
+  readonly userPassword: string;
 }

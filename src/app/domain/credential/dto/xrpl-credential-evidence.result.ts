@@ -1,7 +1,7 @@
 export enum XrplCredentialTransactionKind {
-  CREATE = 'CREATE',
-  ACCEPT = 'ACCEPT',
-  DELETE = 'DELETE',
+  CREATE = "CREATE",
+  ACCEPT = "ACCEPT",
+  DELETE = "DELETE",
 }
 
 export class XrplCredentialTransactionEvidenceResult {

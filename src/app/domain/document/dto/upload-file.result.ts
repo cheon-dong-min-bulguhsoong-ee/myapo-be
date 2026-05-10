@@ -5,14 +5,13 @@
  * 프록시 엔드포인트가 R2 에서 받아 스트리밍 — 버킷은 private 로 유지된다.
  */
 export class UploadFileResult {
-    constructor(
-        public readonly fileKey: string,
-        public readonly originalFileName: string,
-        public readonly contentType: string,
-        public readonly size: number,
-        public readonly downloadUri: string,
-        public readonly encrypted: boolean,
-        public readonly uploadedAt: Date,
-    ) {
-    }
+  constructor(
+    public readonly fileKey: string,
+    public readonly originalFileName: string,
+    public readonly contentType: string,
+    public readonly size: number,
+    public readonly downloadUri: string,
+    public readonly encrypted: boolean,
+    public readonly uploadedAt: Date,
+  ) {}
 }

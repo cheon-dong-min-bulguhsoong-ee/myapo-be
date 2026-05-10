@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { createHash, randomUUID } from 'crypto';
-import { DomainError } from '../../common/error/domain.error';
-import { ErrorCode } from '../../common/error/error-code';
+import { Injectable } from "@nestjs/common";
+import { createHash, randomUUID } from "crypto";
+import { DomainError } from "../../common/error/domain.error";
+import { ErrorCode } from "../../common/error/error-code";
 import {
   CreateCredentialIssueRequestResult,
   CredentialDetailResult,
@@ -12,25 +12,28 @@ import {
   ListCredentialSubmissionsResult,
   ListCredentialsResult,
   SubmitCredentialResult,
-} from '../dto/credential.result';
-import { Credential } from '../entity/credential.entity';
-import { CredentialIssueRequest } from '../entity/credential-issue-request.entity';
-import { CredentialSubmission } from '../entity/credential-submission.entity';
-import { CredentialIssueRequestStatus } from '../enum/credential-issue-request-status.enum';
-import { CredentialStatus } from '../enum/credential-status.enum';
-import { CredentialSubmissionStatus } from '../enum/credential-submission-status.enum';
-import { XrplCredentialDeleteSubmitterRole } from '../enum/xrpl-credential-delete-submitter-role.enum';
+} from "../dto/credential.result";
+import { Credential } from "../entity/credential.entity";
+import { CredentialIssueRequest } from "../entity/credential-issue-request.entity";
+import { CredentialSubmission } from "../entity/credential-submission.entity";
+import { CredentialIssueRequestStatus } from "../enum/credential-issue-request-status.enum";
+import { CredentialStatus } from "../enum/credential-status.enum";
+import { CredentialSubmissionStatus } from "../enum/credential-submission-status.enum";
+import { XrplCredentialDeleteSubmitterRole } from "../enum/xrpl-credential-delete-submitter-role.enum";
 import {
   issuePipelineStageLabels,
   issuePipelineStages,
   IssuePipelineStage,
-} from '../enum/issue-pipeline-stage.enum';
-import { IssuePipelineStageStatus } from '../enum/issue-pipeline-stage-status.enum';
-import { CredentialDocumentTypeRepository } from '../repository/credential-document-type.repository';
-import { CredentialRepository } from '../repository/credential.repository';
-import { XrplCredentialAdapter } from '../contract/xrpl-credential-adapter';
-import { XrplCredentialTransactionEvidenceResult, XrplCredentialTransactionKind } from '../dto/xrpl-credential-evidence.result';
-import { XrplCredentialTransactionPayloadResult } from '../dto/xrpl-credential-transaction-payload.result';
+} from "../enum/issue-pipeline-stage.enum";
+import { IssuePipelineStageStatus } from "../enum/issue-pipeline-stage-status.enum";
+import { CredentialDocumentTypeRepository } from "../repository/credential-document-type.repository";
+import { CredentialRepository } from "../repository/credential.repository";
+import { XrplCredentialAdapter } from "../contract/xrpl-credential-adapter";
+import {
+  XrplCredentialTransactionEvidenceResult,
+  XrplCredentialTransactionKind,
+} from "../dto/xrpl-credential-evidence.result";
+import { XrplCredentialTransactionPayloadResult } from "../dto/xrpl-credential-transaction-payload.result";
 
 @Injectable()
 export class CredentialService {
@@ -47,9 +50,14 @@ export class CredentialService {
     authEventId: string | null,
     walletAddress: string,
   ): Promise<CreateCredentialIssueRequestResult> {
-    const documentType = await this.credentialDocumentTypeRepository.findActiveByCode(documentTypeId);
+    const documentType =
+      await this.credentialDocumentTypeRepository.findActiveByCode(
+        documentTypeId,
+      );
     if (documentType === null) {
-      throw new DomainError(ErrorCode.Credential.DOCUMENT_TYPE_NOT_FOUND, { documentTypeId });
+      throw new DomainError(ErrorCode.Credential.DOCUMENT_TYPE_NOT_FOUND, {
+        documentTypeId,
+      });
     }
 
     const now = new Date();
@@ -94,9 +102,10 @@ export class CredentialService {
       status: CredentialStatus.ISSUED,
       walletAddress,
       isMock: xrplEvidence === null,
-      xrplCredentialId: xrplEvidence === null
-        ? `mock:${request.issueRequestCode}`
-        : this.buildXrplCredentialIdentity(xrplEvidence),
+      xrplCredentialId:
+        xrplEvidence === null
+          ? `mock:${request.issueRequestCode}`
+          : this.buildXrplCredentialIdentity(xrplEvidence),
       xrplNetwork: xrplEvidence?.network ?? null,
       xrplIssuerAddress: xrplEvidence?.issuer ?? null,
       xrplSubjectAddress: xrplEvidence?.subject ?? null,
@@ -126,13 +135,23 @@ export class CredentialService {
     issueRequestId: string,
   ): Promise<CredentialIssueRequestResult> {
     const request = await this.loadOwnedIssueRequest(userId, issueRequestId);
-    const credential = await this.credentialRepository.findCredentialByIssueRequestId(request.id);
-    const submissionCount = await this.credentialRepository.countSubmissionsByIssueRequestId(request.id);
+    const credential =
+      await this.credentialRepository.findCredentialByIssueRequestId(
+        request.id,
+      );
+    const submissionCount =
+      await this.credentialRepository.countSubmissionsByIssueRequestId(
+        request.id,
+      );
 
     return new CredentialIssueRequestResult(
       request.issueRequestCode,
       request.status,
-      this.buildPipeline(request.currentStage, request.status, request.currentSubstep),
+      this.buildPipeline(
+        request.currentStage,
+        request.status,
+        request.currentSubstep,
+      ),
       request.currentStage,
       request.currentSubstep,
       request.authEventId,
@@ -141,18 +160,38 @@ export class CredentialService {
     );
   }
 
-  async listCredentials(userId: bigint, status?: CredentialStatus): Promise<ListCredentialsResult> {
-    const credentials = await this.credentialRepository.listCredentialsByUserId(userId, status);
-    return new ListCredentialsResult(credentials.map((credential) => this.toCredentialSummaryResult(credential)));
+  async listCredentials(
+    userId: bigint,
+    status?: CredentialStatus,
+  ): Promise<ListCredentialsResult> {
+    const credentials = await this.credentialRepository.listCredentialsByUserId(
+      userId,
+      status,
+    );
+    return new ListCredentialsResult(
+      credentials.map((credential) =>
+        this.toCredentialSummaryResult(credential),
+      ),
+    );
   }
 
-  async getCredentialDetail(userId: bigint, credentialId: string): Promise<CredentialDetailResult> {
+  async getCredentialDetail(
+    userId: bigint,
+    credentialId: string,
+  ): Promise<CredentialDetailResult> {
     const credential = await this.loadOwnedCredential(userId, credentialId);
-    const submissions = await this.credentialRepository.listSubmissionsByCredentialId(credential.id);
+    const submissions =
+      await this.credentialRepository.listSubmissionsByCredentialId(
+        credential.id,
+      );
 
     return new CredentialDetailResult(
       this.toCredentialSummaryResult(credential),
-      this.buildPipeline(IssuePipelineStage.ISSUED, CredentialIssueRequestStatus.ISSUED, null),
+      this.buildPipeline(
+        IssuePipelineStage.ISSUED,
+        CredentialIssueRequestStatus.ISSUED,
+        null,
+      ),
       submissions.map((submission) => this.toSubmissionItemResult(submission)),
       credential.sourceDocumentRef,
     );
@@ -166,7 +205,9 @@ export class CredentialService {
     authEventId: string | null,
   ): Promise<SubmitCredentialResult> {
     if (!consentConfirmed) {
-      throw new DomainError(ErrorCode.Credential.CONSENT_REQUIRED, { credentialId });
+      throw new DomainError(ErrorCode.Credential.CONSENT_REQUIRED, {
+        credentialId,
+      });
     }
 
     const credential = await this.loadOwnedCredential(userId, credentialId);
@@ -196,24 +237,43 @@ export class CredentialService {
     );
   }
 
-  async listSubmissions(userId: bigint, credentialId?: string): Promise<ListCredentialSubmissionsResult> {
+  async listSubmissions(
+    userId: bigint,
+    credentialId?: string,
+  ): Promise<ListCredentialSubmissionsResult> {
     if (credentialId !== undefined) {
       const credential = await this.loadOwnedCredential(userId, credentialId);
-      const submissions = await this.credentialRepository.listSubmissionsByCredentialId(credential.id);
-      return new ListCredentialSubmissionsResult(submissions.map((submission) => this.toSubmissionItemResult(submission)));
+      const submissions =
+        await this.credentialRepository.listSubmissionsByCredentialId(
+          credential.id,
+        );
+      return new ListCredentialSubmissionsResult(
+        submissions.map((submission) =>
+          this.toSubmissionItemResult(submission),
+        ),
+      );
     }
 
-    const submissions = await this.credentialRepository.listSubmissionsByUserId(userId);
-    return new ListCredentialSubmissionsResult(submissions.map((submission) => this.toSubmissionItemResult(submission)));
+    const submissions =
+      await this.credentialRepository.listSubmissionsByUserId(userId);
+    return new ListCredentialSubmissionsResult(
+      submissions.map((submission) => this.toSubmissionItemResult(submission)),
+    );
   }
 
   /**
    * 크리덴셜을 취소(Revoke)한다. (Dispute 처리 시 호출됨)
    */
-  async revoke(credentialCode: string, authEventId: string | null): Promise<void> {
-    const credential = await this.credentialRepository.findCredentialByCode(credentialCode);
+  async revoke(
+    credentialCode: string,
+    authEventId: string | null,
+  ): Promise<void> {
+    const credential =
+      await this.credentialRepository.findCredentialByCode(credentialCode);
     if (credential === null) {
-      throw new DomainError(ErrorCode.Credential.NOT_FOUND, { credentialId: credentialCode });
+      throw new DomainError(ErrorCode.Credential.NOT_FOUND, {
+        credentialId: credentialCode,
+      });
     }
 
     if (credential.status === CredentialStatus.REVOKED) {
@@ -286,7 +346,10 @@ export class CredentialService {
     this.assertTestnetCredentialEvidenceAvailable(credential);
     const xrplCredentialAdapter = this.getXrplCredentialAdapterOrThrow();
     const transaction = xrplCredentialAdapter.buildCredentialDeleteTransaction({
-      submitterAddress: this.resolveDeleteSubmitterAddress(credential, submitterRole),
+      submitterAddress: this.resolveDeleteSubmitterAddress(
+        credential,
+        submitterRole,
+      ),
       subjectAddress: credential.xrplSubjectAddress,
       issuerAddress: credential.xrplIssuerAddress,
       credentialTypeHex: credential.xrplCredentialType,
@@ -310,7 +373,10 @@ export class CredentialService {
     const xrplCredentialAdapter = this.getXrplCredentialAdapterOrThrow();
 
     const evidence = await xrplCredentialAdapter.submitCredentialDelete({
-      submitterAddress: this.resolveDeleteSubmitterAddress(credential, submitterRole),
+      submitterAddress: this.resolveDeleteSubmitterAddress(
+        credential,
+        submitterRole,
+      ),
       subjectAddress: credential.xrplSubjectAddress,
       issuerAddress: credential.xrplIssuerAddress,
       credentialTypeHex: credential.xrplCredentialType,
@@ -333,8 +399,8 @@ export class CredentialService {
     submitterRole: XrplCredentialDeleteSubmitterRole,
   ): string {
     return submitterRole === XrplCredentialDeleteSubmitterRole.SUBJECT
-      ? credential.xrplSubjectAddress as string
-      : credential.xrplIssuerAddress as string;
+      ? (credential.xrplSubjectAddress as string)
+      : (credential.xrplIssuerAddress as string);
   }
 
   private async publishTestnetCredentialEvidence(
@@ -356,7 +422,10 @@ export class CredentialService {
         uri: `myapo://credentials/${issueRequestCode}`,
       });
     } catch (error) {
-      if (error instanceof DomainError && error.errorCode === ErrorCode.Credential.XRPL_CONFIG_MISSING) {
+      if (
+        error instanceof DomainError &&
+        error.errorCode === ErrorCode.Credential.XRPL_CONFIG_MISSING
+      ) {
         return null;
       }
       throw error;
@@ -364,10 +433,15 @@ export class CredentialService {
   }
 
   private buildCredentialTypeHex(documentTypeCode: string): string {
-    return createHash('sha256').update(documentTypeCode).digest('hex').toUpperCase();
+    return createHash("sha256")
+      .update(documentTypeCode)
+      .digest("hex")
+      .toUpperCase();
   }
 
-  private buildXrplCredentialIdentity(evidence: XrplCredentialTransactionEvidenceResult): string {
+  private buildXrplCredentialIdentity(
+    evidence: XrplCredentialTransactionEvidenceResult,
+  ): string {
     return `${evidence.issuer}:${evidence.subject}:${evidence.credentialType}`;
   }
 
@@ -378,12 +452,14 @@ export class CredentialService {
     if (error instanceof Error && error.message.length > 0) {
       return error.message;
     }
-    return 'UNKNOWN_CREDENTIAL_ISSUE_FAILURE';
+    return "UNKNOWN_CREDENTIAL_ISSUE_FAILURE";
   }
 
   private getXrplCredentialAdapterOrThrow(): XrplCredentialAdapter {
     if (this.xrplCredentialAdapter === undefined) {
-      throw new DomainError(ErrorCode.Credential.XRPL_CONFIG_MISSING, { key: 'WALLET_SEED' });
+      throw new DomainError(ErrorCode.Credential.XRPL_CONFIG_MISSING, {
+        key: "WALLET_SEED",
+      });
     }
     return this.xrplCredentialAdapter;
   }
@@ -396,10 +472,10 @@ export class CredentialService {
     xrplCredentialType: string;
   } {
     if (
-      credential.isMock
-      || credential.xrplIssuerAddress === null
-      || credential.xrplSubjectAddress === null
-      || credential.xrplCredentialType === null
+      credential.isMock ||
+      credential.xrplIssuerAddress === null ||
+      credential.xrplSubjectAddress === null ||
+      credential.xrplCredentialType === null
     ) {
       throw new DomainError(ErrorCode.Credential.XRPL_EVIDENCE_REQUIRED, {
         credentialId: credential.credentialCode,
@@ -407,45 +483,76 @@ export class CredentialService {
     }
   }
 
-  private async loadOwnedIssueRequest(userId: bigint, issueRequestCode: string): Promise<CredentialIssueRequest> {
-    const request = await this.credentialRepository.findIssueRequestByCode(issueRequestCode);
+  private async loadOwnedIssueRequest(
+    userId: bigint,
+    issueRequestCode: string,
+  ): Promise<CredentialIssueRequest> {
+    const request =
+      await this.credentialRepository.findIssueRequestByCode(issueRequestCode);
     if (request === null) {
-      throw new DomainError(ErrorCode.Credential.ISSUE_REQUEST_NOT_FOUND, { issueRequestId: issueRequestCode });
+      throw new DomainError(ErrorCode.Credential.ISSUE_REQUEST_NOT_FOUND, {
+        issueRequestId: issueRequestCode,
+      });
     }
     if (request.userId !== userId) {
-      throw new DomainError(ErrorCode.Credential.NOT_OWNED, { issueRequestId: issueRequestCode });
+      throw new DomainError(ErrorCode.Credential.NOT_OWNED, {
+        issueRequestId: issueRequestCode,
+      });
     }
     return request;
   }
 
-  private async loadOwnedCredential(userId: bigint, credentialCode: string): Promise<Credential> {
-    const credential = await this.credentialRepository.findCredentialByCode(credentialCode);
+  private async loadOwnedCredential(
+    userId: bigint,
+    credentialCode: string,
+  ): Promise<Credential> {
+    const credential =
+      await this.credentialRepository.findCredentialByCode(credentialCode);
     if (credential === null) {
-      throw new DomainError(ErrorCode.Credential.NOT_FOUND, { credentialId: credentialCode });
+      throw new DomainError(ErrorCode.Credential.NOT_FOUND, {
+        credentialId: credentialCode,
+      });
     }
     if (credential.userId !== userId) {
-      throw new DomainError(ErrorCode.Credential.NOT_OWNED, { credentialId: credentialCode });
+      throw new DomainError(ErrorCode.Credential.NOT_OWNED, {
+        credentialId: credentialCode,
+      });
     }
     return credential;
   }
 
   private assertSubmittable(credential: Credential): void {
-    if (credential.status === CredentialStatus.EXPIRED || credential.expiresAt.getTime() <= Date.now()) {
-      throw new DomainError(ErrorCode.Credential.EXPIRED, { credentialId: credential.credentialCode });
+    if (
+      credential.status === CredentialStatus.EXPIRED ||
+      credential.expiresAt.getTime() <= Date.now()
+    ) {
+      throw new DomainError(ErrorCode.Credential.EXPIRED, {
+        credentialId: credential.credentialCode,
+      });
     }
     if (credential.status === CredentialStatus.REVOKED) {
-      throw new DomainError(ErrorCode.Credential.REVOKED, { credentialId: credential.credentialCode });
+      throw new DomainError(ErrorCode.Credential.REVOKED, {
+        credentialId: credential.credentialCode,
+      });
     }
     if (credential.status !== CredentialStatus.ISSUED) {
-      throw new DomainError(ErrorCode.Credential.NOT_SUBMITTABLE, { credentialId: credential.credentialCode });
+      throw new DomainError(ErrorCode.Credential.NOT_SUBMITTABLE, {
+        credentialId: credential.credentialCode,
+      });
     }
   }
 
-  private toIssueRequestCreateResult(request: CredentialIssueRequest): CreateCredentialIssueRequestResult {
+  private toIssueRequestCreateResult(
+    request: CredentialIssueRequest,
+  ): CreateCredentialIssueRequestResult {
     return new CreateCredentialIssueRequestResult(
       request.issueRequestCode,
       request.status,
-      this.buildPipeline(request.currentStage, request.status, request.currentSubstep),
+      this.buildPipeline(
+        request.currentStage,
+        request.status,
+        request.currentSubstep,
+      ),
       request.currentStage,
       request.currentSubstep,
       request.authEventId,
@@ -459,13 +566,16 @@ export class CredentialService {
   ): IssuePipelineStageItemResult[] {
     const currentIndex = issuePipelineStages.indexOf(currentStage);
     return issuePipelineStages.map((stage, index) => {
-      const status = requestStatus === CredentialIssueRequestStatus.FAILED && stage === currentStage
-        ? IssuePipelineStageStatus.FAILED
-        : index < currentIndex || requestStatus === CredentialIssueRequestStatus.ISSUED
-          ? IssuePipelineStageStatus.DONE
-          : index === currentIndex
-            ? IssuePipelineStageStatus.ACTIVE
-            : IssuePipelineStageStatus.PENDING;
+      const status =
+        requestStatus === CredentialIssueRequestStatus.FAILED &&
+        stage === currentStage
+          ? IssuePipelineStageStatus.FAILED
+          : index < currentIndex ||
+              requestStatus === CredentialIssueRequestStatus.ISSUED
+            ? IssuePipelineStageStatus.DONE
+            : index === currentIndex
+              ? IssuePipelineStageStatus.ACTIVE
+              : IssuePipelineStageStatus.PENDING;
       return new IssuePipelineStageItemResult(
         stage,
         issuePipelineStageLabels[stage],
@@ -475,7 +585,9 @@ export class CredentialService {
     });
   }
 
-  private toCredentialSummaryResult(credential: Credential): CredentialSummaryResult {
+  private toCredentialSummaryResult(
+    credential: Credential,
+  ): CredentialSummaryResult {
     return new CredentialSummaryResult(
       credential.credentialCode,
       credential.issueRequestCode,
@@ -496,7 +608,9 @@ export class CredentialService {
     );
   }
 
-  private toSubmissionItemResult(submission: CredentialSubmission): CredentialSubmissionItemResult {
+  private toSubmissionItemResult(
+    submission: CredentialSubmission,
+  ): CredentialSubmissionItemResult {
     return new CredentialSubmissionItemResult(
       submission.submissionCode,
       submission.credentialCode,

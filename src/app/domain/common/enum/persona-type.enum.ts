@@ -1,4 +1,4 @@
 export enum PersonaType {
-  KOREAN = 'KOREAN',
-  FOREIGNER = 'FOREIGNER',
+  KOREAN = "KOREAN",
+  FOREIGNER = "FOREIGNER",
 }

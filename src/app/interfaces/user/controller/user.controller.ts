@@ -8,26 +8,21 @@ import {
   Param,
   ParseIntPipe,
   Patch,
-  Post,
   UseGuards,
 } from "@nestjs/common";
 import { UserFacade } from "../../../application/user/user.facade";
 import { UserRole } from "../../../domain/user/enum/user-role.enum";
 import { JwtAuthGuard } from "../../../infrastructure/auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../../../infrastructure/auth/guards/roles.guard";
-import { Web3AuthGuard } from "../../../infrastructure/auth/guards/web3auth.guard";
 import { CommonRes } from "../../common/common-res";
 import { Roles } from "../../auth/auth/roles.decorator";
 import { CurrentUserId } from "../auth/current-user-id.decorator";
-import { Web3AuthInfo, Web3AuthPayload } from "../auth/web3auth-info.decorator";
 import { ChangeUserRoleReq } from "../req/change-user-role.req";
-import { RegisterUserReq } from "../req/register-user.req";
-import { RegisterUserRes, UserRes } from "../res/user.res";
+import { UserRes } from "../res/user.res";
 import {
   ChangeUserRoleSwaggerApi,
   DeleteAccountSwaggerApi,
   GetMyProfileSwaggerApi,
-  RegisterUserSwaggerApi,
   UserApiTags,
 } from "../swagger/user.swagger.api";
 
@@ -35,20 +30,6 @@ import {
 @Controller("api/v1/users")
 export class UserController {
   constructor(private readonly userFacade: UserFacade) {}
-
-  /**
-   * 사용자 가입 및 복구.
-   */
-  @Post("register")
-  @UseGuards(Web3AuthGuard)
-  @RegisterUserSwaggerApi()
-  async register(
-    @Body() req: RegisterUserReq,
-    @Web3AuthInfo() auth: Web3AuthPayload,
-  ): Promise<CommonRes<RegisterUserRes>> {
-    const result = await this.userFacade.register(req, auth);
-    return CommonRes.success(result);
-  }
 
   /**
    * 내 정보 조회.

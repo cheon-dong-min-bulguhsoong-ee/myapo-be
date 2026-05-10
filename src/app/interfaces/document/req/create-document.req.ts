@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
+import { ApiProperty } from "@nestjs/swagger";
+import { IsNotEmpty, IsString, MaxLength } from "class-validator";
 
 /**
  * 문서 발급 신청 요청 Body.
@@ -9,8 +9,9 @@ import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
  */
 export class CreateDocumentReq {
   @ApiProperty({
-    description: '문서 카탈로그 코드 (DocumentType.code). 시드 예: KR-NTS-TAX-PAYMENT',
-    example: 'KR-NTS-TAX-PAYMENT',
+    description:
+      "문서 카탈로그 코드 (DocumentType.code). 시드 예: KR-NTS-TAX-PAYMENT",
+    example: "KR-NTS-TAX-PAYMENT",
     maxLength: 40,
   })
   @IsString()

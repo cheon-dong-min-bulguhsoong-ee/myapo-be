@@ -1,5 +1,5 @@
-import { CredentialIssueRequestStatus } from '../enum/credential-issue-request-status.enum';
-import { IssuePipelineStage } from '../enum/issue-pipeline-stage.enum';
+import { CredentialIssueRequestStatus } from "../enum/credential-issue-request-status.enum";
+import { IssuePipelineStage } from "../enum/issue-pipeline-stage.enum";
 
 export class CredentialIssueRequest {
   constructor(

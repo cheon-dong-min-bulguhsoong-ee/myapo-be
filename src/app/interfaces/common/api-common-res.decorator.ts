@@ -1,6 +1,6 @@
-import { applyDecorators, Type } from '@nestjs/common';
-import { ApiExtraModels, ApiOkResponse, getSchemaPath } from '@nestjs/swagger';
-import { CommonRes } from './common-res';
+import { applyDecorators, Type } from "@nestjs/common";
+import { ApiExtraModels, ApiOkResponse, getSchemaPath } from "@nestjs/swagger";
+import { CommonRes } from "./common-res";
 
 export const ApiCommonRes = <T extends Type<unknown>>(model: T) =>
   applyDecorators(

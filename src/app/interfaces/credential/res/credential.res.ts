@@ -1,8 +1,12 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { CredentialDetailResult, CredentialSummaryResult, ListCredentialsResult } from '../../../domain/credential/dto/credential.result';
-import { CredentialStatus } from '../../../domain/credential/enum/credential-status.enum';
-import { IssuePipelineStageItemRes } from './credential-common.res';
-import { CredentialSubmissionItemRes } from './credential-submission.res';
+import { ApiProperty } from "@nestjs/swagger";
+import {
+  CredentialDetailResult,
+  CredentialSummaryResult,
+  ListCredentialsResult,
+} from "../../../domain/credential/dto/credential.result";
+import { CredentialStatus } from "../../../domain/credential/enum/credential-status.enum";
+import { IssuePipelineStageItemRes } from "./credential-common.res";
+import { CredentialSubmissionItemRes } from "./credential-submission.res";
 
 export class CredentialSummaryRes {
   @ApiProperty()

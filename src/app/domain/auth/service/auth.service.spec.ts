@@ -26,7 +26,11 @@ describe("AuthService", () => {
 
   it("사용자 정보를 바탕으로 토큰을 발행한다", async () => {
     tokenProvider.issueToken.mockReturnValue("test-token");
-    const token = await service.issueAccessToken(BigInt(1), "test@test.com", "USER");
+    const token = await service.issueAccessToken(
+      BigInt(1),
+      "test@test.com",
+      "USER",
+    );
     expect(token).toBe("test-token");
     expect(tokenProvider.issueToken).toHaveBeenCalledWith({
       sub: "1",

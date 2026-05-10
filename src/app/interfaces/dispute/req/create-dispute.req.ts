@@ -1,6 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
-import { DisputeType } from '../../../domain/dispute/enum/dispute-type.enum';
+import { ApiProperty } from "@nestjs/swagger";
+import { IsEnum, IsNotEmpty, IsString } from "class-validator";
+import { DisputeType } from "../../../domain/dispute/enum/dispute-type.enum";
 
 export class CreateDisputeReq {
   @ApiProperty({ enum: DisputeType })

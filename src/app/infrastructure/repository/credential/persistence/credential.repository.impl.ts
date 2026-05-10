@@ -1,19 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable } from "@nestjs/common";
 import {
   Credential as CredentialRow,
   CredentialIssueRequest as CredentialIssueRequestRow,
   CredentialSubmission as CredentialSubmissionRow,
   Prisma,
-} from '@prisma/client';
-import { DomainError } from '../../../../domain/common/error/domain.error';
-import { ErrorCode } from '../../../../domain/common/error/error-code';
-import { Credential } from '../../../../domain/credential/entity/credential.entity';
-import { CredentialIssueRequest } from '../../../../domain/credential/entity/credential-issue-request.entity';
-import { CredentialSubmission } from '../../../../domain/credential/entity/credential-submission.entity';
-import { CredentialIssueRequestStatus } from '../../../../domain/credential/enum/credential-issue-request-status.enum';
-import { CredentialStatus } from '../../../../domain/credential/enum/credential-status.enum';
-import { CredentialSubmissionStatus } from '../../../../domain/credential/enum/credential-submission-status.enum';
-import { IssuePipelineStage } from '../../../../domain/credential/enum/issue-pipeline-stage.enum';
+} from "@prisma/client";
+import { DomainError } from "../../../../domain/common/error/domain.error";
+import { ErrorCode } from "../../../../domain/common/error/error-code";
+import { Credential } from "../../../../domain/credential/entity/credential.entity";
+import { CredentialIssueRequest } from "../../../../domain/credential/entity/credential-issue-request.entity";
+import { CredentialSubmission } from "../../../../domain/credential/entity/credential-submission.entity";
+import { CredentialIssueRequestStatus } from "../../../../domain/credential/enum/credential-issue-request-status.enum";
+import { CredentialStatus } from "../../../../domain/credential/enum/credential-status.enum";
+import { CredentialSubmissionStatus } from "../../../../domain/credential/enum/credential-submission-status.enum";
+import { IssuePipelineStage } from "../../../../domain/credential/enum/issue-pipeline-stage.enum";
 import {
   CreateCredentialInput,
   CreateCredentialIssueRequestInput,
@@ -22,8 +22,8 @@ import {
   CredentialRepository,
   MarkCredentialIssueRequestFailedInput,
   MarkCredentialRevokedInput,
-} from '../../../../domain/credential/repository/credential.repository';
-import { PrismaService } from '../../../prisma/prisma.service';
+} from "../../../../domain/credential/repository/credential.repository";
+import { PrismaService } from "../../../prisma/prisma.service";
 
 @Injectable()
 export class CredentialRepositoryImpl extends CredentialRepository {
@@ -31,7 +31,9 @@ export class CredentialRepositoryImpl extends CredentialRepository {
     super();
   }
 
-  async createIssueRequest(input: CreateCredentialIssueRequestInput): Promise<CredentialIssueRequest> {
+  async createIssueRequest(
+    input: CreateCredentialIssueRequestInput,
+  ): Promise<CredentialIssueRequest> {
     const row = await this.prisma.credentialIssueRequest.create({
       data: {
         issueRequestCode: input.issueRequestCode,
@@ -48,7 +50,9 @@ export class CredentialRepositoryImpl extends CredentialRepository {
     return this.toIssueRequestEntity(row);
   }
 
-  async markIssueRequestFailed(input: MarkCredentialIssueRequestFailedInput): Promise<CredentialIssueRequest> {
+  async markIssueRequestFailed(
+    input: MarkCredentialIssueRequestFailedInput,
+  ): Promise<CredentialIssueRequest> {
     const row = await this.prisma.credentialIssueRequest.update({
       where: { id: input.issueRequestId },
       data: {
@@ -60,14 +64,18 @@ export class CredentialRepositoryImpl extends CredentialRepository {
     return this.toIssueRequestEntity(row);
   }
 
-  async findIssueRequestByCode(issueRequestCode: string): Promise<CredentialIssueRequest | null> {
+  async findIssueRequestByCode(
+    issueRequestCode: string,
+  ): Promise<CredentialIssueRequest | null> {
     const row = await this.prisma.credentialIssueRequest.findFirst({
       where: { issueRequestCode, isDelete: false },
     });
     return row === null ? null : this.toIssueRequestEntity(row);
   }
 
-  async findCredentialByIssueRequestId(issueRequestId: bigint): Promise<Credential | null> {
+  async findCredentialByIssueRequestId(
+    issueRequestId: bigint,
+  ): Promise<Credential | null> {
     const row = await this.prisma.credential.findFirst({
       where: { issueRequestId, isDelete: false },
     });
@@ -105,7 +113,9 @@ export class CredentialRepositoryImpl extends CredentialRepository {
     return this.toCredentialEntity(row);
   }
 
-  async markCredentialRevoked(input: MarkCredentialRevokedInput): Promise<Credential> {
+  async markCredentialRevoked(
+    input: MarkCredentialRevokedInput,
+  ): Promise<Credential> {
     const row = await this.prisma.credential.update({
       where: { id: input.credentialId },
       data: {
@@ -117,7 +127,9 @@ export class CredentialRepositoryImpl extends CredentialRepository {
     return this.toCredentialEntity(row);
   }
 
-  async createXrplTransaction(input: CreateCredentialXrplTransactionInput): Promise<void> {
+  async createXrplTransaction(
+    input: CreateCredentialXrplTransactionInput,
+  ): Promise<void> {
     const evidence = input.evidence;
     await this.prisma.credentialXrplTransaction.create({
       data: {
@@ -134,27 +146,37 @@ export class CredentialRepositoryImpl extends CredentialRepository {
         subjectAddress: evidence.subject,
         credentialType: evidence.credentialType,
         flags: evidence.flags,
-        objectSnapshot: evidence.objectSnapshot === null ? Prisma.JsonNull : evidence.objectSnapshot as Prisma.InputJsonValue,
+        objectSnapshot:
+          evidence.objectSnapshot === null
+            ? Prisma.JsonNull
+            : (evidence.objectSnapshot as Prisma.InputJsonValue),
       },
     });
   }
 
-  async findCredentialByCode(credentialCode: string): Promise<Credential | null> {
+  async findCredentialByCode(
+    credentialCode: string,
+  ): Promise<Credential | null> {
     const row = await this.prisma.credential.findFirst({
       where: { credentialCode, isDelete: false },
     });
     return row === null ? null : this.toCredentialEntity(row);
   }
 
-  async listCredentialsByUserId(userId: bigint, status?: CredentialStatus): Promise<Credential[]> {
+  async listCredentialsByUserId(
+    userId: bigint,
+    status?: CredentialStatus,
+  ): Promise<Credential[]> {
     const rows = await this.prisma.credential.findMany({
       where: { userId, status, isDelete: false },
-      orderBy: { issuedAt: 'desc' },
+      orderBy: { issuedAt: "desc" },
     });
     return rows.map((row) => this.toCredentialEntity(row));
   }
 
-  async countSubmissionsByIssueRequestId(issueRequestId: bigint): Promise<number> {
+  async countSubmissionsByIssueRequestId(
+    issueRequestId: bigint,
+  ): Promise<number> {
     const credential = await this.prisma.credential.findFirst({
       where: { issueRequestId, isDelete: false },
       select: { id: true },
@@ -167,7 +189,9 @@ export class CredentialRepositoryImpl extends CredentialRepository {
     });
   }
 
-  async createSubmission(input: CreateCredentialSubmissionInput): Promise<CredentialSubmission> {
+  async createSubmission(
+    input: CreateCredentialSubmissionInput,
+  ): Promise<CredentialSubmission> {
     try {
       const row = await this.prisma.credentialSubmission.create({
         data: {
@@ -185,7 +209,10 @@ export class CredentialRepositoryImpl extends CredentialRepository {
       });
       return this.toSubmissionEntity(row);
     } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === "P2002"
+      ) {
         throw new DomainError(ErrorCode.Credential.SUBMISSION_DUPLICATED, {
           submissionRequestId: input.submissionRequestId,
         });
@@ -194,18 +221,22 @@ export class CredentialRepositoryImpl extends CredentialRepository {
     }
   }
 
-  async listSubmissionsByCredentialId(credentialId: bigint): Promise<CredentialSubmission[]> {
+  async listSubmissionsByCredentialId(
+    credentialId: bigint,
+  ): Promise<CredentialSubmission[]> {
     const rows = await this.prisma.credentialSubmission.findMany({
       where: { credentialId, isDelete: false },
-      orderBy: { submittedAt: 'desc' },
+      orderBy: { submittedAt: "desc" },
     });
     return rows.map((row) => this.toSubmissionEntity(row));
   }
 
-  async listSubmissionsByUserId(userId: bigint): Promise<CredentialSubmission[]> {
+  async listSubmissionsByUserId(
+    userId: bigint,
+  ): Promise<CredentialSubmission[]> {
     const rows = await this.prisma.credentialSubmission.findMany({
       where: { userId, isDelete: false },
-      orderBy: { submittedAt: 'desc' },
+      orderBy: { submittedAt: "desc" },
     });
     return rows.map((row) => this.toSubmissionEntity(row));
   }
@@ -221,7 +252,9 @@ export class CredentialRepositoryImpl extends CredentialRepository {
     });
   }
 
-  private toIssueRequestEntity(row: CredentialIssueRequestRow): CredentialIssueRequest {
+  private toIssueRequestEntity(
+    row: CredentialIssueRequestRow,
+  ): CredentialIssueRequest {
     return new CredentialIssueRequest(
       row.id,
       row.issueRequestCode,
@@ -275,7 +308,9 @@ export class CredentialRepositoryImpl extends CredentialRepository {
     );
   }
 
-  private toSubmissionEntity(row: CredentialSubmissionRow): CredentialSubmission {
+  private toSubmissionEntity(
+    row: CredentialSubmissionRow,
+  ): CredentialSubmission {
     return new CredentialSubmission(
       row.id,
       row.submissionCode,

@@ -1,6 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
-import { DisputeStatus } from '../../../domain/dispute/enum/dispute-status.enum';
+import { ApiProperty } from "@nestjs/swagger";
+import { IsBoolean, IsEnum, IsOptional, IsString } from "class-validator";
+import { DisputeStatus } from "../../../domain/dispute/enum/dispute-status.enum";
 
 export class ChangeDisputeStatusReq {
   @ApiProperty({ enum: DisputeStatus })
@@ -17,7 +17,7 @@ export class ChangeDisputeStatusReq {
   @IsOptional()
   readonly isInternal?: boolean;
 
-  @ApiProperty({ required: false, description: 'RESOLVED 시 필수' })
+  @ApiProperty({ required: false, description: "RESOLVED 시 필수" })
   @IsString()
   @IsOptional()
   readonly credentialCode?: string;

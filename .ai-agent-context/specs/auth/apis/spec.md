@@ -6,38 +6,45 @@
 
 ## 2. Authentication Flow
 1.  **External Auth**: The client authenticates with Web3Auth to get an ID Token.
-2.  **Login**: The client sends the ID Token to `POST /api/v1/auth/login`. The server verifies it and returns an Internal JWT.
+2.  **Sign-In**: The client sends the ID Token and optional registration metadata to `POST /api/v1/auth/signin`. The server verifies the token.
+    - If the user exists, it updates `lastLoginAt` and returns an Internal JWT.
+    - If the user does not exist, it registers the user using the provided metadata and returns an Internal JWT.
 3.  **Session**: The client uses the Internal JWT in the `Authorization: Bearer <token>` header for all subsequent protected API calls.
 4.  **Logout**: The client calls `POST /api/v1/auth/logout` and deletes the stored Internal JWT.
 
 ## 3. Endpoints
 
-### 3.1. Login
+### 3.1. Sign-In
 - **Method**: `POST`
-- **Path**: `/login`
-- **Description**: Verifies a Web3Auth ID Token, logs the user in, and returns an Internal JWT for the application session.
+- **Path**: `/signin`
+- **Description**: Unified endpoint for login and registration. Verifies a Web3Auth ID Token. If the user is new, it performs registration using the provided metadata.
 
 #### API Contract (OpenAPI YAML)
 ```yaml
 paths:
-  /api/v1/auth/login:
+  /api/v1/auth/signin:
     post:
-      summary: User Login
-      description: Verifies Web3Auth ID token and returns an internal session token.
-      operationId: login
+      summary: User Sign-In (Login/Register)
+      description: Verifies Web3Auth ID token. Registers user if not exists.
+      operationId: signin
       security:
         - Web3AuthBearer: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignInRequest'
       responses:
         '201':
-          description: Login successful
+          description: Sign-in successful
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Bad Request (Missing registration metadata for new user)
         '401':
           description: Unauthorized (Invalid Web3Auth Token)
-        '404':
-          description: User not found for the given social account
 ```
 
 ### 3.2. Logout
@@ -66,6 +73,18 @@ paths:
 ```yaml
 components:
   schemas:
+    SignInRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        nationality:
+          type: string
+          example: "KR"
+        xrplAddress:
+          type: string
+        publicKey:
+          type: string
     AuthResponse:
       type: object
       properties:

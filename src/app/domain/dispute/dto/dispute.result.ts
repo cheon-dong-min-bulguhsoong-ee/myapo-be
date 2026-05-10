@@ -1,5 +1,5 @@
-import { DisputeStatus } from '../enum/dispute-status.enum';
-import { DisputeType } from '../enum/dispute-type.enum';
+import { DisputeStatus } from "../enum/dispute-status.enum";
+import { DisputeType } from "../enum/dispute-type.enum";
 
 export class TimelineEntryResult {
   constructor(

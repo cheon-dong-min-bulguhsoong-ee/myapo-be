@@ -1,4 +1,4 @@
-import { DocumentStage } from '../enum/document-stage.enum';
+import { DocumentStage } from "../enum/document-stage.enum";
 
 /**
  * 문서 단계 승인 결과.

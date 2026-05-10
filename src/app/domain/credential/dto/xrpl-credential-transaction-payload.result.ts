@@ -1,4 +1,4 @@
-import { XrplCredentialTransactionKind } from './xrpl-credential-evidence.result';
+import { XrplCredentialTransactionKind } from "./xrpl-credential-evidence.result";
 
 export class XrplCredentialTransactionPayloadResult {
   constructor(

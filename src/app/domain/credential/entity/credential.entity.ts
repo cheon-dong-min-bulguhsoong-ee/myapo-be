@@ -1,4 +1,4 @@
-import { CredentialStatus } from '../enum/credential-status.enum';
+import { CredentialStatus } from "../enum/credential-status.enum";
 
 export class Credential {
   constructor(

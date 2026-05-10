@@ -1,4 +1,4 @@
-import { ErrorCode } from './error-code';
+import { ErrorCode } from "./error-code";
 
 /**
  * 모든 도메인 에러의 단일 클래스.
@@ -13,6 +13,6 @@ export class DomainError extends Error {
     public readonly data: Record<string, unknown> = {},
   ) {
     super(errorCode.message);
-    this.name = 'DomainError';
+    this.name = "DomainError";
   }
 }

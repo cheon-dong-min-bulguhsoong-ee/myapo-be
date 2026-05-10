@@ -1,7 +1,7 @@
-import { DomainError } from '../../common/error/domain.error';
-import { ErrorCode } from '../../common/error/error-code';
-import { DisputeStatus } from '../enum/dispute-status.enum';
-import { DisputeType } from '../enum/dispute-type.enum';
+import { DomainError } from "../../common/error/domain.error";
+import { ErrorCode } from "../../common/error/error-code";
+import { DisputeStatus } from "../enum/dispute-status.enum";
+import { DisputeType } from "../enum/dispute-type.enum";
 
 export class TimelineEntry {
   constructor(
@@ -57,8 +57,13 @@ export class Dispute {
    * 담당 운영자를 배정한다.
    */
   public assignOperator(operatorId: bigint): void {
-    if (this._status !== DisputeStatus.RECEIVED && this._status !== DisputeStatus.ASSIGNED) {
-      throw new DomainError(ErrorCode.Common.BAD_REQUEST, { message: 'Only RECEIVED or ASSIGNED disputes can be (re)assigned.' });
+    if (
+      this._status !== DisputeStatus.RECEIVED &&
+      this._status !== DisputeStatus.ASSIGNED
+    ) {
+      throw new DomainError(ErrorCode.Common.BAD_REQUEST, {
+        message: "Only RECEIVED or ASSIGNED disputes can be (re)assigned.",
+      });
     }
     this._operatorId = operatorId;
     this._status = DisputeStatus.ASSIGNED;
@@ -67,14 +72,19 @@ export class Dispute {
   /**
    * 상태를 변경한다.
    */
-  public changeStatus(newStatus: DisputeStatus, operatorId: bigint, note: string | null = null, isInternal: boolean = false): void {
+  public changeStatus(
+    newStatus: DisputeStatus,
+    operatorId: bigint,
+    note: string | null = null,
+    isInternal: boolean = false,
+  ): void {
     this.assertNotFinalized();
-    
+
     // 상태 변경 규칙 검증 (ADR-003)
     // RECEIVED -> ASSIGNED -> IN_REVIEW -> (INFO_REQUESTED) -> RESOLVED/REJECTED
-    
+
     this._status = newStatus;
-    
+
     // SLA 일시정지 로직
     this._isSlaPaused = newStatus === DisputeStatus.INFO_REQUESTED;
 
@@ -85,8 +95,13 @@ export class Dispute {
    * 최종 확정된 상태(RESOLVED, REJECTED)인지 확인한다.
    */
   private assertNotFinalized(): void {
-    if (this._status === DisputeStatus.RESOLVED || this._status === DisputeStatus.REJECTED) {
-      throw new DomainError(ErrorCode.Common.BAD_REQUEST, { message: 'Finalized disputes cannot be modified.' });
+    if (
+      this._status === DisputeStatus.RESOLVED ||
+      this._status === DisputeStatus.REJECTED
+    ) {
+      throw new DomainError(ErrorCode.Common.BAD_REQUEST, {
+        message: "Finalized disputes cannot be modified.",
+      });
     }
   }
 

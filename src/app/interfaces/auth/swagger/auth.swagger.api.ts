@@ -5,12 +5,12 @@ import { AuthRes } from "../res/auth.res";
 
 export const AuthApiTags = (): ClassDecorator => ApiTags("Auth");
 
-export const LoginSwaggerApi = (): MethodDecorator =>
+export const SignInSwaggerApi = (): MethodDecorator =>
   applyDecorators(
     ApiOperation({
-      summary: "사용자 로그인",
+      summary: "통합 로그인/회원가입 (Sign-In)",
       description:
-        "Web3Auth 인증 후 소셜 계정 정보를 확인하여 로그인 처리하고 자체 Access Token(JWT)을 발행합니다.",
+        "Web3Auth 인증 토큰을 확인하여 로그인을 처리합니다. 시스템에 등록되지 않은 사용자인 경우, 요청 본문의 데이터를 사용하여 회원가입을 함께 수행합니다.",
     }),
     ApiBearerAuth("ExternalJwtBearer"),
     ApiCommonRes(AuthRes),

@@ -1,6 +1,10 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { CredentialSubmissionItemResult, ListCredentialSubmissionsResult, SubmitCredentialResult } from '../../../domain/credential/dto/credential.result';
-import { CredentialSubmissionStatus } from '../../../domain/credential/enum/credential-submission-status.enum';
+import { ApiProperty } from "@nestjs/swagger";
+import {
+  CredentialSubmissionItemResult,
+  ListCredentialSubmissionsResult,
+  SubmitCredentialResult,
+} from "../../../domain/credential/dto/credential.result";
+import { CredentialSubmissionStatus } from "../../../domain/credential/enum/credential-submission-status.enum";
 
 export class CredentialSubmissionItemRes {
   @ApiProperty()
@@ -27,7 +31,9 @@ export class CredentialSubmissionItemRes {
   @ApiProperty({ nullable: true })
   readonly authEventId!: string | null;
 
-  static from(result: CredentialSubmissionItemResult): CredentialSubmissionItemRes {
+  static from(
+    result: CredentialSubmissionItemResult,
+  ): CredentialSubmissionItemRes {
     return {
       submissionId: result.submissionId,
       credentialId: result.credentialId,
@@ -76,7 +82,11 @@ export class ListCredentialSubmissionsRes {
   @ApiProperty({ type: [CredentialSubmissionItemRes] })
   readonly submissions!: CredentialSubmissionItemRes[];
 
-  static from(result: ListCredentialSubmissionsResult): ListCredentialSubmissionsRes {
-    return { submissions: result.submissions.map(CredentialSubmissionItemRes.from) };
+  static from(
+    result: ListCredentialSubmissionsResult,
+  ): ListCredentialSubmissionsRes {
+    return {
+      submissions: result.submissions.map(CredentialSubmissionItemRes.from),
+    };
   }
 }

@@ -1,7 +1,7 @@
 import {
   XrplCredentialObjectResult,
   XrplCredentialTransactionEvidenceResult,
-} from '../dto/xrpl-credential-evidence.result';
+} from "../dto/xrpl-credential-evidence.result";
 
 export interface BuildCredentialCreateTransactionInput {
   readonly issuerAddress: string;
@@ -40,7 +40,7 @@ export interface GetCredentialObjectsInput {
 }
 
 export interface XrplCredentialCreateTransaction {
-  readonly TransactionType: 'CredentialCreate';
+  readonly TransactionType: "CredentialCreate";
   readonly Account: string;
   readonly Subject: string;
   readonly CredentialType: string;
@@ -49,14 +49,14 @@ export interface XrplCredentialCreateTransaction {
 }
 
 export interface XrplCredentialAcceptTransaction {
-  readonly TransactionType: 'CredentialAccept';
+  readonly TransactionType: "CredentialAccept";
   readonly Account: string;
   readonly Issuer: string;
   readonly CredentialType: string;
 }
 
 export interface XrplCredentialDeleteTransaction {
-  readonly TransactionType: 'CredentialDelete';
+  readonly TransactionType: "CredentialDelete";
   readonly Account: string;
   readonly Subject?: string;
   readonly Issuer?: string;
@@ -94,7 +94,9 @@ export abstract class XrplCredentialAdapter {
     input: BuildCredentialDeleteTransactionInput,
   ): Promise<XrplCredentialTransactionEvidenceResult>;
 
-  abstract getCredentialObjects(input: GetCredentialObjectsInput): Promise<XrplCredentialObjectResult[]>;
+  abstract getCredentialObjects(
+    input: GetCredentialObjectsInput,
+  ): Promise<XrplCredentialObjectResult[]>;
 
   abstract getNetworkName(): string;
 

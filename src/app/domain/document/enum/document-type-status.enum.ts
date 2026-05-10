@@ -1,4 +1,4 @@
 export enum DocumentTypeStatus {
-  ACTIVE = 'ACTIVE',
-  DEPRECATED = 'DEPRECATED',
+  ACTIVE = "ACTIVE",
+  DEPRECATED = "DEPRECATED",
 }

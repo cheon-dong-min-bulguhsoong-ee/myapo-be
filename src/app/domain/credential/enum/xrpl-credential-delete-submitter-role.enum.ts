@@ -1,4 +1,4 @@
 export enum XrplCredentialDeleteSubmitterRole {
-  SUBJECT = 'SUBJECT',
-  ISSUER = 'ISSUER',
+  SUBJECT = "SUBJECT",
+  ISSUER = "ISSUER",
 }

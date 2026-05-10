@@ -1,5 +1,8 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { DisputeResult, TimelineEntryResult } from '../../../domain/dispute/dto/dispute.result';
+import { ApiProperty } from "@nestjs/swagger";
+import {
+  DisputeResult,
+  TimelineEntryResult,
+} from "../../../domain/dispute/dto/dispute.result";
 
 export class TimelineEntryRes {
   @ApiProperty()
@@ -59,7 +62,7 @@ export class DisputeRes {
       operatorId: result.operatorId,
       slaDeadline: result.slaDeadline.toISOString(),
       isSlaPaused: result.isSlaPaused,
-      timeline: result.timeline.map(t => TimelineEntryRes.from(t)),
+      timeline: result.timeline.map((t) => TimelineEntryRes.from(t)),
       createdAt: result.createdAt.toISOString(),
     };
   }

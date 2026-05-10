@@ -1,8 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { CreateCredentialIssueRequestResult, CredentialIssueRequestResult } from '../../../domain/credential/dto/credential.result';
-import { CredentialIssueRequestStatus } from '../../../domain/credential/enum/credential-issue-request-status.enum';
-import { IssuePipelineStage } from '../../../domain/credential/enum/issue-pipeline-stage.enum';
-import { IssuePipelineStageItemRes } from './credential-common.res';
+import { ApiProperty } from "@nestjs/swagger";
+import {
+  CreateCredentialIssueRequestResult,
+  CredentialIssueRequestResult,
+} from "../../../domain/credential/dto/credential.result";
+import { CredentialIssueRequestStatus } from "../../../domain/credential/enum/credential-issue-request-status.enum";
+import { IssuePipelineStage } from "../../../domain/credential/enum/issue-pipeline-stage.enum";
+import { IssuePipelineStageItemRes } from "./credential-common.res";
 
 export class CreateCredentialIssueRequestRes {
   @ApiProperty()
@@ -23,7 +26,9 @@ export class CreateCredentialIssueRequestRes {
   @ApiProperty({ nullable: true })
   readonly authEventId!: string | null;
 
-  static from(result: CreateCredentialIssueRequestResult): CreateCredentialIssueRequestRes {
+  static from(
+    result: CreateCredentialIssueRequestResult,
+  ): CreateCredentialIssueRequestRes {
     return {
       issueRequestId: result.issueRequestId,
       status: result.status,

@@ -1,16 +1,6 @@
 # User Use Cases
 
-## 1. RegisterUserUseCase
-- **Actor**: Unregistered User (Authenticated via Web3Auth)
-- **Input**: `email`, `name`, `nationality`, `xrplAddress`, `publicKey`, `verifier`, `verifierId`
-- **Output**: Created `User` entity
-- **Flow**:
-    1. `verifier` 및 `verifierId` 중복 여부 확인.
-    2. `email` 및 `xrplAddress` 중복 여부 확인.
-    3. 국적 코드 유효성 검증.
-    4. `User` 및 `UserWallet` 엔티티 생성 및 저장.
-
-## 2. GetMyProfileUseCase
+## 1. GetMyProfileUseCase
 - **Actor**: Registered User
 - **Input**: `userId`
 - **Output**: `User` entity with `UserWallet`

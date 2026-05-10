@@ -19,7 +19,7 @@ describe("AuthFacade", () => {
         {
           provide: UserService,
           useValue: {
-            login: jest.fn(),
+            signIn: jest.fn(),
           },
         },
         {
@@ -37,8 +37,8 @@ describe("AuthFacade", () => {
     authService = module.get(AuthService);
   });
 
-  describe("login", () => {
-    it("성공적으로 로그인하고 토큰을 반환한다", async () => {
+  describe("signIn", () => {
+    it("성공적으로 로그인/가입하고 토큰을 반환한다", async () => {
       const userResult = new UserResult(
         "1",
         "test@test.com",
@@ -48,24 +48,24 @@ describe("AuthFacade", () => {
         new Date(),
         new UserWalletResult("rAddress"),
       );
-      userService.login.mockResolvedValue(userResult);
+      userService.signIn.mockResolvedValue(userResult);
       authService.issueAccessToken.mockResolvedValue("access-token");
 
-      const authPayload = {
+      const signInPayload = {
         email: "test@test.com",
         verifier: "google",
         verifierId: "sub-123",
+        name: "Test",
+        nationality: "KR",
+        xrplAddress: "rAddress",
+        publicKey: "02...",
       };
 
-      const result = await facade.login(authPayload);
+      const result = await facade.signIn(signInPayload);
 
       expect(result.id).toBe("1");
       expect(result.accessToken).toBe("access-token");
-      expect(userService.login).toHaveBeenCalledWith(
-        "google",
-        "sub-123",
-        "test@test.com",
-      );
+      expect(userService.signIn).toHaveBeenCalledWith(signInPayload);
       expect(authService.issueAccessToken).toHaveBeenCalledWith(
         BigInt(1),
         "test@test.com",
@@ -76,7 +76,6 @@ describe("AuthFacade", () => {
 
   describe("logout", () => {
     it("성공 응답을 반환한다", async () => {
-      userService.login.mockResolvedValue({} as any); // Not used but for consistency
       authService.logout.mockResolvedValue(undefined);
 
       await expect(facade.logout(BigInt(1))).resolves.toBeUndefined();

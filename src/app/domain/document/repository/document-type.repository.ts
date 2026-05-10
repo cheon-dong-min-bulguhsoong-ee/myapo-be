@@ -1,4 +1,4 @@
-import { DocumentType } from '../entity/document-type.entity';
+import { DocumentType } from "../entity/document-type.entity";
 
 export abstract class DocumentTypeRepository {
   /**

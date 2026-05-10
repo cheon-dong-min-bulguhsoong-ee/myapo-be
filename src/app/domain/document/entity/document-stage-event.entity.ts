@@ -1,5 +1,5 @@
-import { DocumentStage } from '../enum/document-stage.enum';
-import { DocumentStageStatus } from '../enum/document-stage-status.enum';
+import { DocumentStage } from "../enum/document-stage.enum";
+import { DocumentStageStatus } from "../enum/document-stage-status.enum";
 
 export class DocumentStageEvent {
   constructor(

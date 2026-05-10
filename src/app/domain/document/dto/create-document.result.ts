@@ -1,5 +1,5 @@
-import { DocumentStage } from '../enum/document-stage.enum';
-import { DocumentStatus } from '../enum/document-status.enum';
+import { DocumentStage } from "../enum/document-stage.enum";
+import { DocumentStatus } from "../enum/document-status.enum";
 
 /**
  * 문서 발급 신청 결과.

@@ -1,5 +1,8 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { XrplCredentialTransactionEvidenceResult, XrplCredentialTransactionKind } from '../../../domain/credential/dto/xrpl-credential-evidence.result';
+import { ApiProperty } from "@nestjs/swagger";
+import {
+  XrplCredentialTransactionEvidenceResult,
+  XrplCredentialTransactionKind,
+} from "../../../domain/credential/dto/xrpl-credential-evidence.result";
 
 export class XrplCredentialEvidenceRes {
   @ApiProperty({ enum: XrplCredentialTransactionKind })
@@ -41,7 +44,9 @@ export class XrplCredentialEvidenceRes {
   @ApiProperty({ nullable: true })
   readonly objectSnapshot!: Record<string, unknown> | null;
 
-  static from(result: XrplCredentialTransactionEvidenceResult): XrplCredentialEvidenceRes {
+  static from(
+    result: XrplCredentialTransactionEvidenceResult,
+  ): XrplCredentialEvidenceRes {
     return {
       transactionKind: result.transactionKind,
       network: result.network,

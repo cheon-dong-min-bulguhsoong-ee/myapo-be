@@ -1,14 +1,20 @@
-import { Injectable } from '@nestjs/common';
-import { Dispute as DisputeRow, DisputeTimeline as TimelineRow } from '@prisma/client';
-import { Dispute, TimelineEntry } from '../../../../domain/dispute/entity/dispute.entity';
-import { DisputeStatus } from '../../../../domain/dispute/enum/dispute-status.enum';
-import { DisputeType } from '../../../../domain/dispute/enum/dispute-type.enum';
+import { Injectable } from "@nestjs/common";
+import {
+  Dispute as DisputeRow,
+  DisputeTimeline as TimelineRow,
+} from "@prisma/client";
+import {
+  Dispute,
+  TimelineEntry,
+} from "../../../../domain/dispute/entity/dispute.entity";
+import { DisputeStatus } from "../../../../domain/dispute/enum/dispute-status.enum";
+import { DisputeType } from "../../../../domain/dispute/enum/dispute-type.enum";
 import {
   CreateDisputeInput,
   CreateTimelineEntryInput,
   DisputeRepository,
-} from '../../../../domain/dispute/repository/dispute.repository';
-import { PrismaService } from '../../../prisma/prisma.service';
+} from "../../../../domain/dispute/repository/dispute.repository";
+import { PrismaService } from "../../../prisma/prisma.service";
 
 @Injectable()
 export class DisputeRepositoryImpl extends DisputeRepository {
@@ -33,7 +39,7 @@ export class DisputeRepositoryImpl extends DisputeRepository {
   async findById(id: string): Promise<Dispute | null> {
     const row = await this.prisma.dispute.findUnique({
       where: { id },
-      include: { timeline: { orderBy: { createdAt: 'asc' } } },
+      include: { timeline: { orderBy: { createdAt: "asc" } } },
     });
     return row ? this.toEntity(row, row.timeline) : null;
   }
@@ -41,7 +47,7 @@ export class DisputeRepositoryImpl extends DisputeRepository {
   async listByRequesterId(requesterId: bigint): Promise<Dispute[]> {
     const rows = await this.prisma.dispute.findMany({
       where: { requesterId },
-      include: { timeline: { orderBy: { createdAt: 'asc' } } },
+      include: { timeline: { orderBy: { createdAt: "asc" } } },
     });
     return rows.map((row) => this.toEntity(row, row.timeline));
   }
@@ -49,7 +55,7 @@ export class DisputeRepositoryImpl extends DisputeRepository {
   async listByOperatorId(operatorId: bigint): Promise<Dispute[]> {
     const rows = await this.prisma.dispute.findMany({
       where: { operatorId },
-      include: { timeline: { orderBy: { createdAt: 'asc' } } },
+      include: { timeline: { orderBy: { createdAt: "asc" } } },
     });
     return rows.map((row) => this.toEntity(row, row.timeline));
   }
@@ -61,7 +67,7 @@ export class DisputeRepositoryImpl extends DisputeRepository {
           status: { in: [DisputeStatus.RESOLVED, DisputeStatus.REJECTED] },
         },
       },
-      include: { timeline: { orderBy: { createdAt: 'asc' } } },
+      include: { timeline: { orderBy: { createdAt: "asc" } } },
     });
     return rows.map((row) => this.toEntity(row, row.timeline));
   }
@@ -89,21 +95,29 @@ export class DisputeRepositoryImpl extends DisputeRepository {
     });
   }
 
-  async getOperatorWorkloads(): Promise<{ operatorId: bigint; activeCount: number }[]> {
+  async getOperatorWorkloads(): Promise<
+    { operatorId: bigint; activeCount: number }[]
+  > {
     const activeDisputes = await this.prisma.dispute.groupBy({
-      by: ['operatorId'],
+      by: ["operatorId"],
       where: {
         operatorId: { not: null },
-        status: { in: [DisputeStatus.ASSIGNED, DisputeStatus.IN_REVIEW, DisputeStatus.INFO_REQUESTED] }
+        status: {
+          in: [
+            DisputeStatus.ASSIGNED,
+            DisputeStatus.IN_REVIEW,
+            DisputeStatus.INFO_REQUESTED,
+          ],
+        },
       },
       _count: {
-        id: true
-      }
+        id: true,
+      },
     });
 
-    return activeDisputes.map(d => ({
+    return activeDisputes.map((d) => ({
       operatorId: d.operatorId!,
-      activeCount: d._count.id
+      activeCount: d._count.id,
     }));
   }
 
