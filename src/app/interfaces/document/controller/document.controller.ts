@@ -1,7 +1,8 @@
-import {Body, Controller, Get, Param, Post, Query, StreamableFile, UploadedFile, UseGuards, UseInterceptors} from '@nestjs/common';
+import {Body, Controller, Get, Param, ParseEnumPipe, Post, Query, StreamableFile, UploadedFile, UseGuards, UseInterceptors} from '@nestjs/common';
 import {FileInterceptor} from '@nestjs/platform-express';
 import {DocumentFacade} from '../../../application/document/document.facade';
 import {DocumentFileService} from '../../../domain/document/service/document-file.service';
+import {DocumentStage} from '../../../domain/document/enum/document-stage.enum';
 import {JwtAuthGuard} from '../../../infrastructure/auth/guards/jwt-auth.guard';
 import {CommonRes} from '../../common/common-res';
 import {CurrentUserId} from '../../user/auth/current-user-id.decorator';
@@ -110,16 +111,19 @@ export class DocumentController {
     }
 
     /**
-     * 파일 다운로드 프록시.
+     * (documentCode, stage) 기반 파일 다운로드 프록시.
      *
-     * 라우트는 `files/:fileKey(.*)` — `(.*)` 정규식이 슬래시까지 캡처해
-     * `documents/<STAGE>/<userPk>/<uuid>.pdf` 같은 multi-segment key 를 한 번에 받는다.
-     * 업로드 응답의 `downloadUri` 그대로 GET 호출하면 됨.
+     * 클라이언트는 R2 키를 직접 알 필요 없음 — 본인 소유 Document + stage 만 지정하면
+     * 서버가 `document_stages.s3_object_key` 룩업해서 R2 객체를 스트리밍한다.
      */
-    @Get('files/:fileKey(.*)')
+    @Get(':documentCode/files/:stage')
     @DownloadDocumentFileSwaggerApi()
-    async download(@Param('fileKey') fileKey: string): Promise<StreamableFile> {
-        return this.documentFacade.downloadFile(fileKey);
+    async download(
+        @CurrentUserId() userId: bigint,
+        @Param('documentCode') documentCode: string,
+        @Param('stage', new ParseEnumPipe(DocumentStage)) stage: DocumentStage,
+    ): Promise<StreamableFile> {
+        return this.documentFacade.downloadFileByStage(documentCode, stage, userId);
     }
 
     /**

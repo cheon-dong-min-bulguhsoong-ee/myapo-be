@@ -24,4 +24,24 @@ export abstract class DocumentStageRepository {
         stage: DocumentStage,
         completedAt: Date,
     ): Promise<void>;
+
+    /**
+     * (documentId, stage) 의 가장 최근 행 1건. 없으면 null.
+     * 첨부 파일 다운로드 시 `s3_object_key` 룩업에 사용.
+     */
+    abstract findLatestByDocumentIdAndStage(
+        documentId: bigint,
+        stage: DocumentStage,
+    ): Promise<DocumentStageEvent | null>;
+
+    /**
+     * (documentId, stage) 의 최신 행에 `s3_object_key` 를 갱신.
+     * 해당 stage 에 행이 아직 없으면 PENDING 상태의 새 행을 만들어 함께 기록.
+     * (예: 운영자가 stage 가 시작되기 전에 파일을 미리 올리는 경우)
+     */
+    abstract setS3ObjectKey(
+        documentId: bigint,
+        stage: DocumentStage,
+        s3ObjectKey: string,
+    ): Promise<void>;
 }
