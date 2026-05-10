@@ -33,8 +33,10 @@ export class UploadFileRes {
     readonly size: number;
 
     @ApiProperty({
-        description: '백엔드 프록시 다운로드 URI. 이 값을 그대로 `Authorization: Bearer …` 와 함께 GET 호출.',
-        example: '/api/v1/documents/files/documents/2026/05/9f2b1a3c-4d5e-6f7a-8b9c-0d1e2f3a4b5c.pdf',
+        description:
+            '백엔드 프록시 다운로드 URI — `/<documentCode>/files/<stage>` 형태. ' +
+            '이 값을 그대로 `Authorization: Bearer …` 와 함께 GET 호출하면 R2 객체가 스트리밍된다.',
+        example: '/api/v1/documents/9f2b1a3c-4d5e-6f7a-8b9c-0d1e2f3a4b5c/files/DOCUMENT_ARRIVED',
     })
     readonly downloadUri: string;
 

@@ -114,17 +114,23 @@ export const UploadDocumentFileSwaggerApi = (): MethodDecorator =>
         ApiBody({
             schema: {
                 type: 'object',
-                required: ['file', 'stage'],
+                required: ['file', 'documentCode', 'stage'],
                 properties: {
                     file: {
                         type: 'string',
                         format: 'binary',
                         description: '업로드할 파일(최대 50 MiB)',
                     },
+                    documentCode: {
+                        type: 'string',
+                        format: 'uuid',
+                        description: '대상 Document 의 외부 노출 코드 (UUID).',
+                        example: '9f2b1a3c-4d5e-6f7a-8b9c-0d1e2f3a4b5c',
+                    },
                     stage: {
                         type: 'string',
                         enum: Object.values(DocumentStage),
-                        description: '이 파일이 속하는 5단계 파이프라인 stage. 객체 키 prefix 로 사용.',
+                        description: '5단계 파이프라인 stage. `document_stages.s3_object_key` 룩업 키.',
                         example: DocumentStage.DOCUMENT_ARRIVED,
                     },
                 },
@@ -153,17 +159,23 @@ export const UploadEncryptedPdfSwaggerApi = (): MethodDecorator =>
         ApiBody({
             schema: {
                 type: 'object',
-                required: ['file', 'stage', 'userPassword'],
+                required: ['file', 'documentCode', 'stage', 'userPassword'],
                 properties: {
                     file: {
                         type: 'string',
                         format: 'binary',
                         description: '업로드할 PDF (최대 50 MiB).',
                     },
+                    documentCode: {
+                        type: 'string',
+                        format: 'uuid',
+                        description: '대상 Document 의 외부 노출 코드 (UUID).',
+                        example: '9f2b1a3c-4d5e-6f7a-8b9c-0d1e2f3a4b5c',
+                    },
                     stage: {
                         type: 'string',
                         enum: Object.values(DocumentStage),
-                        description: '이 파일이 속하는 5단계 파이프라인 stage. 객체 키 prefix 로 사용.',
+                        description: '5단계 파이프라인 stage. `document_stages.s3_object_key` 룩업 키.',
                         example: DocumentStage.DOCUMENT_ARRIVED,
                     },
                     userPassword: {
@@ -182,21 +194,27 @@ export const UploadEncryptedPdfSwaggerApi = (): MethodDecorator =>
 export const DownloadDocumentFileSwaggerApi = (): MethodDecorator =>
     applyDecorators(
         ApiOperation({
-            summary: '문서 첨부 파일 다운로드 프록시',
+            summary: '문서 첨부 파일 다운로드 (documentCode + stage 기반)',
             description:
-                '업로드 응답에서 받은 `fileKey` 를 path param 으로 전달하면, ' +
-                '서버가 R2 에서 객체를 받아 그대로 스트리밍한다. ' +
+                '본인 소유 Document 의 특정 stage 에 첨부된 파일을 다운로드한다. ' +
+                '서버가 `document_stages.s3_object_key` 를 룩업해 R2 에서 객체를 그대로 스트리밍한다. ' +
                 '암호화 PDF 는 다운로드는 받을 수 있지만 PDF 뷰어에서 비밀번호 입력이 필요하다.\n\n' +
+                '*제약*: ' +
+                '(1) 본인이 신청한 Document 만 다운로드 가능. ' +
+                '(2) 해당 stage 에 업로드된 파일이 없으면 `ERR_DOCUMENT_FILE_NOT_FOUND`.\n\n' +
                 '*인증*: `Authorization: Bearer <accessToken>` 필수.',
         }),
         ApiBearerAuth(),
         ApiParam({
-            name: 'fileKey',
-            description:
-                '업로드 응답의 `fileKey` 를 그대로 path 에 붙여 호출. ' +
-                '라우트가 `:fileKey(.*)` 정규식이라 슬래시 포함된 multi-segment key 가 한 번에 캡처됨. ' +
-                '⚠ 이 example 값은 placeholder — 실제로는 본인이 업로드해서 받은 fileKey 를 입력해야 다운로드 됨.',
-            example: 'documents/DOCUMENT_ARRIVED/1/6e052b7d-9a66-48d2-9bc0-6b4c9a066fd9.pdf',
+            name: 'documentCode',
+            description: '대상 Document 의 외부 노출 코드 (UUID).',
+            example: '9f2b1a3c-4d5e-6f7a-8b9c-0d1e2f3a4b5c',
+        }),
+        ApiParam({
+            name: 'stage',
+            enum: DocumentStage,
+            description: '5단계 파이프라인 stage 중 하나.',
+            example: DocumentStage.DOCUMENT_ARRIVED,
         }),
         ApiProduces('application/octet-stream', 'application/pdf'),
         ApiResponse({

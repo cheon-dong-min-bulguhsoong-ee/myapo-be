@@ -47,6 +47,46 @@ export class DocumentStageRepositoryImpl extends DocumentStageRepository {
         });
     }
 
+    async findLatestByDocumentIdAndStage(
+        documentId: bigint,
+        stage: DocumentStage,
+    ): Promise<DocumentStageEvent | null> {
+        const row = await this.prisma.documentStage.findFirst({
+            where: {documentId, stage, isDelete: false},
+            orderBy: {createdAt: 'desc'},
+        });
+        return row === null ? null : this.toEntity(row);
+    }
+
+    async setS3ObjectKey(
+        documentId: bigint,
+        stage: DocumentStage,
+        s3ObjectKey: string,
+    ): Promise<void> {
+        const latest = await this.prisma.documentStage.findFirst({
+            where: {documentId, stage, isDelete: false},
+            orderBy: {createdAt: 'desc'},
+            select: {id: true},
+        });
+        if (latest !== null) {
+            await this.prisma.documentStage.update({
+                where: {id: latest.id},
+                data: {s3ObjectKey},
+            });
+            return;
+        }
+        // (documentId, stage) 행이 아직 없으면 PENDING 상태로 신규 INSERT.
+        await this.prisma.documentStage.create({
+            data: {
+                documentId,
+                stage,
+                status: DocumentStageStatus.PENDING,
+                s3ObjectKey,
+                startedAt: new Date(),
+            },
+        });
+    }
+
     private toEntity(row: StageRow): DocumentStageEvent {
         return new DocumentStageEvent(
             row.id,

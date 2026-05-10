@@ -1,6 +1,7 @@
 import {Injectable, StreamableFile} from '@nestjs/common';
 import {DocumentFileService} from '../../domain/document/service/document-file.service';
 import {DocumentService} from '../../domain/document/service/document.service';
+import {DocumentStage} from '../../domain/document/enum/document-stage.enum';
 import {UserService} from '../../domain/user/service/user.service';
 import {AdvanceDocumentStageReq} from '../../interfaces/document/req/advance-document-stage.req';
 import {ApproveDocumentReq} from '../../interfaces/document/req/approve-document.req';
@@ -36,8 +37,8 @@ export class DocumentFacade {
     }
 
     /**
-     * 일반 파일 업로드 — 객체 스토리지에 평문으로 저장.
-     * 키 형식: `documents/<STAGE>/<userPk>/<UUID>.<ext>`
+     * 일반 파일 업로드 — 객체 스토리지에 평문으로 저장 + `document_stages.s3_object_key` 갱신.
+     * 키 형식: `documents/<documentCode>/<stage>/<UUID>.<ext>`
      */
     async uploadFile(
         file: Express.Multer.File | undefined,
@@ -48,15 +49,16 @@ export class DocumentFacade {
             body: file?.buffer ?? Buffer.alloc(0),
             originalFileName: file?.originalname ?? '',
             contentType: file?.mimetype ?? 'application/octet-stream',
+            documentCode: request.documentCode,
             stage: request.stage,
-            userPk: userId,
+            userId,
         });
         return UploadFileRes.from(result);
     }
 
     /**
-     * PDF 암호화 업로드 — open-password 부착 후 저장.
-     * 키 형식: `documents/<STAGE>/<userPk>/<UUID>.pdf`
+     * PDF 암호화 업로드 — open-password 부착 후 저장 + `document_stages.s3_object_key` 갱신.
+     * 키 형식: `documents/<documentCode>/<stage>/<UUID>.pdf`
      */
     async uploadEncryptedPdf(
         file: Express.Multer.File | undefined,
@@ -68,18 +70,23 @@ export class DocumentFacade {
             originalFileName: file?.originalname ?? '',
             contentType: file?.mimetype ?? 'application/pdf',
             userPassword: request.userPassword,
+            documentCode: request.documentCode,
             stage: request.stage,
-            userPk: userId,
+            userId,
         });
         return UploadFileRes.from(result);
     }
 
     /**
-     * 다운로드 프록시 — StreamableFile 로 wrapping.
+     * (documentCode, stage) 기반 다운로드 프록시 — StreamableFile 로 wrapping.
      * NestJS 가 type/disposition/length 헤더 세팅 + 에러 핸들링까지 처리.
      */
-    async downloadFile(fileKey: string): Promise<StreamableFile> {
-        const file = await this.documentFileService.getDownloadStream(fileKey);
+    async downloadFileByStage(
+        documentCode: string,
+        stage: DocumentStage,
+        userId: bigint,
+    ): Promise<StreamableFile> {
+        const file = await this.documentFileService.downloadByStage({documentCode, stage, userId});
         return new StreamableFile(file.stream, {
             type: file.contentType,
             disposition: file.contentDisposition ?? undefined,
