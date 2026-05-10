@@ -62,7 +62,7 @@ export class S3FileStorageAdapter extends FileStorage {
         contentType: input.contentType,
       };
     } catch (error) {
-      this.logger.error(`S3 upload failed: ${this.errorMessage(error)}`);
+      this.logger.error(`S3 upload failed: ${this.describeError(error)}`);
       throw new DomainError(ErrorCode.Document.FILE_STORAGE_FAILURE, {
         op: "upload",
         key: input.key,
@@ -99,7 +99,7 @@ export class S3FileStorageAdapter extends FileStorage {
       ) {
         throw new DomainError(ErrorCode.Document.FILE_NOT_FOUND, { key });
       }
-      this.logger.error(`S3 getObject failed: ${this.errorMessage(error)}`);
+      this.logger.error(`S3 getObject failed: ${this.describeError(error)}`);
       throw new DomainError(ErrorCode.Document.FILE_STORAGE_FAILURE, {
         op: "getObject",
         key,
@@ -120,6 +120,10 @@ export class S3FileStorageAdapter extends FileStorage {
       forcePathStyle:
         (this.getOptional("S3_FORCE_PATH_STYLE") ?? "true").toLowerCase() !==
         "false",
+      // SDK v3.729+ 가 기본으로 붙이는 streaming CRC32 trailer 를 R2/MinIO 등이
+      // 거부해 HTTP 400 + 비표준 응답을 돌려주는 문제 회피.
+      requestChecksumCalculation: "WHEN_REQUIRED",
+      responseChecksumValidation: "WHEN_REQUIRED",
     });
     return this.cachedClient;
   }
@@ -150,5 +154,25 @@ export class S3FileStorageAdapter extends FileStorage {
   private errorMessage(error: unknown): string {
     if (error instanceof Error) return error.message;
     return String(error);
+  }
+
+  private describeError(error: unknown): string {
+    const parts: string[] = [];
+    const e = error as {
+      name?: string;
+      message?: string;
+      Code?: string;
+      $metadata?: { httpStatusCode?: number; requestId?: string };
+      $response?: { statusCode?: number };
+    };
+    if (e?.name) parts.push(`name=${e.name}`);
+    const code = e?.Code;
+    if (code && code !== e?.name) parts.push(`code=${code}`);
+    const status = e?.$metadata?.httpStatusCode ?? e?.$response?.statusCode;
+    if (status) parts.push(`status=${status}`);
+    if (e?.$metadata?.requestId)
+      parts.push(`requestId=${e.$metadata.requestId}`);
+    parts.push(`message=${this.errorMessage(error)}`);
+    return parts.join(" ");
   }
 }

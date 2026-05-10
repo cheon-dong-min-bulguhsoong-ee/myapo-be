@@ -254,8 +254,13 @@ export class DocumentFileService {
   }
 
   private toContentDisposition(originalFileName: string): string {
+    // RFC 6266: filename= 은 ASCII 만 허용. 한글 등 non-ASCII 는 filename*=UTF-8'' 로만 전달.
+    // (raw non-ASCII 를 헤더에 박으면 R2/일부 게이트웨이가 400 으로 거절)
+    const asciiFallback =
+      originalFileName.replace(/[^\x20-\x7e]/g, "_").replace(/"/g, "_") ||
+      "file";
     const encoded = encodeURIComponent(originalFileName);
-    return `attachment; filename="${originalFileName.replace(/"/g, "_")}"; filename*=UTF-8''${encoded}`;
+    return `attachment; filename="${asciiFallback}"; filename*=UTF-8''${encoded}`;
   }
 
   private buildDownloadUri(documentCode: string, stage: DocumentStage): string {
