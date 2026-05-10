@@ -18,7 +18,14 @@ async function bootstrap(): Promise<void> {
         .setTitle('MyApoBE API')
         .setDescription(`Provides an API for domains managed by the 'MyApo' backend.`)
         .setVersion('0.0.1')
-        .addBearerAuth({type: 'http', scheme: 'bearer', bearerFormat: 'JWT'})
+        .addBearerAuth(
+            { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+            'ExternalJwtBearer',
+        )
+        .addBearerAuth(
+            { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+            'InternalJwtBearer',
+        )
         .build();
     const document = SwaggerModule.createDocument(app, swaggerConfig);
     SwaggerModule.setup('docs', app, document);
