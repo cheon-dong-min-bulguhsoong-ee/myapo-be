@@ -1,0 +1,76 @@
+sequenceDiagram
+    autonumber
+    actor User as User Actor
+    participant Client as Client Application (Frontend)
+    participant W3A as Web3Auth (External Provider)
+    
+    box "Infrastructure / Interface Layer" #f9f9f9
+        participant Guard as Web3AuthGuard
+        participant Ctrl as AuthController
+    end
+
+    box "Application Layer" #e1f5fe
+        participant Facade as AuthFacade
+    end
+
+    box "Domain Layer" #fff9c4
+        participant USvc as UserService
+        participant ASvc as AuthService
+    end
+
+    box "Infrastructure Layer (Data)" #f1f8e9
+        participant Repo as UserRepository (Prisma)
+        participant DB as Database (PostgreSQL)
+    end
+
+    %% 1. External Authentication
+    User->>Client: Click "Sign-In" (Social Login)
+    Client->>W3A: Trigger Web3Auth Authentication
+    W3A-->>User: Request Social Login (Google, etc.)
+    User-->>W3A: Grant Permission
+    W3A-->>Client: Return ID Token (External JWT)
+
+    %% 2. Server-side Sign-In
+    Client->>Ctrl: POST /api/v1/auth/signin (ID Token + Metadata)
+    
+    note over Guard: Intercepts request
+    Guard->>W3A: Validate ID Token & Get JWKS
+    W3A-->>Guard: Token Validated
+    Guard->>Guard: Extract Social Profile (email, verifier, verifierId)
+    Guard-->>Ctrl: Pass Verified Profile
+
+    Ctrl->>Facade: signin(socialProfile, registrationMetadata)
+    Facade->>USvc: signIn(socialProfile, registrationMetadata)
+
+    %% 3. User Resolution (Login vs Register)
+    USvc->>Repo: findByProvider(verifier, verifierId)
+    Repo->>DB: SELECT user WHERE verifier AND verifierId
+    DB-->>Repo: User Record (or Null)
+    Repo-->>USvc: User Entity (or Null)
+
+    alt User Exists (Login)
+        USvc->>USvc: Update User Info (lastLoginAt, sync email)
+        USvc->>Repo: save(user)
+        Repo->>DB: UPDATE users SET last_login_at...
+        DB-->>Repo: OK
+    else User Does Not Exist (Registration)
+        USvc->>USvc: Validate registrationMetadata (name, nationality, xrplAddress)
+        USvc->>Repo: createWithWallet(userData, walletData)
+        Repo->>DB: BEGIN TRANSACTION, INSERT INTO users, INSERT INTO user_wallets, COMMIT
+        DB-->>Repo: Created User & Wallet
+        Repo-->>USvc: New User Entity
+    end
+
+    USvc-->>Facade: User Entity
+    
+    %% 4. Internal Token Issuance
+    Facade->>ASvc: issueAccessToken(user)
+    ASvc->>ASvc: Generate JWT (userId, email, role)
+    ASvc-->>Facade: Internal JWT
+
+    Facade-->>Ctrl: AuthResponse (User Profile + Internal JWT)
+    Ctrl-->>Client: CommonRes.success(AuthResponse)
+
+    %% 5. Client-side Persistence
+    Client->>Client: Store Internal JWT in LocalStorage/Cookie
+    Client->>User: Redirect to Dashboard / Show Logged-in State
