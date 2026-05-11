@@ -1,6 +1,5 @@
 import { Injectable } from "@nestjs/common";
 import {
-  Credential as CredentialRow,
   CredentialIssueRequest as CredentialIssueRequestRow,
   CredentialSubmission as CredentialSubmissionRow,
   Prisma,
@@ -26,6 +25,56 @@ import {
 } from "../../../../domain/credential/repository/credential.repository";
 import { PrismaService } from "../../../prisma/prisma.service";
 
+const credentialXrplTransactionSelect = {
+  id: true,
+  transactionKind: true,
+  network: true,
+  txHash: true,
+  engineResult: true,
+  failureReason: true,
+  ledgerIndex: true,
+  validated: true,
+  feeDrops: true,
+  accountAddress: true,
+  issuerAddress: true,
+  subjectAddress: true,
+  credentialType: true,
+  flags: true,
+  objectSnapshot: true,
+} satisfies Prisma.CredentialXrplTransactionSelect;
+
+const credentialRowInclude = Prisma.validator<Prisma.CredentialDefaultArgs>()({
+  include: {
+    issueRequest: {
+      select: {
+        issueRequestCode: true,
+      },
+    },
+    user: {
+      include: {
+        userWallet: {
+          select: {
+            xrplAddress: true,
+          },
+        },
+      },
+    },
+    createdXrplTransaction: {
+      select: credentialXrplTransactionSelect,
+    },
+    acceptedXrplTransaction: {
+      select: credentialXrplTransactionSelect,
+    },
+    revokedXrplTransaction: {
+      select: credentialXrplTransactionSelect,
+    },
+  },
+});
+
+type CredentialRowWithRelations = Prisma.CredentialGetPayload<
+  typeof credentialRowInclude
+>;
+
 @Injectable()
 export class CredentialRepositoryImpl extends CredentialRepository {
   constructor(private readonly prisma: PrismaService) {
@@ -40,11 +89,9 @@ export class CredentialRepositoryImpl extends CredentialRepository {
         issueRequestCode: input.issueRequestCode,
         userId: input.userId,
         documentTypeCode: input.documentTypeCode,
-        documentId: input.documentId,
+        documentCode: input.documentCode,
         status: input.status,
         currentStage: input.currentStage,
-        currentSubstep: input.currentSubstep,
-        authEventId: input.authEventId,
         requestedAt: input.requestedAt,
       },
     });
@@ -79,6 +126,7 @@ export class CredentialRepositoryImpl extends CredentialRepository {
   ): Promise<Credential | null> {
     const row = await this.prisma.credential.findFirst({
       where: { issueRequestId, isDelete: false },
+      ...credentialRowInclude,
     });
     return row === null ? null : this.toCredentialEntity(row);
   }
@@ -88,28 +136,19 @@ export class CredentialRepositoryImpl extends CredentialRepository {
       data: {
         credentialCode: input.credentialCode,
         issueRequestId: input.issueRequestId,
-        issueRequestCode: input.issueRequestCode,
         userId: input.userId,
         documentTypeCode: input.documentTypeCode,
         documentTypeName: input.documentTypeName,
         issuerCode: input.issuerCode,
         status: input.status,
-        walletAddress: input.walletAddress,
-        isMock: input.isMock,
-        xrplCredentialId: input.xrplCredentialId,
-        xrplNetwork: input.xrplNetwork,
-        xrplIssuerAddress: input.xrplIssuerAddress,
-        xrplSubjectAddress: input.xrplSubjectAddress,
-        xrplCredentialType: input.xrplCredentialType,
-        xrplTxHash: input.xrplTxHash,
-        xrplLedgerIndex: input.xrplLedgerIndex,
-        xrplEngineResult: input.xrplEngineResult,
-        xrplValidated: input.xrplValidated,
-        sourceDocumentRef: input.sourceDocumentRef,
-        authEventId: input.authEventId,
+        currentStage: input.currentStage,
+        createdXrplTransactionId: null,
+        acceptedXrplTransactionId: null,
+        revokedXrplTransactionId: null,
         issuedAt: input.issuedAt,
         expiresAt: input.expiresAt,
       },
+      ...credentialRowInclude,
     });
     return this.toCredentialEntity(row);
   }
@@ -122,23 +161,37 @@ export class CredentialRepositoryImpl extends CredentialRepository {
       data: {
         status: CredentialStatus.REVOKED,
         revokedAt: input.revokedAt,
-        failureReason: input.failureReason,
       },
+      ...credentialRowInclude,
+    });
+    return this.toCredentialEntity(row);
+  }
+
+  async markCredentialAccepted(input: {
+    credentialId: bigint;
+  }): Promise<Credential> {
+    const row = await this.prisma.credential.update({
+      where: { id: input.credentialId },
+      data: {
+        status: CredentialStatus.ACCEPTED,
+      },
+      ...credentialRowInclude,
     });
     return this.toCredentialEntity(row);
   }
 
   async createXrplTransaction(
     input: CreateCredentialXrplTransactionInput,
-  ): Promise<void> {
+  ): Promise<bigint> {
     const evidence = input.evidence;
-    await this.prisma.credentialXrplTransaction.create({
+    const row = await this.prisma.credentialXrplTransaction.create({
       data: {
         credentialId: input.credentialId,
         transactionKind: evidence.transactionKind,
         network: evidence.network,
         txHash: evidence.transactionHash,
         engineResult: evidence.engineResult,
+        failureReason: input.failureReason ?? null,
         ledgerIndex: evidence.ledgerIndex,
         validated: evidence.validated,
         feeDrops: evidence.feeDrops,
@@ -153,6 +206,43 @@ export class CredentialRepositoryImpl extends CredentialRepository {
             : (evidence.objectSnapshot as Prisma.InputJsonValue),
       },
     });
+    return row.id;
+  }
+
+  async updateCredentialCreatedXrplTransaction(input: {
+    credentialId: bigint;
+    createdXrplTransactionId: bigint | null;
+  }): Promise<void> {
+    await this.prisma.credential.update({
+      where: { id: input.credentialId },
+      data: {
+        createdXrplTransactionId: input.createdXrplTransactionId,
+      },
+    });
+  }
+
+  async updateCredentialAcceptedXrplTransaction(input: {
+    credentialId: bigint;
+    acceptedXrplTransactionId: bigint | null;
+  }): Promise<void> {
+    await this.prisma.credential.update({
+      where: { id: input.credentialId },
+      data: {
+        acceptedXrplTransactionId: input.acceptedXrplTransactionId,
+      },
+    });
+  }
+
+  async updateCredentialRevokedXrplTransaction(input: {
+    credentialId: bigint;
+    revokedXrplTransactionId: bigint | null;
+  }): Promise<void> {
+    await this.prisma.credential.update({
+      where: { id: input.credentialId },
+      data: {
+        revokedXrplTransactionId: input.revokedXrplTransactionId,
+      },
+    });
   }
 
   async findCredentialByCode(
@@ -160,6 +250,7 @@ export class CredentialRepositoryImpl extends CredentialRepository {
   ): Promise<Credential | null> {
     const row = await this.prisma.credential.findFirst({
       where: { credentialCode, isDelete: false },
+      ...credentialRowInclude,
     });
     return row === null ? null : this.toCredentialEntity(row);
   }
@@ -175,21 +266,23 @@ export class CredentialRepositoryImpl extends CredentialRepository {
         ...(status === undefined ? {} : { status }),
       },
       orderBy: { issuedAt: "desc" },
+      ...credentialRowInclude,
     });
     return rows.map((row) => this.toCredentialEntity(row));
   }
 
-  async listCredentialsByUserIdAndSourceDocumentRef(
+  async listCredentialsByUserIdAndCurrentStage(
     userId: bigint,
-    sourceDocumentRef: string,
+    currentStage: IssuePipelineStage,
   ): Promise<Credential[]> {
     const rows = await this.prisma.credential.findMany({
       where: {
         userId,
         isDelete: false,
-        sourceDocumentRef,
+        currentStage,
       },
       orderBy: { issuedAt: "desc" },
+      ...credentialRowInclude,
     });
     return rows.map((row) => this.toCredentialEntity(row));
   }
@@ -238,7 +331,6 @@ export class CredentialRepositoryImpl extends CredentialRepository {
           recipientInstitutionId: input.recipientInstitutionId,
           recipientInstitutionName: input.recipientInstitutionName,
           status: input.status,
-          authEventId: input.authEventId,
           submittedAt: input.submittedAt,
         },
       });
@@ -282,7 +374,6 @@ export class CredentialRepositoryImpl extends CredentialRepository {
       data: {
         status: credential.status,
         revokedAt: credential.revokedAt,
-        authEventId: credential.authEventId,
       },
     });
   }
@@ -295,11 +386,9 @@ export class CredentialRepositoryImpl extends CredentialRepository {
       row.issueRequestCode,
       row.userId,
       row.documentTypeCode,
-      row.documentId,
+      row.documentCode,
       row.status as CredentialIssueRequestStatus,
       row.currentStage as IssuePipelineStage,
-      row.currentSubstep,
-      row.authEventId,
       row.requestedAt,
       row.issuedAt,
       row.failedAt,
@@ -309,35 +398,40 @@ export class CredentialRepositoryImpl extends CredentialRepository {
     );
   }
 
-  private toCredentialEntity(row: CredentialRow): Credential {
+  private toCredentialEntity(
+    row: CredentialRowWithRelations,
+  ): Credential {
+    const createdTransaction = row.createdXrplTransaction ?? null;
+    const acceptedTransaction = row.acceptedXrplTransaction ?? null;
+    const revokedTransaction = row.revokedXrplTransaction ?? null;
+    const latestTransaction =
+      revokedTransaction ?? acceptedTransaction ?? createdTransaction;
     return new Credential(
       row.id,
       row.credentialCode,
       row.issueRequestId,
-      row.issueRequestCode,
+      row.issueRequest.issueRequestCode,
       row.userId,
       row.documentTypeCode,
       row.documentTypeName,
       row.issuerCode,
       row.status as CredentialStatus,
-      row.walletAddress,
-      row.isMock,
-      row.xrplCredentialId,
-      row.xrplNetwork,
-      row.xrplIssuerAddress,
-      row.xrplSubjectAddress,
-      row.xrplCredentialType,
-      row.xrplTxHash,
-      row.xrplLedgerIndex,
-      row.xrplEngineResult,
-      row.xrplValidated,
-      row.payloadHash,
-      row.sourceDocumentRef,
-      row.authEventId,
+      row.user.userWallet?.xrplAddress ?? "",
+      latestTransaction === null
+        ? null
+        : `${latestTransaction.issuerAddress ?? latestTransaction.accountAddress}:${latestTransaction.subjectAddress ?? ""}:${latestTransaction.credentialType}`,
+      latestTransaction?.network ?? null,
+      latestTransaction?.issuerAddress ?? null,
+      latestTransaction?.subjectAddress ?? null,
+      latestTransaction?.credentialType ?? null,
+      latestTransaction?.txHash ?? null,
+      latestTransaction?.ledgerIndex ?? null,
+      latestTransaction?.engineResult ?? null,
+      latestTransaction?.validated ?? null,
+      row.currentStage,
       row.issuedAt,
       row.expiresAt,
       row.revokedAt,
-      row.failureReason,
       row.createdAt,
       row.updatedAt,
     );
@@ -357,7 +451,6 @@ export class CredentialRepositoryImpl extends CredentialRepository {
       row.recipientInstitutionName,
       row.status as CredentialSubmissionStatus,
       row.rejectionReason,
-      row.authEventId,
       row.submittedAt,
       row.createdAt,
       row.updatedAt,

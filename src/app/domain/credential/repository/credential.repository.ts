@@ -14,36 +14,21 @@ export interface CreateCredentialIssueRequestInput {
   issueRequestCode: string;
   userId: bigint;
   documentTypeCode: string;
-  documentId: string | null;
+  documentCode: string | null;
   status: CredentialIssueRequestStatus;
   currentStage: IssuePipelineStage;
-  currentSubstep: string | null;
-  authEventId: string | null;
   requestedAt: Date;
 }
 
 export interface CreateCredentialInput {
   credentialCode: string;
   issueRequestId: bigint;
-  issueRequestCode: string;
   userId: bigint;
   documentTypeCode: string;
   documentTypeName: string;
   issuerCode: string;
   status: CredentialStatus;
-  walletAddress: string;
-  isMock: boolean;
-  xrplCredentialId: string | null;
-  xrplNetwork: string | null;
-  xrplIssuerAddress: string | null;
-  xrplSubjectAddress: string | null;
-  xrplCredentialType: string | null;
-  xrplTxHash: string | null;
-  xrplLedgerIndex: bigint | null;
-  xrplEngineResult: string | null;
-  xrplValidated: boolean | null;
-  sourceDocumentRef: string | null;
-  authEventId: string | null;
+  currentStage: IssuePipelineStage;
   issuedAt: Date;
   expiresAt: Date;
 }
@@ -57,12 +42,12 @@ export interface MarkCredentialIssueRequestFailedInput {
 export interface MarkCredentialRevokedInput {
   credentialId: bigint;
   revokedAt: Date;
-  failureReason: string | null;
 }
 
 export interface CreateCredentialXrplTransactionInput {
   credentialId: bigint;
   evidence: XrplCredentialTransactionEvidenceResult;
+  failureReason?: string | null;
 }
 
 export interface CreateCredentialSubmissionInput {
@@ -74,7 +59,6 @@ export interface CreateCredentialSubmissionInput {
   recipientInstitutionId: string;
   recipientInstitutionName: string;
   status: CredentialSubmissionStatus;
-  authEventId: string | null;
   submittedAt: Date;
 }
 
@@ -97,7 +81,19 @@ export abstract class CredentialRepository {
   ): Promise<Credential>;
   abstract createXrplTransaction(
     input: CreateCredentialXrplTransactionInput,
-  ): Promise<void>;
+  ): Promise<bigint>;
+  abstract updateCredentialCreatedXrplTransaction(input: {
+    credentialId: bigint;
+    createdXrplTransactionId: bigint | null;
+  }): Promise<void>;
+  abstract updateCredentialAcceptedXrplTransaction(input: {
+    credentialId: bigint;
+    acceptedXrplTransactionId: bigint | null;
+  }): Promise<void>;
+  abstract updateCredentialRevokedXrplTransaction(input: {
+    credentialId: bigint;
+    revokedXrplTransactionId: bigint | null;
+  }): Promise<void>;
   abstract findCredentialByCode(
     credentialCode: string,
   ): Promise<Credential | null>;
@@ -105,9 +101,9 @@ export abstract class CredentialRepository {
     userId: bigint,
     status?: CredentialStatus,
   ): Promise<Credential[]>;
-  abstract listCredentialsByUserIdAndSourceDocumentRef(
+  abstract listCredentialsByUserIdAndCurrentStage(
     userId: bigint,
-    sourceDocumentRef: string,
+    currentStage: IssuePipelineStage,
   ): Promise<Credential[]>;
   abstract hasCredentialXrplTransaction(
     credentialId: bigint,
@@ -126,4 +122,7 @@ export abstract class CredentialRepository {
     userId: bigint,
   ): Promise<CredentialSubmission[]>;
   abstract updateCredential(credential: Credential): Promise<void>;
+  abstract markCredentialAccepted(input: {
+    credentialId: bigint;
+  }): Promise<Credential>;
 }

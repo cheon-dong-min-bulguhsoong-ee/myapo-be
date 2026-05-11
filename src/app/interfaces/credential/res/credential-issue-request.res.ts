@@ -20,12 +20,6 @@ export class CreateCredentialIssueRequestRes {
   @ApiProperty({ enum: IssuePipelineStage })
   readonly currentStage!: IssuePipelineStage;
 
-  @ApiProperty({ nullable: true })
-  readonly currentSubstep!: string | null;
-
-  @ApiProperty({ nullable: true })
-  readonly authEventId!: string | null;
-
   static from(
     result: CreateCredentialIssueRequestResult,
   ): CreateCredentialIssueRequestRes {
@@ -34,8 +28,6 @@ export class CreateCredentialIssueRequestRes {
       status: result.status,
       pipeline: result.pipeline.map(IssuePipelineStageItemRes.from),
       currentStage: result.currentStage,
-      currentSubstep: result.currentSubstep,
-      authEventId: result.authEventId,
     };
   }
 }

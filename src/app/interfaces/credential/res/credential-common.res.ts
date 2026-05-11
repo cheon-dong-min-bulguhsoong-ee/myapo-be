@@ -13,15 +13,11 @@ export class IssuePipelineStageItemRes {
   @ApiProperty({ enum: IssuePipelineStageStatus })
   readonly status!: IssuePipelineStageStatus;
 
-  @ApiProperty({ nullable: true })
-  readonly substep!: string | null;
-
   static from(result: IssuePipelineStageItemResult): IssuePipelineStageItemRes {
     return {
       stage: result.stage,
       label: result.label,
       status: result.status,
-      substep: result.substep,
     };
   }
 }

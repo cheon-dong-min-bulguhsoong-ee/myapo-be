@@ -15,7 +15,7 @@ import { Credential } from "../entity/credential.entity";
 import { CredentialIssueRequest } from "../entity/credential-issue-request.entity";
 import { CredentialSubmission } from "../entity/credential-submission.entity";
 import { CredentialIssueRequestStatus } from "../enum/credential-issue-request-status.enum";
-import { CredentialDocumentStageState } from "../enum/credential-document-stage-state.enum";
+import { CredentialIssuePipelineState } from "../enum/credential-issue-pipeline-state.enum";
 import { CredentialStatus } from "../enum/credential-status.enum";
 import { CredentialSubmissionStatus } from "../enum/credential-submission-status.enum";
 import { XrplCredentialDeleteSubmitterRole } from "../enum/xrpl-credential-delete-submitter-role.enum";
@@ -203,11 +203,9 @@ class FakeCredentialRepository extends CredentialRepository {
       input.issueRequestCode,
       input.userId,
       input.documentTypeCode,
-      input.documentId,
+      input.documentCode,
       input.status,
       input.currentStage,
-      input.currentSubstep,
-      input.authEventId,
       input.requestedAt,
       null,
       null,
@@ -234,11 +232,9 @@ class FakeCredentialRepository extends CredentialRepository {
       request.issueRequestCode,
       request.userId,
       request.documentTypeCode,
-      request.documentId,
+      request.documentCode,
       CredentialIssueRequestStatus.FAILED,
       request.currentStage,
-      request.currentSubstep,
-      request.authEventId,
       request.requestedAt,
       request.issuedAt,
       input.failedAt,
@@ -271,33 +267,32 @@ class FakeCredentialRepository extends CredentialRepository {
   }
 
   async createCredential(input: CreateCredentialInput): Promise<Credential> {
+    const issueRequest = this.issueRequests.find(
+      (request) => request.id === input.issueRequestId,
+    );
     const credential = new Credential(
       BigInt(this.credentials.length + 1),
       input.credentialCode,
       input.issueRequestId,
-      input.issueRequestCode,
+      issueRequest?.issueRequestCode ?? "UNKNOWN",
       input.userId,
       input.documentTypeCode,
       input.documentTypeName,
       input.issuerCode,
       input.status,
-      input.walletAddress,
-      input.isMock,
-      input.xrplCredentialId,
-      input.xrplNetwork,
-      input.xrplIssuerAddress,
-      input.xrplSubjectAddress,
-      input.xrplCredentialType,
-      input.xrplTxHash,
-      input.xrplLedgerIndex,
-      input.xrplEngineResult,
-      input.xrplValidated,
+      "",
       null,
-      input.sourceDocumentRef,
-      input.authEventId,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      input.currentStage,
       input.issuedAt,
       input.expiresAt,
-      null,
       null,
       input.issuedAt,
       input.issuedAt,
@@ -327,7 +322,6 @@ class FakeCredentialRepository extends CredentialRepository {
       credential.issuerCode,
       CredentialStatus.REVOKED,
       credential.walletAddress,
-      credential.isMock,
       credential.xrplCredentialId,
       credential.xrplNetwork,
       credential.xrplIssuerAddress,
@@ -337,13 +331,10 @@ class FakeCredentialRepository extends CredentialRepository {
       credential.xrplLedgerIndex,
       credential.xrplEngineResult,
       credential.xrplValidated,
-      credential.payloadHash,
-      credential.sourceDocumentRef,
-      credential.authEventId,
+      credential.currentStage,
       credential.issuedAt,
       credential.expiresAt,
       input.revokedAt,
-      input.failureReason,
       credential.createdAt,
       input.revokedAt,
     );
@@ -351,10 +342,110 @@ class FakeCredentialRepository extends CredentialRepository {
     return revokedCredential;
   }
 
+  async markCredentialAccepted(input: {
+    credentialId: bigint;
+  }): Promise<Credential> {
+    const credentialIndex = this.credentials.findIndex(
+      (credential) => credential.id === input.credentialId,
+    );
+    const credential = this.credentials[credentialIndex];
+    if (credential === undefined) {
+      throw new DomainError(ErrorCode.Credential.NOT_FOUND);
+    }
+    const acceptedCredential = new Credential(
+      credential.id,
+      credential.credentialCode,
+      credential.issueRequestId,
+      credential.issueRequestCode,
+      credential.userId,
+      credential.documentTypeCode,
+      credential.documentTypeName,
+      credential.issuerCode,
+      CredentialStatus.ACCEPTED,
+      credential.walletAddress,
+      credential.xrplCredentialId,
+      credential.xrplNetwork,
+      credential.xrplIssuerAddress,
+      credential.xrplSubjectAddress,
+      credential.xrplCredentialType,
+      credential.xrplTxHash,
+      credential.xrplLedgerIndex,
+      credential.xrplEngineResult,
+      credential.xrplValidated,
+      credential.currentStage,
+      credential.issuedAt,
+      credential.expiresAt,
+      credential.revokedAt,
+      credential.createdAt,
+      credential.updatedAt,
+    );
+    this.credentials[credentialIndex] = acceptedCredential;
+    return acceptedCredential;
+  }
+
   async createXrplTransaction(
     input: CreateCredentialXrplTransactionInput,
-  ): Promise<void> {
+  ): Promise<bigint> {
     this.xrplTransactions.push(input);
+    const credentialIndex = this.credentials.findIndex(
+      (credential) => credential.id === input.credentialId,
+    );
+    if (credentialIndex === -1) {
+      return BigInt(this.xrplTransactions.length);
+    }
+    const credential = this.credentials[credentialIndex];
+    const evidence = input.evidence;
+    this.credentials[credentialIndex] = new Credential(
+      credential.id,
+      credential.credentialCode,
+      credential.issueRequestId,
+      credential.issueRequestCode,
+      credential.userId,
+      credential.documentTypeCode,
+      credential.documentTypeName,
+      credential.issuerCode,
+      credential.status,
+      evidence.subject ?? credential.walletAddress,
+      evidence.issuer === null || evidence.subject === null
+        ? credential.xrplCredentialId
+        : `${evidence.issuer}:${evidence.subject}:${evidence.credentialType}`,
+      evidence.network,
+      evidence.issuer,
+      evidence.subject,
+      evidence.credentialType,
+      evidence.transactionHash,
+      evidence.ledgerIndex,
+      evidence.engineResult,
+      evidence.validated,
+      credential.currentStage,
+      credential.issuedAt,
+      credential.expiresAt,
+      credential.revokedAt,
+      credential.createdAt,
+      credential.updatedAt,
+    );
+    return BigInt(this.xrplTransactions.length);
+  }
+
+  async updateCredentialCreatedXrplTransaction(input: {
+    credentialId: bigint;
+    createdXrplTransactionId: bigint | null;
+  }): Promise<void> {
+    void input;
+  }
+
+  async updateCredentialAcceptedXrplTransaction(input: {
+    credentialId: bigint;
+    acceptedXrplTransactionId: bigint | null;
+  }): Promise<void> {
+    void input;
+  }
+
+  async updateCredentialRevokedXrplTransaction(input: {
+    credentialId: bigint;
+    revokedXrplTransactionId: bigint | null;
+  }): Promise<void> {
+    void input;
   }
 
   async findCredentialByCode(
@@ -378,14 +469,14 @@ class FakeCredentialRepository extends CredentialRepository {
     );
   }
 
-  async listCredentialsByUserIdAndSourceDocumentRef(
+  async listCredentialsByUserIdAndCurrentStage(
     userId: bigint,
-    sourceDocumentRef: string,
+    currentStage: IssuePipelineStage,
   ): Promise<Credential[]> {
     return this.credentials.filter(
       (credential) =>
         credential.userId === userId &&
-        credential.sourceDocumentRef === sourceDocumentRef,
+        credential.currentStage === currentStage,
     );
   }
 
@@ -435,7 +526,6 @@ class FakeCredentialRepository extends CredentialRepository {
       input.recipientInstitutionName,
       input.status,
       null,
-      input.authEventId,
       input.submittedAt,
       input.submittedAt,
       input.submittedAt,
@@ -476,40 +566,41 @@ describe("CredentialService", () => {
     6,
   );
 
-  it("creates an issued MVP mock credential from a protected issue request", async () => {
+  it("creates an issued credential from a protected issue request", async () => {
     const repo = new FakeCredentialRepository();
+    const adapter = new FakeXrplCredentialAdapter();
     const service = new CredentialService(
       repo,
       new FakeDocumentTypeRepository(documentType),
+      adapter,
     );
 
     const result = await service.createIssueRequest(
       BigInt(1),
       documentType.code,
       null,
-      "auth-event-1",
       "rUserWallet",
     );
 
     expect(result.status).toBe(CredentialIssueRequestStatus.ISSUED);
-    expect(result.currentStage).toBe(IssuePipelineStage.ISSUED);
-    expect(result.pipeline).toHaveLength(5);
+    expect(result.currentStage).toBe(IssuePipelineStage.APOSTILLE_RECEIVED);
+    expect(result.pipeline).toHaveLength(4);
     expect(repo.credentials).toHaveLength(1);
-    expect(repo.credentials[0].status).toBe(CredentialStatus.ISSUED);
-    expect(repo.credentials[0].isMock).toBe(true);
-    expect(repo.credentials[0].authEventId).toBe("auth-event-1");
+    expect(repo.credentials[0].status).toBe(CredentialStatus.CREATED);
+    expect(repo.xrplTransactions).toHaveLength(1);
   });
 
   it("blocks submission without explicit consent", async () => {
     const repo = new FakeCredentialRepository();
+    const adapter = new FakeXrplCredentialAdapter();
     const service = new CredentialService(
       repo,
       new FakeDocumentTypeRepository(documentType),
+      adapter,
     );
     await service.createIssueRequest(
       BigInt(1),
       documentType.code,
-      null,
       null,
       "rUserWallet",
     );
@@ -520,7 +611,6 @@ describe("CredentialService", () => {
         repo.credentials[0].credentialCode,
         "SUB-REQ-1",
         false,
-        null,
       ),
     ).rejects.toMatchObject({
       errorCode: ErrorCode.Credential.CONSENT_REQUIRED,
@@ -529,16 +619,22 @@ describe("CredentialService", () => {
 
   it("creates one submission row per institution submission request", async () => {
     const repo = new FakeCredentialRepository();
+    const adapter = new FakeXrplCredentialAdapter();
     const service = new CredentialService(
       repo,
       new FakeDocumentTypeRepository(documentType),
+      adapter,
     );
     await service.createIssueRequest(
       BigInt(1),
       documentType.code,
       null,
-      null,
       "rUserWallet",
+    );
+    await service.acceptTestnetCredential(
+      BigInt(1),
+      repo.credentials[0].credentialCode,
+      "signed-accept",
     );
 
     const result = await service.submitCredential(
@@ -546,51 +642,14 @@ describe("CredentialService", () => {
       repo.credentials[0].credentialCode,
       "SUB-REQ-1",
       true,
-      "auth-event-2",
     );
 
     expect(result.status).toBe(CredentialSubmissionStatus.RECEIVED);
     expect(result.recipientInstitutionId).toBe("SUB-REQ-1");
-    expect(result.authEventId).toBe("auth-event-2");
     expect(repo.submissions).toHaveLength(1);
   });
 
   it("lists all credentials when status is omitted", async () => {
-    const repo = new FakeCredentialRepository();
-    const service = new CredentialService(
-      repo,
-      new FakeDocumentTypeRepository(documentType),
-    );
-
-    await service.createIssueRequest(
-      BigInt(1),
-      documentType.code,
-      null,
-      null,
-      "rUserWallet",
-    );
-    await service.createIssueRequest(
-      BigInt(1),
-      documentType.code,
-      null,
-      null,
-      "rUserWallet",
-    );
-
-    (repo.credentials[1] as any).status = CredentialStatus.EXPIRED;
-
-    const result = await service.listCredentials(BigInt(1));
-
-    expect(result.credentials).toHaveLength(2);
-    expect(result.credentials.map((credential) => credential.status)).toEqual(
-      expect.arrayContaining([
-        CredentialStatus.ISSUED,
-        CredentialStatus.EXPIRED,
-      ]),
-    );
-  });
-
-  it("lists credentials by document stage with pending and accepted states", async () => {
     const repo = new FakeCredentialRepository();
     const adapter = new FakeXrplCredentialAdapter();
     const service = new CredentialService(
@@ -603,17 +662,48 @@ describe("CredentialService", () => {
       BigInt(1),
       documentType.code,
       null,
-      null,
       "rUserWallet",
-      "100",
     );
     await service.createIssueRequest(
       BigInt(1),
       documentType.code,
       null,
+      "rUserWallet",
+    );
+
+    (repo.credentials[1] as any).status = CredentialStatus.EXPIRED;
+
+    const result = await service.listCredentials(BigInt(1));
+
+    expect(result.credentials).toHaveLength(2);
+    expect(result.credentials.map((credential) => credential.status)).toEqual(
+      expect.arrayContaining([
+        CredentialStatus.CREATED,
+        CredentialStatus.EXPIRED,
+      ]),
+    );
+  });
+
+  it("lists credentials by issue pipeline stage with created and accepted states", async () => {
+    const repo = new FakeCredentialRepository();
+    const adapter = new FakeXrplCredentialAdapter();
+    const service = new CredentialService(
+      repo,
+      new FakeDocumentTypeRepository(documentType),
+      adapter,
+    );
+
+    await service.createIssueRequest(
+      BigInt(1),
+      documentType.code,
       null,
       "rUserWallet",
-      "100",
+    );
+    await service.createIssueRequest(
+      BigInt(1),
+      documentType.code,
+      null,
+      "rUserWallet",
     );
     await service.acceptTestnetCredential(
       BigInt(1),
@@ -621,17 +711,17 @@ describe("CredentialService", () => {
       "signed-accept",
     );
 
-    const result = await service.listCredentialsByDocumentStageId(
+    const result = await service.listCredentialsByIssuePipelineStage(
       BigInt(1),
-      "100",
+      IssuePipelineStage.APOSTILLE_RECEIVED,
     );
 
     expect(result.credentials).toHaveLength(2);
     expect(result.credentials.map((credential) => credential.credentialState))
       .toEqual(
         expect.arrayContaining([
-          CredentialDocumentStageState.ISSUED_ACCEPTED,
-          CredentialDocumentStageState.ISSUED_PENDING_ACCEPT,
+          CredentialIssuePipelineState.ACCEPTED,
+          CredentialIssuePipelineState.CREATED,
         ]),
       );
   });
@@ -648,11 +738,9 @@ describe("CredentialService", () => {
       BigInt(1),
       documentType.code,
       null,
-      null,
       "rSUBJECT",
     );
 
-    expect(repo.credentials[0].isMock).toBe(false);
     expect(repo.credentials[0].xrplTxHash).toBe("A".repeat(64));
     expect(repo.credentials[0].xrplLedgerIndex).toBe(BigInt(123));
     expect(repo.credentials[0].xrplValidated).toBe(true);
@@ -672,7 +760,6 @@ describe("CredentialService", () => {
         BigInt(1),
         documentType.code,
         null,
-        null,
         "rSUBJECT",
       ),
     ).rejects.toMatchObject({
@@ -691,6 +778,32 @@ describe("CredentialService", () => {
     expect(repo.xrplTransactions).toHaveLength(0);
   });
 
+  it("blocks credential creation when Testnet adapter is not configured", async () => {
+    const repo = new FakeCredentialRepository();
+    const service = new CredentialService(
+      repo,
+      new FakeDocumentTypeRepository(documentType),
+    );
+
+    await expect(
+      service.createIssueRequest(
+        BigInt(1),
+        documentType.code,
+        null,
+        "rSUBJECT",
+      ),
+    ).rejects.toMatchObject({
+      errorCode: ErrorCode.Credential.XRPL_CONFIG_MISSING,
+    });
+
+    expect(repo.issueRequests).toHaveLength(1);
+    expect(repo.issueRequests[0].status).toBe(
+      CredentialIssueRequestStatus.FAILED,
+    );
+    expect(repo.credentials).toHaveLength(0);
+    expect(repo.xrplTransactions).toHaveLength(0);
+  });
+
   it("stores XRP Testnet CredentialAccept evidence for a Testnet credential", async () => {
     const repo = new FakeCredentialRepository();
     const adapter = new FakeXrplCredentialAdapter();
@@ -702,7 +815,6 @@ describe("CredentialService", () => {
     await service.createIssueRequest(
       BigInt(1),
       documentType.code,
-      null,
       null,
       "rSUBJECT",
     );
@@ -745,7 +857,6 @@ describe("CredentialService", () => {
     await service.createIssueRequest(
       BigInt(1),
       documentType.code,
-      null,
       null,
       "rSUBJECT",
     );
@@ -795,7 +906,6 @@ describe("CredentialService", () => {
       BigInt(1),
       documentType.code,
       null,
-      null,
       "rSUBJECT",
     );
 
@@ -817,19 +927,24 @@ describe("CredentialService", () => {
     );
   });
 
-  it("blocks Testnet accept for mock fallback credentials", async () => {
+  it("blocks Testnet accept when XRPL evidence is missing", async () => {
     const repo = new FakeCredentialRepository();
+    const adapter = new FakeXrplCredentialAdapter();
     const service = new CredentialService(
       repo,
       new FakeDocumentTypeRepository(documentType),
+      adapter,
     );
     await service.createIssueRequest(
       BigInt(1),
       documentType.code,
       null,
-      null,
       "rUserWallet",
     );
+
+    (repo.credentials[0] as any).xrplIssuerAddress = null;
+    (repo.credentials[0] as any).xrplSubjectAddress = null;
+    (repo.credentials[0] as any).xrplCredentialType = null;
 
     await expect(
       service.acceptTestnetCredential(

@@ -12,7 +12,6 @@ export class CredentialSubmission {
     public readonly recipientInstitutionName: string,
     public readonly status: CredentialSubmissionStatus,
     public readonly rejectionReason: string | null,
-    public readonly authEventId: string | null,
     public readonly submittedAt: Date,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,

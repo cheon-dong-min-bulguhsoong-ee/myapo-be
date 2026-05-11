@@ -1,7 +1,7 @@
 # Credential Functional Requirements
 
 ## 0. Draft Status
-- **Status**: Approved for MVP 1st implementation. Scope: 5-stage pipeline, Internal JWT, user-facing APIs, nullable authEventId references, and XRP Testnet XLS-70 adapter evidence for hackathon transaction-log review. Excluded: operator APIs, production/mainnet XRPL finality, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
+- **Status**: Approved for MVP 1st implementation. Scope: 4-stage pipeline, Internal JWT, user-facing APIs, and XRP Testnet XLS-70 adapter evidence for hackathon transaction-log review. Excluded: operator APIs, production/mainnet XRPL finality, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
 - **Primary Sources**: `.ai-agent-context/references/frontend-design/Readme.md`, ADR-002.
 
 ## 1. Core Scenarios
@@ -12,15 +12,14 @@
 - **And** the user starts a credential/document issuance request
 - **When** the system accepts the request
 - **Then** the action is treated as auth trigger `issue_request`
-- **And** the issue request enters the 5-stage pipeline
+- **And** the issue request enters the 4-stage pipeline
 - **And** the response includes the pipeline state or next action
 
-### Scenario: Track issuance through the 5-stage pipeline
+### Scenario: Track issuance through the 4-stage pipeline
 - **Source Level**: Reference Evidence
 - **Given** an issuance request exists
 - **When** operators or system processes advance the request
-- **Then** the request can be displayed in one of the five stages: 접수, 사전 검토, 번역/검수, 공증 서명, 발급 완료
-- **And** credential creation or user approval can be represented as substeps
+- **Then** the request can be displayed in one of the four stages: MyData 수신, 문서 이동, 번역 수신, 아포스티유 수신
 
 ### Scenario: Complete issuance and create usable credential
 - **Source Level**: Reference Evidence
@@ -40,11 +39,10 @@
 ### Scenario: Submit credential as an authenticated heavy action
 - **Source Level**: Reference + ADR Evidence
 - **Given** a user has an Internal JWT
-- **And** the user owns an `ISSUED` credential that is not expired or revoked
+- **And** the user owns an `ACCEPTED` credential that is not expired or revoked
 - **And** a valid institution submission request exists
 - **When** the user submits the credential
 - **Then** the action is treated as auth trigger `institution_submit`
-- **And** an auth event id is linked to the submission when available
 - **And** one submission record is created for that institution request
 
 ### Scenario: Multiple institution submissions are separate records
@@ -79,7 +77,7 @@
 - **Source Level**: Reference Evidence
 - **Given** a credential is invalidated by an approved dispute/operator action
 - **When** revocation is executed
-- **Then** the credential becomes `REVOKED`
+- **Then** the credential becomes `FAILED`
 - **And** future submissions are blocked
 - **And** action reason/audit metadata is retained
 

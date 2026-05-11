@@ -1,23 +1,20 @@
 export enum IssuePipelineStage {
-  RECEIVED = "RECEIVED",
-  PRE_REVIEW = "PRE_REVIEW",
-  TRANSLATION_REVIEW = "TRANSLATION_REVIEW",
-  NOTARY_SIGNATURE = "NOTARY_SIGNATURE",
-  ISSUED = "ISSUED",
+  MYDATA_RECEIVED = "MYDATA_RECEIVED",
+  DOCUMENT_MOVED = "DOCUMENT_MOVED",
+  TRANSLATION_RECEIVED = "TRANSLATION_RECEIVED",
+  APOSTILLE_RECEIVED = "APOSTILLE_RECEIVED",
 }
 
 export const issuePipelineStages = [
-  IssuePipelineStage.RECEIVED,
-  IssuePipelineStage.PRE_REVIEW,
-  IssuePipelineStage.TRANSLATION_REVIEW,
-  IssuePipelineStage.NOTARY_SIGNATURE,
-  IssuePipelineStage.ISSUED,
+  IssuePipelineStage.MYDATA_RECEIVED,
+  IssuePipelineStage.DOCUMENT_MOVED,
+  IssuePipelineStage.TRANSLATION_RECEIVED,
+  IssuePipelineStage.APOSTILLE_RECEIVED,
 ] as const;
 
 export const issuePipelineStageLabels: Record<IssuePipelineStage, string> = {
-  [IssuePipelineStage.RECEIVED]: "접수",
-  [IssuePipelineStage.PRE_REVIEW]: "사전 검토",
-  [IssuePipelineStage.TRANSLATION_REVIEW]: "번역 검토",
-  [IssuePipelineStage.NOTARY_SIGNATURE]: "공증 서명",
-  [IssuePipelineStage.ISSUED]: "발급 완료",
+  [IssuePipelineStage.MYDATA_RECEIVED]: "MyData 수신",
+  [IssuePipelineStage.DOCUMENT_MOVED]: "문서 이동",
+  [IssuePipelineStage.TRANSLATION_RECEIVED]: "번역 수신",
+  [IssuePipelineStage.APOSTILLE_RECEIVED]: "아포스티유 수신",
 };

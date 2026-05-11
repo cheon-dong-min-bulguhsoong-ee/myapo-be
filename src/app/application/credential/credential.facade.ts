@@ -16,8 +16,8 @@ import {
   ListCredentialsRes,
 } from "../../interfaces/credential/res/credential.res";
 import {
-  ListCredentialsByDocumentStageRes,
-} from "../../interfaces/credential/res/credential-document-stage.res";
+  ListCredentialsByIssuePipelineStageRes,
+} from "../../interfaces/credential/res/credential-issue-pipeline-stage.res";
 import {
   ListCredentialSubmissionsRes,
   SubmitCredentialRes,
@@ -40,10 +40,8 @@ export class CredentialFacade {
     const result = await this.credentialService.createIssueRequest(
       userId,
       req.documentTypeId,
-      req.documentId ?? null,
-      req.authEventId ?? null,
+      req.documentCode ?? null,
       user.wallet.xrplAddress,
-      req.documentStageId ?? req.documentId ?? null,
     );
     return CreateCredentialIssueRequestRes.from(result);
   }
@@ -67,16 +65,16 @@ export class CredentialFacade {
     return ListCredentialsRes.from(result);
   }
 
-  async listCredentialsByDocumentStageId(
+  async listCredentialsByIssuePipelineStage(
     userId: bigint,
-    documentStageId: string,
-  ): Promise<ListCredentialsByDocumentStageRes> {
-    const result =
-      await this.credentialService.listCredentialsByDocumentStageId(
+    currentStage: string,
+  ): Promise<ListCredentialsByIssuePipelineStageRes> {
+      const result =
+      await this.credentialService.listCredentialsByIssuePipelineStage(
         userId,
-        documentStageId,
+        currentStage,
       );
-    return ListCredentialsByDocumentStageRes.from(result);
+    return ListCredentialsByIssuePipelineStageRes.from(result);
   }
 
   async getCredentialDetail(
@@ -100,7 +98,6 @@ export class CredentialFacade {
       credentialId,
       req.submissionRequestId,
       req.consentConfirmed,
-      req.authEventId ?? null,
     );
     return SubmitCredentialRes.from(result);
   }

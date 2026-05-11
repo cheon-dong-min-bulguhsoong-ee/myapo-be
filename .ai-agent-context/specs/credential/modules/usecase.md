@@ -1,7 +1,7 @@
 # Credential Use Cases
 
 ## 0. Draft Status
-- **Status**: Approved for MVP 1st implementation. Scope: 5-stage pipeline, Internal JWT, user-facing APIs, nullable authEventId references, and XRP Testnet XLS-70 adapter evidence for hackathon transaction-log review. Excluded: operator APIs, production/mainnet XRPL finality, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
+- **Status**: Approved for MVP 1st implementation. Scope: 4-stage pipeline, Internal JWT, user-facing APIs, and XRP Testnet XLS-70 adapter evidence for hackathon transaction-log review. Excluded: operator APIs, production/mainnet XRPL finality, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
 
 ## 1. CreateCredentialIssueRequest
 - **Actor**: Authenticated User
@@ -10,30 +10,28 @@
 
 ### Service Flow
 1. **Auth Context**: Receive `userId` from `JwtAuthGuard`-verified Internal JWT.
-2. **Auth Event Link**: Accept or request an Auth-owned `authEventId` for `issue_request` when Auth integration is available.
 3. **Validation**: Confirm user, wallet, document type, and issuer eligibility through approved boundaries.
-4. **Create Request**: Create `CredentialIssueRequest` with 5-stage pipeline starting at `RECEIVED` or appropriate current stage.
+4. **Create Request**: Create `CredentialIssueRequest` with 4-stage pipeline ending at `APOSTILLE_RECEIVED` or appropriate current stage.
 5. **Persistence**: Save request and initial stage snapshots transactionally.
-6. **Output**: Return request id, status, current stage, pipeline, and auth event link.
+6. **Output**: Return request id, status, current stage, and pipeline.
 
 ### Input / Output
-- **Inputs**: `userId`, `documentTypeId`, optional `documentId`, optional `documentStageId`, optional `authEventId`.
-- **Outputs**: `issueRequestId`, `status`, `currentStage`, `currentSubstep`, `pipeline`, `authEventId`.
+- **Inputs**: `userId`, `documentTypeId`, optional `documents.document_code`, optional `currentStage`.
+- **Outputs**: `issueRequestId`, `status`, `currentStage`, `pipeline`.
 
 ## 2. AdvanceIssuePipeline
 - **Actor**: System or approved operator flow
-- **Trigger**: Backend processing advances a request through the 5-stage pipeline.
+- **Trigger**: Backend processing advances a request through the 4-stage pipeline.
 - **Implementation Gate**: Operator force-advance requires Admin/Auth spec.
 
 ### Service Flow
 1. **Load Request**: Find request and current pipeline stage.
 2. **Validate Transition**: Ensure next stage follows allowed order.
-3. **Apply Substep**: Set optional `CREDENTIAL_CREATION` or `USER_APPROVAL` substep when needed.
-4. **Complete Credential**: When stage reaches `ISSUED` and credential creation succeeds, create `Credential`.
-5. **Persist**: Save request, stage snapshots, credential result, and failure reason if failed.
+3. **Complete Credential**: When stage reaches `APOSTILLE_RECEIVED` and credential creation succeeds, create `Credential`.
+4. **Persist**: Save request, stage snapshots, credential result, and failure reason if failed.
 
 ### Input / Output
-- **Inputs**: `issueRequestId`, `nextStage`, optional `substep`, optional `actorContext`.
+- **Inputs**: `issueRequestId`, `nextStage`, optional `actorContext`.
 - **Outputs**: Updated issue request result and optional credential id.
 
 ## 3. ListMyCredentials
@@ -56,14 +54,14 @@
 3. **Load Context**: Load issue pipeline projection and submission history.
 4. **Privacy Guard**: Return metadata and references only.
 
-## 5. ListCredentialsByDocumentStageId
+## 5. ListCredentialsByIssuePipelineStage
 - **Actor**: Authenticated User
 - **Trigger**: User opens the credential list for a specific `document_stages.id`.
 
 ### Service Flow
 1. **Auth Context**: Use JWT `userId`.
-2. **Reference Lookup**: Load credentials by `sourceDocumentRef` matching the given `documentStageId`.
-3. **Derived State**: Return `ISSUED_PENDING_ACCEPT` when `CredentialCreate` exists but no `ACCEPT` evidence exists; return `ISSUED_ACCEPTED` when `ACCEPT` evidence exists.
+2. **Reference Lookup**: Load credentials by `currentStage` matching the given `currentStage` snapshot.
+3. **Derived State**: Return `CREATED` when `CredentialCreate` exists but no `ACCEPT` evidence exists; return `ACCEPTED` when `ACCEPT` evidence exists.
 4. **Lifecycle State**: Preserve base states `EXPIRED`, `REVOKED`, and `FAILED` as-is.
 5. **Map**: Return summaries plus the derived `credentialState`.
 
@@ -74,12 +72,11 @@
 
 ### Service Flow
 1. **Auth Context**: Use JWT `userId`.
-2. **Auth Event Link**: Accept/verify Auth-owned `authEventId` for `institution_submit` when available.
-3. **Credential Guard**: Ensure credential is owned by user, `ISSUED`, not expired, not revoked.
+3. **Credential Guard**: Ensure credential is owned by user, `ACCEPTED`, not expired, not revoked.
 4. **Institution Request Guard**: Ensure target institution request exists and matches credential/document type/user.
 5. **Consent Guard**: Ensure explicit user submission confirmation.
 6. **Create Submission Row**: Save one `CredentialSubmission` with initial status `RECEIVED` or configured initial status.
-7. **Output**: Return submission id, recipient institution, status, submitted time, and auth event id.
+7. **Output**: Return submission id, recipient institution, status, and submitted time.
 
 ## 7. UpdateSubmissionResult
 - **Actor**: Institution/System/Operator integration
@@ -123,7 +120,7 @@
 ### Service Flow
 1. **Auth Context**: Use JWT `userId`.
 2. **Load Credential**: Verify the credential exists and is owned by the user.
-3. **Evidence Guard**: Reject mock credentials or credentials without Testnet issuer/subject/credentialType evidence.
+3. **Evidence Guard**: Reject credentials without Testnet issuer/subject/credentialType evidence.
 4. **Build Payload**: Build XLS-70 `CredentialAccept` with `Account = Subject`, `Issuer = credential.xrplIssuerAddress`, and `CredentialType = credential.xrplCredentialType`.
 5. **Output**: Return unsigned transaction JSON and network for frontend wallet signing. Backend must not receive or store private keys.
 
@@ -135,7 +132,7 @@
 ### Service Flow
 1. **Auth Context**: Use JWT `userId`.
 2. **Load Credential**: Verify the credential exists and is owned by the user.
-3. **Evidence Guard**: Reject mock credentials or credentials without Testnet issuer/subject/credentialType evidence.
+3. **Evidence Guard**: Reject credentials without Testnet issuer/subject/credentialType evidence.
 4. **Signed Payload Guard**: Decode `signedTransactionBlob` and require it to match the server-prepared `CredentialAccept` target.
 5. **Submit Signed Transaction**: Submit the signed blob to XRP Testnet without server-side user signing.
 6. **Persist Evidence**: Save one `CredentialXrplTransaction` row with `transactionKind = ACCEPT`.
@@ -149,7 +146,7 @@
 ### Service Flow
 1. **Auth Context**: Use JWT `userId`.
 2. **Load Credential**: Verify the credential exists and is owned by the user.
-3. **Evidence Guard**: Reject mock credentials or credentials without Testnet issuer/subject/credentialType evidence.
+3. **Evidence Guard**: Reject credentials without Testnet issuer/subject/credentialType evidence.
 4. **Authorize XRPL Submitter Role**: Require `submitterRole` to be `SUBJECT` or `ISSUER`. XLS-70 also allows anyone to delete after expiration, but third-party expired cleanup is outside MVP API scope.
 5. **Build Payload**: Build XLS-70 `CredentialDelete` with `Account = Subject` for `SUBJECT` submitter or `Account = Issuer` for `ISSUER` submitter; include both `Subject` and `Issuer` to target the exact credential.
 6. **Output**: Return unsigned transaction JSON and network for frontend wallet signing. Backend must not receive or store private keys.
@@ -162,9 +159,9 @@
 ### Service Flow
 1. **Auth Context**: Use JWT `userId`.
 2. **Load Credential**: Verify the credential exists and is owned by the user.
-3. **Evidence Guard**: Reject mock credentials or credentials without Testnet issuer/subject/credentialType evidence.
+3. **Evidence Guard**: Reject credentials without Testnet issuer/subject/credentialType evidence.
 4. **Signed Payload Guard**: Decode `signedTransactionBlob` and require it to match the server-prepared `CredentialDelete` target for the requested `submitterRole`.
 5. **Submit Signed Transaction**: Submit the signed blob to XRP Testnet without server-side user signing.
 6. **Persist Evidence**: Save one `CredentialXrplTransaction` row with `transactionKind = DELETE`.
-7. **Local Lifecycle**: Mark the local credential `REVOKED` and retain the transaction evidence.
+7. **Local Lifecycle**: Mark the local credential `FAILED` and retain the transaction evidence.
 8. **Output**: Return transaction hash, ledger index, validation result, and object snapshot when available.

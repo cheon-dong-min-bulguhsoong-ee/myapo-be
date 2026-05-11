@@ -1,7 +1,7 @@
 # Credential API Specification
 
 ## 0. Draft Status
-- **Status**: Approved for MVP 1st implementation. Scope: 5-stage pipeline, Internal JWT, user-facing APIs, nullable authEventId references, and XRP Testnet XLS-70 adapter evidence for hackathon transaction-log review. Excluded: operator APIs, production/mainnet XRPL finality, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
+- **Status**: Approved for MVP 1st implementation. Scope: 4-stage pipeline, Internal JWT, user-facing APIs, and XRP Testnet XLS-70 adapter evidence for hackathon transaction-log review. Excluded: operator APIs, production/mainnet XRPL finality, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
 - **Base Path**: `/api/v1/credentials`
 - **Response Envelope**: Every response must use `CommonRes<T>`.
 - **Error Model**: All business errors must use `DomainError` and `ErrorCode`.
@@ -9,10 +9,10 @@
 
 ## 1. Overview
 Credential APIs support the latest frontend-design model:
-- Credential issue requests appear in the 5-stage issue pipeline.
+- Credential issue requests appear in the 4-stage issue pipeline.
 - Credential submission is a heavy auth-gated action and creates one row per institution submission.
-- Submission rows can link to an Auth-owned auth event id.
-- Document-driven credential issuance may carry an optional `documentStageId`; when present, the created credential stores that stage reference in `sourceDocumentRef` so the UI can list credentials by `document_stages.id`.
+- Submission rows retain submission metadata only; auth verification data belongs to the Auth/Document domains.
+- Document-driven credential issuance may carry an optional `documentCode` (`documents.document_code`) or `currentStage`; when present, the created credential snapshots the issue request's `current_stage` into its `currentStage` field so the UI can list credentials by stage without duplicating document linkage.
 - Rejected submissions can be converted to Dispute context, but Dispute owns case lifecycle.
 - Operator actions remain draft-only until Admin/Auth/Dispute permissions are approved.
 
@@ -28,7 +28,7 @@ Credential APIs support the latest frontend-design model:
 - **Method**: `POST`
 - **Path**: `/api/v1/credentials/issue-requests`
 - **Source Level**: Reference + ADR Evidence
-- **Description**: Starts a credential issue request as heavy action trigger `issue_request` and returns 5-stage pipeline state.
+- **Description**: Starts a credential issue request as heavy action trigger `issue_request` and returns 4-stage pipeline state.
 
 ```yaml
 paths:
@@ -63,7 +63,7 @@ paths:
 - **Method**: `GET`
 - **Path**: `/api/v1/credentials/issue-requests/{issueRequestId}`
 - **Source Level**: Reference Evidence
-- **Description**: Returns issue request status, 5-stage pipeline, credential result if created, and submission count if any.
+- **Description**: Returns issue request status, 4-stage pipeline, credential result if created, and submission count if any.
 
 ```yaml
 paths:
@@ -114,7 +114,7 @@ paths:
           required: false
           schema:
             type: string
-            enum: [ISSUED, EXPIRED, REVOKED, FAILED]
+            enum: [CREATED, ACCEPTED, EXPIRED, REVOKED, FAILED]
       responses:
         '200':
           description: Credential list returned
@@ -128,21 +128,21 @@ paths:
 
 ### 3.4. List Credentials by Document Stage
 - **Method**: `GET`
-- **Path**: `/api/v1/credentials/document-stages/{documentStageId}`
+- **Path**: `/api/v1/credentials/issue-pipeline-stages/{currentStage}`
 - **Source Level**: Spec Inference
-- **Description**: Returns the current user's credentials linked to a specific `document_stages.id`. Response includes basic credential metadata plus a derived `credentialState` that distinguishes `CredentialCreate` completed / `CredentialAccept` pending from accepted credentials.
+- **Description**: Returns the current user's credentials linked to a specific `document_stages.id`. Response includes basic credential metadata plus a derived `credentialState` that distinguishes `CredentialCreate` completed from accepted credentials.
 
 ```yaml
 paths:
-  /api/v1/credentials/document-stages/{documentStageId}:
+  /api/v1/credentials/issue-pipeline-stages/{currentStage}:
     get:
-      summary: List credentials by document stage id
+      summary: List credentials by issue pipeline stage id
       operationId: listCredentialsByDocumentStageId
       security:
         - InternalJwtBearer: []
       parameters:
         - in: path
-          name: documentStageId
+          name: currentStage
           required: true
           schema:
             type: string
@@ -152,11 +152,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CommonResListCredentialsByDocumentStageRes'
+                $ref: '#/components/schemas/CommonResListCredentialsByIssuePipelineStageRes'
         '401':
           description: Unauthorized Internal JWT
         '400':
-          description: Invalid document stage id
+          description: Invalid issue pipeline stage id
 ```
 
 ### 3.5. Get My Credential Detail
@@ -198,7 +198,7 @@ paths:
 - **Method**: `POST`
 - **Path**: `/api/v1/credentials/{credentialId}/submissions`
 - **Source Level**: Reference + ADR Evidence
-- **Description**: Submits one valid credential to one institution request. This is heavy action trigger `institution_submit` and should link the resulting Auth-owned auth event id.
+- **Description**: Submits one valid credential to one institution request. This is heavy action trigger `institution_submit`.
 
 ```yaml
 paths:
@@ -228,7 +228,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/CommonResSubmitCredentialRes'
         '400':
-          description: Invalid institution request or missing consent/auth event
+          description: Invalid institution request or missing consent
         '401':
           description: Unauthorized Internal JWT
         '403':
@@ -397,7 +397,7 @@ paths:
 - **Method**: `POST`
 - **Path**: `/api/v1/credentials/{credentialId}/xrpl/delete`
 - **Source Level**: Hackathon Decision + XLS-70 Reference
-- **Description**: Submits a frontend wallet-signed XRP Testnet `CredentialDelete` transaction blob, stores evidence, and marks the local credential `REVOKED`. The signed transaction must match the server-prepared payload for the same credential and submitter role.
+- **Description**: Submits a frontend wallet-signed XRP Testnet `CredentialDelete` transaction blob, stores evidence, and marks the local credential `FAILED`. The signed transaction must match the server-prepared payload for the same credential and submitter role.
 
 ```yaml
 paths:
@@ -500,16 +500,13 @@ components:
       properties:
         documentTypeId:
           type: string
-        documentId:
+        documentCode:
+          type: string
+          format: uuid
+          nullable: true
+        currentStage:
           type: string
           nullable: true
-        documentStageId:
-          type: string
-          nullable: true
-        authEventId:
-          type: string
-          nullable: true
-          description: Auth-owned event id for issue_request trigger, when available.
     CreateCredentialIssueRequestRes:
       type: object
       properties:
@@ -517,20 +514,14 @@ components:
           type: string
         status:
           type: string
-          enum: [ISSUING, USER_APPROVAL_REQUIRED, ISSUED, FAILED]
+          enum: [ISSUED, FAILED]
         pipeline:
           type: array
           items:
             $ref: '#/components/schemas/IssuePipelineStageItem'
         currentStage:
           type: string
-          enum: [RECEIVED, PRE_REVIEW, TRANSLATION_REVIEW, NOTARY_SIGNATURE, ISSUED]
-        currentSubstep:
-          type: string
-          nullable: true
-        authEventId:
-          type: string
-          nullable: true
+          enum: [MYDATA_RECEIVED, DOCUMENT_MOVED, TRANSLATION_RECEIVED, APOSTILLE_RECEIVED]
     CredentialIssueRequestRes:
       allOf:
         - $ref: '#/components/schemas/CreateCredentialIssueRequestRes'
@@ -546,15 +537,12 @@ components:
       properties:
         stage:
           type: string
-          enum: [RECEIVED, PRE_REVIEW, TRANSLATION_REVIEW, NOTARY_SIGNATURE, ISSUED]
+          enum: [MYDATA_RECEIVED, DOCUMENT_MOVED, TRANSLATION_RECEIVED, APOSTILLE_RECEIVED]
         label:
           type: string
         status:
           type: string
           enum: [PENDING, ACTIVE, DONE, FAILED]
-        substep:
-          type: string
-          nullable: true
     CredentialSummary:
       type: object
       properties:
@@ -570,7 +558,7 @@ components:
           type: string
         status:
           type: string
-          enum: [ISSUED, EXPIRED, REVOKED, FAILED]
+          enum: [CREATED, ACCEPTED, EXPIRED, REVOKED, FAILED]
         issuedAt:
           type: string
           format: date-time
@@ -579,8 +567,27 @@ components:
           format: date-time
         walletAddress:
           type: string
-        isMock:
+        currentStage:
+          type: string
+          enum: [MYDATA_RECEIVED, DOCUMENT_MOVED, TRANSLATION_RECEIVED, APOSTILLE_RECEIVED]
+        xrplNetwork:
+          type: string
+          nullable: true
+        xrplTxHash:
+          type: string
+          nullable: true
+        xrplLedgerIndex:
+          type: string
+          nullable: true
+        xrplEngineResult:
+          type: string
+          nullable: true
+        xrplValidated:
           type: boolean
+          nullable: true
+        xrplCredentialType:
+          type: string
+          nullable: true
     ListCredentialsRes:
       type: object
       properties:
@@ -588,21 +595,21 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CredentialSummary'
-    CredentialDocumentStageRes:
+    CredentialIssuePipelineStageRes:
       allOf:
         - $ref: '#/components/schemas/CredentialSummary'
         - type: object
           properties:
             credentialState:
               type: string
-              enum: [ISSUED_PENDING_ACCEPT, ISSUED_ACCEPTED, EXPIRED, REVOKED, FAILED]
-    ListCredentialsByDocumentStageRes:
+              enum: [CREATED, ACCEPTED, EXPIRED, REVOKED, FAILED]
+    ListCredentialsByIssuePipelineStageRes:
       type: object
       properties:
         credentials:
           type: array
           items:
-            $ref: '#/components/schemas/CredentialDocumentStageRes'
+            $ref: '#/components/schemas/CredentialIssuePipelineStageRes'
     CredentialDetailRes:
       allOf:
         - $ref: '#/components/schemas/CredentialSummary'
@@ -616,9 +623,8 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/CredentialSubmissionItem'
-            sourceDocumentRef:
+            currentStage:
               type: string
-              nullable: true
     SubmitCredentialReq:
       type: object
       required: [submissionRequestId, consentConfirmed]
@@ -627,10 +633,6 @@ components:
           type: string
         consentConfirmed:
           type: boolean
-        authEventId:
-          type: string
-          nullable: true
-          description: Auth-owned event id for institution_submit trigger, when available.
     AcceptTestnetCredentialReq:
       type: object
       required: [signedTransactionBlob]
@@ -672,9 +674,6 @@ components:
         submittedAt:
           type: string
           format: date-time
-        authEventId:
-          type: string
-          nullable: true
     ListCredentialSubmissionsRes:
       type: object
       properties:
@@ -751,9 +750,6 @@ components:
         submittedAt:
           type: string
           format: date-time
-        authEventId:
-          type: string
-          nullable: true
 ```
 
 ## 6. Draft Error Codes Needed
@@ -763,10 +759,10 @@ components:
 | `CREDENTIAL_NOT_FOUND` | 404 | Credential id does not exist. |
 | `CREDENTIAL_OWNER_MISMATCH` | 403 | Current JWT user does not own the credential. |
 | `CREDENTIAL_EXPIRED` | 409 | Credential expired before submission/use. |
-| `CREDENTIAL_REVOKED` | 409 | Credential was revoked. |
+| `CREDENTIAL_FAILED` | 409 | Credential was revoked. |
 | `CREDENTIAL_NOT_SUBMITTABLE` | 409 | Credential status is failed or otherwise not valid. |
 | `CREDENTIAL_ALREADY_SUBMITTED` | 409 | Duplicate submission for same institution request. |
-| `CREDENTIAL_XRPL_EVIDENCE_REQUIRED` | 409 | Testnet Accept/Delete requested for mock or non-XRPL credential. |
+| `CREDENTIAL_XRPL_EVIDENCE_REQUIRED` | 409 | Testnet Accept/Delete requested without required XRPL evidence. |
 | `ISSUE_REQUEST_NOT_FOUND` | 404 | Issue request id does not exist. |
 | `ISSUE_REQUEST_NOT_ADVANCEABLE` | 409 | Issue request cannot advance in current state. |
 | `INSTITUTION_SUBMISSION_REQUEST_NOT_FOUND` | 404 | No matching institution request exists. |

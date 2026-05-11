@@ -16,7 +16,7 @@ import {
   CreateCredentialIssueRequestRes,
   CredentialIssueRequestRes,
 } from "../res/credential-issue-request.res";
-import { ListCredentialsByDocumentStageRes } from "../res/credential-document-stage.res";
+import { ListCredentialsByIssuePipelineStageRes } from "../res/credential-issue-pipeline-stage.res";
 import { CredentialDetailRes, ListCredentialsRes } from "../res/credential.res";
 import {
   ListCredentialSubmissionsRes,
@@ -36,7 +36,7 @@ export const CreateCredentialIssueRequestSwaggerApi = (): MethodDecorator =>
       ApiOperation({
         summary: "크리덴셜 발급 요청 생성",
         description:
-          "Internal JWT 기반 사용자 발급 요청을 생성하고 XRP Testnet evidence 또는 MVP fallback Credential을 발급합니다.",
+          "Internal JWT 기반 사용자 발급 요청을 생성하고 XRP Testnet evidence와 연결된 크레덴셜을 발급합니다.",
       }),
       ApiCommonRes(CreateCredentialIssueRequestRes),
     ),
@@ -64,18 +64,19 @@ export const ListCredentialsSwaggerApi = (): MethodDecorator =>
     ),
   );
 
-export const ListCredentialsByDocumentStageSwaggerApi = (): MethodDecorator =>
+export const ListCredentialsByIssuePipelineStageSwaggerApi = (): MethodDecorator =>
   withBearer(
     applyDecorators(
       ApiOperation({
-        summary: "특정 document_stages.id 기준 크리덴셜 목록 조회",
+        summary: "특정 credential issue pipeline stage 기준 크리덴셜 목록 조회",
       }),
       ApiParam({
-        name: "documentStageId",
+        name: "currentStage",
         required: true,
-        description: "document_stages.id 값",
+        description:
+          "credential_issue_requests.current_stage 값 (MYDATA_RECEIVED | DOCUMENT_MOVED | TRANSLATION_RECEIVED | APOSTILLE_RECEIVED)",
       }),
-      ApiCommonRes(ListCredentialsByDocumentStageRes),
+      ApiCommonRes(ListCredentialsByIssuePipelineStageRes),
     ),
   );
 

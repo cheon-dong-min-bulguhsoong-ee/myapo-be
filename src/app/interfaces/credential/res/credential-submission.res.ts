@@ -28,9 +28,6 @@ export class CredentialSubmissionItemRes {
   @ApiProperty()
   readonly submittedAt!: string;
 
-  @ApiProperty({ nullable: true })
-  readonly authEventId!: string | null;
-
   static from(
     result: CredentialSubmissionItemResult,
   ): CredentialSubmissionItemRes {
@@ -42,7 +39,6 @@ export class CredentialSubmissionItemRes {
       status: result.status,
       rejectionReason: result.rejectionReason,
       submittedAt: result.submittedAt.toISOString(),
-      authEventId: result.authEventId,
     };
   }
 }
@@ -63,9 +59,6 @@ export class SubmitCredentialRes {
   @ApiProperty()
   readonly submittedAt!: string;
 
-  @ApiProperty({ nullable: true })
-  readonly authEventId!: string | null;
-
   static from(result: SubmitCredentialResult): SubmitCredentialRes {
     return {
       submissionId: result.submissionId,
@@ -73,7 +66,6 @@ export class SubmitCredentialRes {
       recipientInstitutionId: result.recipientInstitutionId,
       status: result.status,
       submittedAt: result.submittedAt.toISOString(),
-      authEventId: result.authEventId,
     };
   }
 }

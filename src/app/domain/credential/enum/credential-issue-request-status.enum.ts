@@ -1,7 +1,4 @@
 export enum CredentialIssueRequestStatus {
-  ISSUING = "ISSUING",
-  USER_APPROVAL_REQUIRED = "USER_APPROVAL_REQUIRED",
   ISSUED = "ISSUED",
   FAILED = "FAILED",
-  REVOKED = "REVOKED",
 }

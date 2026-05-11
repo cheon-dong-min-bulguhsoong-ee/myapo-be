@@ -22,8 +22,8 @@ import {
   CredentialIssueRequestRes,
 } from "../res/credential-issue-request.res";
 import {
-  ListCredentialsByDocumentStageRes,
-} from "../res/credential-document-stage.res";
+  ListCredentialsByIssuePipelineStageRes,
+} from "../res/credential-issue-pipeline-stage.res";
 import { CredentialDetailRes, ListCredentialsRes } from "../res/credential.res";
 import {
   ListCredentialSubmissionsRes,
@@ -41,7 +41,7 @@ import {
   GetCredentialDetailSwaggerApi,
   GetCredentialIssueRequestSwaggerApi,
   ListCredentialsSwaggerApi,
-  ListCredentialsByDocumentStageSwaggerApi,
+  ListCredentialsByIssuePipelineStageSwaggerApi,
   ListCredentialSubmissionsSwaggerApi,
   SubmitCredentialSwaggerApi,
 } from "../swagger/credential.swagger.api";
@@ -95,15 +95,15 @@ export class CredentialController {
     return CommonRes.success(response);
   }
 
-  @Get("credentials/document-stages/:documentStageId")
-  @ListCredentialsByDocumentStageSwaggerApi()
-  async listCredentialsByDocumentStageId(
+  @Get("credentials/issue-pipeline-stages/:currentStage")
+  @ListCredentialsByIssuePipelineStageSwaggerApi()
+  async listCredentialsByIssuePipelineStage(
     @CurrentUserId() userId: bigint,
-    @Param("documentStageId") documentStageId: string,
-  ): Promise<CommonRes<ListCredentialsByDocumentStageRes>> {
-    const response = await this.credentialFacade.listCredentialsByDocumentStageId(
+    @Param("currentStage") currentStage: string,
+  ): Promise<CommonRes<ListCredentialsByIssuePipelineStageRes>> {
+    const response = await this.credentialFacade.listCredentialsByIssuePipelineStage(
       userId,
-      documentStageId,
+      currentStage,
     );
     return CommonRes.success(response);
   }

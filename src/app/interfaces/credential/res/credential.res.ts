@@ -37,7 +37,7 @@ export class CredentialSummaryRes {
   readonly walletAddress!: string;
 
   @ApiProperty()
-  readonly isMock!: boolean;
+  readonly currentStage!: string;
 
   @ApiProperty({ nullable: true })
   readonly xrplNetwork!: string | null;
@@ -68,7 +68,7 @@ export class CredentialSummaryRes {
       issuedAt: result.issuedAt.toISOString(),
       expiresAt: result.expiresAt.toISOString(),
       walletAddress: result.walletAddress,
-      isMock: result.isMock,
+      currentStage: result.currentStage,
       xrplNetwork: result.xrplNetwork,
       xrplTxHash: result.xrplTxHash,
       xrplLedgerIndex: result.xrplLedgerIndex?.toString() ?? null,
@@ -95,15 +95,11 @@ export class CredentialDetailRes extends CredentialSummaryRes {
   @ApiProperty({ type: [CredentialSubmissionItemRes] })
   readonly submissions!: CredentialSubmissionItemRes[];
 
-  @ApiProperty({ nullable: true })
-  readonly sourceDocumentRef!: string | null;
-
   static from(result: CredentialDetailResult): CredentialDetailRes {
     return {
       ...CredentialSummaryRes.from(result),
       pipeline: result.pipeline.map(IssuePipelineStageItemRes.from),
       submissions: result.submissions.map(CredentialSubmissionItemRes.from),
-      sourceDocumentRef: result.sourceDocumentRef,
     };
   }
 }
