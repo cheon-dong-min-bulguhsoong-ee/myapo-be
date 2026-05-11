@@ -19,14 +19,12 @@ import { JwtAuthGuard } from "../../../infrastructure/auth/guards/jwt-auth.guard
 import { CommonRes } from "../../common/common-res";
 import { CurrentUserId } from "../../user/auth/current-user-id.decorator";
 import { AdvanceDocumentStageReq } from "../req/advance-document-stage.req";
-import { ApproveDocumentReq } from "../req/approve-document.req";
 import { CreateDocumentReq } from "../req/create-document.req";
 import { DocumentListReq } from "../req/document-list.req";
 import { DocumentTypeListReq } from "../req/document-type-list.req";
 import { UploadEncryptedPdfReq } from "../req/upload-encrypted-pdf.req";
 import { UploadFileReq } from "../req/upload-file.req";
 import { AdvanceDocumentStageRes } from "../res/advance-document-stage.res";
-import { ApproveDocumentRes } from "../res/approve-document.res";
 import { CreateDocumentRes } from "../res/create-document.res";
 import { DocumentDetailRes } from "../res/document-detail.res";
 import { DocumentListRes } from "../res/document-list.res";
@@ -34,7 +32,6 @@ import { DocumentTypeListRes } from "../res/document-type-list.res";
 import { UploadFileRes } from "../res/upload-file.res";
 import {
   AdvanceDocumentStageSwaggerApi,
-  ApproveDocumentSwaggerApi,
   CreateDocumentSwaggerApi,
   DocumentApiTags,
   DownloadDocumentFileSwaggerApi,
@@ -61,23 +58,28 @@ export class DocumentController {
     return CommonRes.success(response);
   }
 
-  @Post("approvals")
-  @ApproveDocumentSwaggerApi()
-  async approve(
-    @CurrentUserId() userId: bigint,
-    @Body() request: ApproveDocumentReq,
-  ): Promise<CommonRes<ApproveDocumentRes>> {
-    const response = await this.documentFacade.approve(request, userId);
-    return CommonRes.success(response);
-  }
-
-  @Post("stages/advance")
+  /**
+   * 문서 단계 승인 + 전이 (통합 API).
+   *
+   * 사용자가 자기 seed 로 서명한 xrplTxHash 를 받아 한 호출에 다음을 모두 처리:
+   *   1) DocumentApproval INSERT (서명 증거 누적)
+   *   2) 현 stage 마감 + documents.current_stage 갱신
+   *   3) 다음 stage 이벤트 신규 INSERT (WALLET_STORED 도달 시 status=VALID)
+   *
+   * `:documentCode` 라우트보다 위에 두지 않아도 메서드(POST)/패턴이 달라 충돌 없음.
+   */
+  @Post(":documentCode/stages/advance")
   @AdvanceDocumentStageSwaggerApi()
   async advanceStage(
     @CurrentUserId() userId: bigint,
+    @Param("documentCode") documentCode: string,
     @Body() request: AdvanceDocumentStageReq,
   ): Promise<CommonRes<AdvanceDocumentStageRes>> {
-    const response = await this.documentFacade.advanceStage(request, userId);
+    const response = await this.documentFacade.advanceStage(
+      documentCode,
+      request,
+      userId,
+    );
     return CommonRes.success(response);
   }
 

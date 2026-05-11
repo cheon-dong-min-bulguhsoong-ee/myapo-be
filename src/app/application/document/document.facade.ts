@@ -4,14 +4,12 @@ import { DocumentService } from "../../domain/document/service/document.service"
 import { DocumentStage } from "../../domain/document/enum/document-stage.enum";
 import { UserService } from "../../domain/user/service/user.service";
 import { AdvanceDocumentStageReq } from "../../interfaces/document/req/advance-document-stage.req";
-import { ApproveDocumentReq } from "../../interfaces/document/req/approve-document.req";
 import { CreateDocumentReq } from "../../interfaces/document/req/create-document.req";
 import { DocumentListReq } from "../../interfaces/document/req/document-list.req";
 import { DocumentTypeListReq } from "../../interfaces/document/req/document-type-list.req";
 import { UploadEncryptedPdfReq } from "../../interfaces/document/req/upload-encrypted-pdf.req";
 import { UploadFileReq } from "../../interfaces/document/req/upload-file.req";
 import { AdvanceDocumentStageRes } from "../../interfaces/document/res/advance-document-stage.res";
-import { ApproveDocumentRes } from "../../interfaces/document/res/approve-document.res";
 import { CreateDocumentRes } from "../../interfaces/document/res/create-document.res";
 import { DocumentDetailRes } from "../../interfaces/document/res/document-detail.res";
 import { DocumentListRes } from "../../interfaces/document/res/document-list.res";
@@ -112,25 +110,19 @@ export class DocumentFacade {
     return CreateDocumentRes.from(result);
   }
 
-  async approve(
-    request: ApproveDocumentReq,
-    userId: bigint,
-  ): Promise<ApproveDocumentRes> {
-    const result = await this.documentService.approve(
-      userId,
-      request.documentCode,
-      request.xrplTxHash,
-    );
-    return ApproveDocumentRes.from(result);
-  }
-
+  /**
+   * 문서 단계 승인 + 전이 — DocumentApproval INSERT 와 current_stage 갱신을 한 호출에 묶는다.
+   * 기존 `POST /documents/approvals` + `POST /documents/stages/advance` 두 API 가 이리로 통합됨.
+   */
   async advanceStage(
+    documentCode: string,
     request: AdvanceDocumentStageReq,
     userId: bigint,
   ): Promise<AdvanceDocumentStageRes> {
     const result = await this.documentService.advanceStage(
       userId,
-      request.documentCode,
+      documentCode,
+      request.xrplTxHash,
     );
     return AdvanceDocumentStageRes.from(result);
   }

@@ -41,16 +41,6 @@ export class DocumentApprovalRepositoryImpl extends DocumentApprovalRepository {
     }
   }
 
-  async findByDocumentIdAndStage(
-    documentId: bigint,
-    stage: DocumentStage,
-  ): Promise<DocumentApproval | null> {
-    const row = await this.prisma.documentApproval.findFirst({
-      where: { documentId, stage, isDelete: false },
-    });
-    return row === null ? null : this.toEntity(row);
-  }
-
   private toEntity(row: ApprovalRow): DocumentApproval {
     return new DocumentApproval(
       row.id,
