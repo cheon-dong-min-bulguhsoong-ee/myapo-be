@@ -1,4 +1,11 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UseGuards,
+} from "@nestjs/common";
 import { AuthFacade } from "../../../application/auth/auth.facade";
 import { JwtAuthGuard } from "../../../infrastructure/auth/guards/jwt-auth.guard";
 import { Web3AuthGuard } from "../../../infrastructure/auth/guards/web3auth.guard";

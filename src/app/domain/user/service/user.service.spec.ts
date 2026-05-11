@@ -116,9 +116,7 @@ describe("UserService", () => {
           verifier: "v",
           verifierId: "vId",
         }),
-      ).rejects.toThrow(
-        new DomainError(ErrorCode.Common.BAD_REQUEST),
-      );
+      ).rejects.toThrow(new DomainError(ErrorCode.Common.BAD_REQUEST));
     });
 
     it("삭제된 유저면 복구를 시도한다", async () => {

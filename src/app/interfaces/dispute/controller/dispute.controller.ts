@@ -16,13 +16,14 @@ import { CommonRes } from "../../common/common-res";
 import { CurrentUserId } from "../../user/auth/current-user-id.decorator";
 import { ChangeDisputeStatusReq } from "../req/change-dispute-status.req";
 import { CreateDisputeReq } from "../req/create-dispute.req";
-import { DisputeRes } from "../res/dispute.res";
+import { DisputeRes, ListDisputesRes } from "../res/dispute.res";
 import {
   AssignOperatorSwaggerApi,
   ChangeDisputeStatusSwaggerApi,
   CreateDisputeSwaggerApi,
   DisputeApiTags,
   GetDisputeSwaggerApi,
+  GetMyDisputesSwaggerApi,
 } from "../swagger/dispute.swagger.api";
 
 @DisputeApiTags()
@@ -43,6 +44,17 @@ export class DisputeController {
       requesterId: userId,
     });
     return CommonRes.success(DisputeRes.from(result));
+  }
+
+  @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.USER)
+  @GetMyDisputesSwaggerApi()
+  async getMyDisputes(
+    @CurrentUserId() userId: bigint,
+  ): Promise<CommonRes<ListDisputesRes>> {
+    const results = await this.disputeFacade.getMyDisputes(userId);
+    return CommonRes.success(ListDisputesRes.from(results));
   }
 
   @Get(":id")

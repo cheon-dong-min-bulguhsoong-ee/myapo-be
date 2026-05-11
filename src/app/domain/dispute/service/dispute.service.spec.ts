@@ -19,6 +19,7 @@ describe("DisputeService", () => {
           useValue: {
             create: jest.fn(),
             findById: jest.fn(),
+            listByRequesterId: jest.fn(),
             update: jest.fn(),
             addTimelineEntry: jest.fn(),
             getOperatorWorkloads: jest.fn(),
@@ -127,6 +128,34 @@ describe("DisputeService", () => {
           isInternal: true,
         }),
       );
+    });
+  });
+
+  describe("getMyDisputes", () => {
+    it("사용자의 분쟁 목록을 요약 형태로 조회한다", async () => {
+      const requesterId = BigInt(1);
+      const disputes = [
+        new Dispute(
+          "DSP-2026-0001",
+          DisputeStatus.RECEIVED,
+          DisputeType.TYPO,
+          "REQ-123",
+          requesterId,
+          null,
+          new Date(),
+          false,
+          new Date(),
+          new Date(),
+        ),
+      ];
+
+      repository.listByRequesterId.mockResolvedValue(disputes);
+
+      const result = await service.getMyDisputes(requesterId);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe("DSP-2026-0001");
+      expect(repository.listByRequesterId).toHaveBeenCalledWith(requesterId);
     });
   });
 });
