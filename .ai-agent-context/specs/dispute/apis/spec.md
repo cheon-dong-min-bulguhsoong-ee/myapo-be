@@ -37,10 +37,31 @@ paths:
                 $ref: '#/components/schemas/DisputeResponse'
 ```
 
-### 3.2. Get Dispute List (Admin/Operator)
+### 3.2. Get My Dispute List (User)
 - **Method**: `GET`
 - **Path**: `/`
-- **Description**: Retrieves a list of disputes with filtering.
+- **Description**: Retrieves a list of disputes filed by the authenticated user.
+
+#### API Contract (OpenAPI YAML)
+```yaml
+paths:
+  /api/v1/disputes:
+    get:
+      summary: Get my disputes
+      operationId: getMyDisputes
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisputeListResponse'
+```
+
+### 3.3. Get Dispute List (Admin/Operator)
+- **Method**: `GET`
+- **Path**: `/`
+- **Description**: Retrieves a list of disputes with filtering. (Note: Implementation for Admin/Operator list may vary or use query params)
 
 #### API Contract (OpenAPI YAML)
 ```yaml
@@ -122,7 +143,41 @@ components:
       properties:
         id: { type: string }
         status: { type: string }
-        headline: { type: string }
+        type: { type: string }
+        requestId: { type: string }
+        requesterId: { type: string }
+        operatorId: { type: string, nullable: true }
+        slaDeadline: { type: string, format: date-time }
+        isSlaPaused: { type: boolean }
+        timeline:
+          type: array
+          items: { $ref: '#/components/schemas/TimelineEntry' }
+        createdAt: { type: string, format: date-time }
+    DisputeSummaryResponse:
+      type: object
+      properties:
+        id: { type: string }
+        status: { type: string }
+        type: { type: string }
+        requestId: { type: string }
+        operatorId: { type: string, nullable: true }
+        slaDeadline: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+    DisputeListResponse:
+      type: object
+      properties:
+        disputes:
+          type: array
+          items: { $ref: '#/components/schemas/DisputeSummaryResponse' }
+    TimelineEntry:
+      type: object
+      properties:
+        id: { type: string }
+        status: { type: string }
+        note: { type: string, nullable: true }
+        operatorId: { type: string, nullable: true }
+        isInternal: { type: boolean }
+        createdAt: { type: string, format: date-time }
     FileInfo:
       type: object
       properties:

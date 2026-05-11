@@ -14,7 +14,19 @@
 - **Inputs**: `requestId`, `type`, `headline`, `reason`, `evidenceFiles`
 - **Outputs**: `disputeId`, `initialStatus`
 
-## 2. AssignOperator (Admin)
+## 2. GetMyDisputes (User)
+- **Actor**: Requester (User)
+- **Trigger**: Opening the "My Disputes" screen in the app.
+
+### Service Flow
+1.  **Persistence**: Fetch all disputes where `requesterId` matches the authenticated user.
+2.  **Mapping**: Transform the dispute entities into summary results (excluding detailed timeline).
+
+### Input / Output
+- **Inputs**: `userId`
+- **Outputs**: `List of DisputeSummary`
+
+## 3. AssignOperator (Admin)
 - **Actor**: Administrator
 - **Trigger**: Manual assignment action in the console.
 

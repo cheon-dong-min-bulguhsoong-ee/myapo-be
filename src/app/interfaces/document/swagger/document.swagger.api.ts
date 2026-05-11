@@ -12,10 +12,10 @@ import {
 import { DocumentStage } from "../../../domain/document/enum/document-stage.enum";
 import { ApiCommonRes } from "../../common/api-common-res.decorator";
 import { AdvanceDocumentStageRes } from "../res/advance-document-stage.res";
-import { ApproveDocumentRes } from "../res/approve-document.res";
 import { CreateDocumentRes } from "../res/create-document.res";
 import { DocumentDetailRes } from "../res/document-detail.res";
 import { DocumentListRes } from "../res/document-list.res";
+import { DocumentTypeListRes } from "../res/document-type-list.res";
 import { UploadFileRes } from "../res/upload-file.res";
 
 /**
@@ -43,46 +43,52 @@ export const CreateDocumentSwaggerApi = (): MethodDecorator =>
     ApiCommonRes(CreateDocumentRes),
   );
 
-export const ApproveDocumentSwaggerApi = (): MethodDecorator =>
-  applyDecorators(
-    ApiOperation({
-      summary: "문서 단계 승인 (사용자 크리덴셜 서명 결과 제출)",
-      description:
-        "사용자가 현재 stage 의 크리덴셜에 자기 seed 로 서명한 XRPL TX 해시를 제출한다. " +
-        "서버는 documents.current_stage 를 보고 다음 stage 를 계산해 " +
-        "document_approvals 테이블에 1행 INSERT 한다 (stage = 통과시킨 다음 stage).\n\n" +
-        "*제약*: " +
-        "(1) 본인이 신청한 문서만 승인 가능. " +
-        "(2) 이미 마지막 단계(WALLET_STORED) 에 도달한 문서는 거부. " +
-        "(3) 같은 단계 중복 승인은 (document_id, stage) UNIQUE 제약으로 차단.\n\n" +
-        "*인증*: `Authorization: Bearer <accessToken>` 필수.",
-    }),
-    ApiBearerAuth("InternalJwtBearer"),
-    ApiCommonRes(ApproveDocumentRes),
-  );
-
 export const AdvanceDocumentStageSwaggerApi = (): MethodDecorator =>
   applyDecorators(
     ApiOperation({
-      summary: "문서 단계 전이 (누적된 사용자 승인 기반 currentStage 진행)",
+      summary: "문서 단계 승인 + 전이",
       description:
-        "`POST /documents/approvals` 로 누적된 사용자 승인을 바탕으로 " +
-        "documents.current_stage 를 다음 stage 로 1단계 전진시킨다.\n\n" +
+        "사용자가 자기 seed 로 서명한 XRPL TX 해시를 받아 한 호출에 다음을 처리한다 " +
         "서버 처리:\n" +
-        "1) documents.current_stage 의 미완료 DocumentStage 이벤트를 DONE 으로 마감\n" +
-        "2) documents.current_stage 를 다음 stage 로 갱신 " +
+        "1) documents.current_stage 를 보고 다음 stage 계산\n" +
+        "2) document_approvals 1행 INSERT (stage = 통과시킨 다음 stage, xrplTxHash 기록)\n" +
+        "3) 현 stage 의 미완료 DocumentStage 이벤트를 DONE 으로 마감\n" +
+        "4) documents.current_stage 를 다음 stage 로 갱신 " +
         "(WALLET_STORED 도달 시 status=VALID, issuedAt=now)\n" +
-        "3) 다음 stage 의 DocumentStage 이벤트 신규 INSERT " +
+        "5) 다음 stage 의 DocumentStage 이벤트 신규 INSERT " +
         "(WALLET_STORED 는 종착지이므로 즉시 DONE)\n\n" +
         "*제약*: " +
         "(1) 본인이 신청한 문서만 전이 가능. " +
         "(2) 이미 마지막 단계(WALLET_STORED) 에 도달한 문서는 거부. " +
-        "(3) 다음 stage 에 대한 DocumentApproval 행이 없으면 거부 " +
-        "(승인 없이 전이 불가).\n\n" +
         "*인증*: `Authorization: Bearer <accessToken>` 필수.",
     }),
     ApiBearerAuth("InternalJwtBearer"),
+    ApiParam({
+      name: "documentCode",
+      description: "발급 문서 외부 노출 코드 (UUID).",
+      example: "9f2b1a3c-4d5e-6f7a-8b9c-0d1e2f3a4b5c",
+    }),
     ApiCommonRes(AdvanceDocumentStageRes),
+  );
+
+export const ListDocumentTypeSwaggerApi = (): MethodDecorator =>
+  applyDecorators(
+    ApiOperation({
+      summary: "발급 가능한 문서 카탈로그 리스트 (서류 발급 신청 화면)",
+      description:
+        '와이어프레임 "서류 발급 신청" 화면의 카드 리스트. ' +
+        "활성(ACTIVE) 상태의 DocumentType + Issuer 만 반환한다.\n\n" +
+        "응답 필드 활용:\n" +
+        "- `code` — 카드 선택 후 `POST /documents` 에 그대로 전달.\n" +
+        "- `name` / `useCase` — 카드 타이틀 + 서브카피.\n" +
+        "- `issuerIconLabel` — 카드 좌측 아이콘 텍스트 (법원 / MOIS / NTS …).\n" +
+        '- 우측 배지(예: `KR-법원`)는 프론트에서 `"${issuerCountryCode}-${issuerIconLabel}"` 로 합쳐 표시.\n\n' +
+        "필터:\n" +
+        "- `personaType` (KOREAN | FOREIGNER, optional) — 미지정 시 전체.\n\n" +
+        "*인증*: `Authorization: Bearer <accessToken>` 필수.",
+    }),
+    ApiBearerAuth("InternalJwtBearer"),
+    ApiCommonRes(DocumentTypeListRes),
   );
 
 export const ListDocumentSwaggerApi = (): MethodDecorator =>

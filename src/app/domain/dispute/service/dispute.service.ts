@@ -66,6 +66,26 @@ export class DisputeService {
   }
 
   /**
+   * 사용자의 분쟁 목록을 조회한다.
+   */
+  async getMyDisputes(requesterId: bigint): Promise<DisputeSummaryResult[]> {
+    const disputes =
+      await this.disputeRepository.listByRequesterId(requesterId);
+    return disputes.map(
+      (d) =>
+        new DisputeSummaryResult(
+          d.id,
+          d.status,
+          d.type,
+          d.requestId,
+          d.operatorId?.toString() ?? null,
+          d.slaDeadline,
+          d.createdAt,
+        ),
+    );
+  }
+
+  /**
    * 운영자를 배정한다 (최소 부하 방식 + 랜덤 타이브레이크).
    */
   async assignOperator(
