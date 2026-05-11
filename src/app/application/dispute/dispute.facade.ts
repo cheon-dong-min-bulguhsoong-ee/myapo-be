@@ -66,10 +66,7 @@ export class DisputeFacade {
     // ADR-003: RESOLVED 상태가 되면 시스템이 직접 크리덴셜 취소 실행
     if (input.newStatus === DisputeStatus.RESOLVED && input.credentialCode) {
       // CredentialService의 revoke API 사용
-      await this.credentialService.revoke(
-        input.credentialCode,
-        `DISPUTE:${input.id}`,
-      );
+      await this.credentialService.revoke(input.credentialCode);
     }
 
     return result;
