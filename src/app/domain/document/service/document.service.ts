@@ -11,6 +11,7 @@ import {
   DocumentSubstep,
 } from "../dto/document-detail.result";
 import { DocumentListResult } from "../dto/document-list-item.result";
+import { DocumentTypeListItemResult } from "../dto/document-type-list-item.result";
 import { DocumentStage, nextDocumentStage } from "../enum/document-stage.enum";
 import { DocumentStageStatus } from "../enum/document-stage-status.enum";
 import { DocumentStatus } from "../enum/document-status.enum";
@@ -230,6 +231,18 @@ export class DocumentService {
       updated.status,
       updated.issuedAt,
     );
+  }
+
+  /**
+   * 발급 가능한 문서 카탈로그 리스트 — 와이어프레임 "서류 발급 신청" 화면.
+   *
+   * personaType 지정 시 해당 페르소나용 카탈로그만, 미지정 시 전체.
+   * Issuer 의 status / isDelete 까지 함께 필터링해 "발급기관도 활성" 인 카탈로그만 노출한다.
+   */
+  async listAvailableTypes(
+    personaType?: PersonaType,
+  ): Promise<DocumentTypeListItemResult[]> {
+    return this.documentTypeRepository.findAvailableList(personaType);
   }
 
   /**

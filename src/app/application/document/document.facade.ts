@@ -7,6 +7,7 @@ import { AdvanceDocumentStageReq } from "../../interfaces/document/req/advance-d
 import { ApproveDocumentReq } from "../../interfaces/document/req/approve-document.req";
 import { CreateDocumentReq } from "../../interfaces/document/req/create-document.req";
 import { DocumentListReq } from "../../interfaces/document/req/document-list.req";
+import { DocumentTypeListReq } from "../../interfaces/document/req/document-type-list.req";
 import { UploadEncryptedPdfReq } from "../../interfaces/document/req/upload-encrypted-pdf.req";
 import { UploadFileReq } from "../../interfaces/document/req/upload-file.req";
 import { AdvanceDocumentStageRes } from "../../interfaces/document/res/advance-document-stage.res";
@@ -14,6 +15,7 @@ import { ApproveDocumentRes } from "../../interfaces/document/res/approve-docume
 import { CreateDocumentRes } from "../../interfaces/document/res/create-document.res";
 import { DocumentDetailRes } from "../../interfaces/document/res/document-detail.res";
 import { DocumentListRes } from "../../interfaces/document/res/document-list.res";
+import { DocumentTypeListRes } from "../../interfaces/document/res/document-type-list.res";
 import { UploadFileRes } from "../../interfaces/document/res/upload-file.res";
 
 /**
@@ -149,6 +151,19 @@ export class DocumentFacade {
       limit: request.limit ?? 20,
     });
     return DocumentListRes.from(result);
+  }
+
+  /**
+   * 발급 가능한 카탈로그 리스트 — 와이어프레임 "서류 발급 신청" 화면.
+   * 인증된 사용자라면 누구나 호출 가능 (페르소나 필터는 query 로만 좁힌다).
+   */
+  async listAvailableTypes(
+    request: DocumentTypeListReq,
+  ): Promise<DocumentTypeListRes> {
+    const items = await this.documentService.listAvailableTypes(
+      request.personaType,
+    );
+    return DocumentTypeListRes.from(items);
   }
 
   /**

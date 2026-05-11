@@ -16,6 +16,7 @@ import { ApproveDocumentRes } from "../res/approve-document.res";
 import { CreateDocumentRes } from "../res/create-document.res";
 import { DocumentDetailRes } from "../res/document-detail.res";
 import { DocumentListRes } from "../res/document-list.res";
+import { DocumentTypeListRes } from "../res/document-type-list.res";
 import { UploadFileRes } from "../res/upload-file.res";
 
 /**
@@ -83,6 +84,26 @@ export const AdvanceDocumentStageSwaggerApi = (): MethodDecorator =>
     }),
     ApiBearerAuth("InternalJwtBearer"),
     ApiCommonRes(AdvanceDocumentStageRes),
+  );
+
+export const ListDocumentTypeSwaggerApi = (): MethodDecorator =>
+  applyDecorators(
+    ApiOperation({
+      summary: "발급 가능한 문서 카탈로그 리스트 (서류 발급 신청 화면)",
+      description:
+        '와이어프레임 "서류 발급 신청" 화면의 카드 리스트. ' +
+        "활성(ACTIVE) 상태의 DocumentType + Issuer 만 반환한다.\n\n" +
+        "응답 필드 활용:\n" +
+        "- `code` — 카드 선택 후 `POST /documents` 에 그대로 전달.\n" +
+        "- `name` / `useCase` — 카드 타이틀 + 서브카피.\n" +
+        "- `issuerIconLabel` — 카드 좌측 아이콘 텍스트 (법원 / MOIS / NTS …).\n" +
+        '- 우측 배지(예: `KR-법원`)는 프론트에서 `"${issuerCountryCode}-${issuerIconLabel}"` 로 합쳐 표시.\n\n' +
+        "필터:\n" +
+        "- `personaType` (KOREAN | FOREIGNER, optional) — 미지정 시 전체.\n\n" +
+        "*인증*: `Authorization: Bearer <accessToken>` 필수.",
+    }),
+    ApiBearerAuth("InternalJwtBearer"),
+    ApiCommonRes(DocumentTypeListRes),
   );
 
 export const ListDocumentSwaggerApi = (): MethodDecorator =>

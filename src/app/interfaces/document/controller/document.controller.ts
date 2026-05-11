@@ -22,6 +22,7 @@ import { AdvanceDocumentStageReq } from "../req/advance-document-stage.req";
 import { ApproveDocumentReq } from "../req/approve-document.req";
 import { CreateDocumentReq } from "../req/create-document.req";
 import { DocumentListReq } from "../req/document-list.req";
+import { DocumentTypeListReq } from "../req/document-type-list.req";
 import { UploadEncryptedPdfReq } from "../req/upload-encrypted-pdf.req";
 import { UploadFileReq } from "../req/upload-file.req";
 import { AdvanceDocumentStageRes } from "../res/advance-document-stage.res";
@@ -29,6 +30,7 @@ import { ApproveDocumentRes } from "../res/approve-document.res";
 import { CreateDocumentRes } from "../res/create-document.res";
 import { DocumentDetailRes } from "../res/document-detail.res";
 import { DocumentListRes } from "../res/document-list.res";
+import { DocumentTypeListRes } from "../res/document-type-list.res";
 import { UploadFileRes } from "../res/upload-file.res";
 import {
   AdvanceDocumentStageSwaggerApi,
@@ -38,6 +40,7 @@ import {
   DownloadDocumentFileSwaggerApi,
   GetDocumentDetailSwaggerApi,
   ListDocumentSwaggerApi,
+  ListDocumentTypeSwaggerApi,
   UploadDocumentFileSwaggerApi,
   UploadEncryptedPdfSwaggerApi,
 } from "../swagger/document.swagger.api";
@@ -134,6 +137,20 @@ export class DocumentController {
       request,
       userId,
     );
+    return CommonRes.success(response);
+  }
+
+  /**
+   * 발급 가능한 문서 카탈로그 리스트 — "서류 발급 신청" 화면용.
+   *
+   * `:documentCode` 라우트보다 위에 둬야 정적 경로 매칭이 먼저 잡힌다.
+   */
+  @Get("types")
+  @ListDocumentTypeSwaggerApi()
+  async listTypes(
+    @Query() request: DocumentTypeListReq,
+  ): Promise<CommonRes<DocumentTypeListRes>> {
+    const response = await this.documentFacade.listAvailableTypes(request);
     return CommonRes.success(response);
   }
 

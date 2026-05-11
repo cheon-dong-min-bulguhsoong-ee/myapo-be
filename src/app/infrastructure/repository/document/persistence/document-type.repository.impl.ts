@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { DocumentType as DocumentTypeRow } from "@prisma/client";
 import { PersonaType } from "../../../../domain/common/enum/persona-type.enum";
+import { DocumentTypeListItemResult } from "../../../../domain/document/dto/document-type-list-item.result";
 import { DocumentType } from "../../../../domain/document/entity/document-type.entity";
 import { DocumentTypeStatus } from "../../../../domain/document/enum/document-type-status.enum";
 import { DocumentTypeRepository } from "../../../../domain/document/repository/document-type.repository";
@@ -22,6 +23,37 @@ export class DocumentTypeRepositoryImpl extends DocumentTypeRepository {
       where: { code, status: DocumentTypeStatus.ACTIVE, isDelete: false },
     });
     return row === null ? null : this.toEntity(row);
+  }
+
+  async findAvailableList(
+    personaType?: PersonaType,
+  ): Promise<DocumentTypeListItemResult[]> {
+    const rows = await this.prisma.documentType.findMany({
+      where: {
+        status: DocumentTypeStatus.ACTIVE,
+        isDelete: false,
+        ...(personaType !== undefined ? { personaType } : {}),
+        issuer: { status: DocumentTypeStatus.ACTIVE, isDelete: false },
+      },
+      include: { issuer: true },
+      orderBy: [{ issuerCode: "asc" }, { code: "asc" }],
+    });
+
+    return rows.map(
+      (row) =>
+        new DocumentTypeListItemResult(
+          row.code,
+          row.name,
+          row.englishName,
+          row.useCase,
+          row.defaultTtlMonths,
+          row.personaType as PersonaType,
+          row.issuer.code,
+          row.issuer.name,
+          row.issuer.countryCode,
+          row.issuer.iconLabel,
+        ),
+    );
   }
 
   private toEntity(row: DocumentTypeRow): DocumentType {
