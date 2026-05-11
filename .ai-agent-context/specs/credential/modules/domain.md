@@ -1,11 +1,11 @@
 # Credential Domain Models
 
 ## 0. Draft Status
-- **Status**: Approved for MVP 1st implementation. Scope: 5-stage pipeline, Internal JWT, user-facing APIs, nullable authEventId references, and XRP Testnet XLS-70 adapter evidence for hackathon transaction-log review. Excluded: operator APIs, production/mainnet XRPL finality, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
+- **Status**: Approved for MVP 1st implementation. Scope: 4-stage pipeline, Internal JWT, user-facing APIs, and XRP Testnet XLS-70 adapter evidence for hackathon transaction-log review. Excluded: operator APIs, production/mainnet XRPL finality, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
 - **Source Boundary**: Names below are proposed backend model names aligned to latest frontend-design and ADR-002.
 
 ## 1. Aggregate: Credential
-- **Core Purpose**: Represents the reusable credential/document result after the issue pipeline reaches completion.
+- **Core Purpose**: Represents the user-held credential result after the issue pipeline reaches completion.
 
 ### Data Elements
 | Property | Description | Role / Constraint |
@@ -15,42 +15,39 @@
 | `walletId` | Related UserWallet id. | Required when issued. |
 | `walletAddress` | Displayable wallet address. | Derived from UserWallet. |
 | `issueRequestId` | Issue request that produced this credential. | Required. |
-| `documentId` | Related Document id if available. | Cross-domain reference only. |
+| `documentCode` | Related `documents.document_code` if available. | Cross-domain reference only. |
 | `documentTypeId` | Source document type. | Required. |
 | `issuerId` | Issuer/institution id. | Required after issuer resolution. |
-| `status` | Credential lifecycle status. | `ISSUED`, `EXPIRED`, `REVOKED`, `FAILED`. |
+| `status` | Credential lifecycle status. | `CREATED`, `ACCEPTED`, `EXPIRED`, `REVOKED`, `FAILED`. |
 | `issuedAt` | Issue completion timestamp. | Required when issued. |
 | `expiresAt` | Validity end timestamp. | Required when issued. |
 | `revokedAt` | Revocation timestamp. | Nullable. |
 | `revocationReason` | Reason for revocation. | Required when revoked. |
-| `xrplCredentialId` | Testnet/mock XRPL credential object identity or derived reference. | Nullable. |
+| `xrplCredentialId` | Testnet XRPL credential object identity or derived reference. | Nullable. |
 | `xrplTransactionHash` | Latest related XRP Testnet transaction hash for MVP evidence. | Nullable; not production/mainnet finality. |
-| `isMock` | Whether the credential uses local mock fallback instead of validated XRP Testnet evidence. | Required for MVP. |
-| `sourceDocumentRef` | Reference to source/encrypted document artifact. | No raw file body. |
+| `currentStage` | Snapshot of `credential_issue_requests.current_stage`. | No raw file body. |
 | `createdAt` | Creation timestamp. | Audit. |
 | `updatedAt` | Update timestamp. | Audit. |
 
 ### Business Invariants
 - A credential has exactly one owner.
-- A credential cannot be submitted if status is `EXPIRED`, `REVOKED`, or `FAILED`.
+- A credential cannot be submitted if status is not `ACCEPTED`, or if it is `EXPIRED`, `REVOKED`, or `FAILED`.
 - A credential cannot be submitted when `expiresAt <= now`, even if stored status has not been projected to `EXPIRED`.
-- XRP Testnet credentials must expose Testnet metadata and must not claim production/mainnet XRPL finality. Local mock fallback credentials must be clearly marked with `isMock = true`.
+- XRP Testnet credentials must expose Testnet metadata and must not claim production/mainnet XRPL finality.
 
 ## 2. Aggregate: CredentialIssueRequest
-- **Core Purpose**: Tracks issue progress through the latest 5-stage operations pipeline.
+- **Core Purpose**: Tracks issue progress through the latest 4-stage operations pipeline.
 
 ### Data Elements
 | Property | Description | Role / Constraint |
 | :--- | :--- | :--- |
 | `id` | Internal issue request id. | System generated. |
 | `userId` | Request owner. | Required. |
-| `documentId` | Existing Document id if issue is document-backed. | Optional until integration finalized. |
+| `documentCode` | Existing `documents.document_code` if issue is document-backed. | Optional until integration finalized. |
 | `documentTypeId` | Requested document type. | Required. |
 | `issuerId` | Issuing authority. | Required after validation. |
-| `status` | Request lifecycle status. | `ISSUING`, `USER_APPROVAL_REQUIRED`, `ISSUED`, `FAILED`, `REVOKED`. |
-| `currentStage` | Current 5-stage pipeline stage. | `RECEIVED`, `PRE_REVIEW`, `TRANSLATION_REVIEW`, `NOTARY_SIGNATURE`, `ISSUED`. |
-| `currentSubstep` | Optional substep label. | Example: `CREDENTIAL_CREATION`, `USER_APPROVAL`. |
-| `authEventId` | Auth-owned event for `issue_request` trigger. | Nullable until Auth integration finalized. |
+| `status` | Request lifecycle status. | `ISSUED`, `FAILED`. |
+| `currentStage` | Current 4-stage pipeline stage. | `MYDATA_RECEIVED`, `DOCUMENT_MOVED`, `TRANSLATION_RECEIVED`, `APOSTILLE_RECEIVED`. |
 | `failureReason` | Machine-readable failure reason. | Required when failed. |
 | `createdAt` | Request creation timestamp. | Audit. |
 | `completedAt` | Completion timestamp. | Nullable. |
@@ -58,7 +55,7 @@
 ### Business Invariants
 - Pipeline stage order must be deterministic.
 - `ISSUED` request status requires a created credential or approved deferred creation policy.
-- Credential issue request stores Auth event ids by reference only; it does not own CI verification data.
+  - Credential issue request does not own CI verification data.
 - The old four-signature model is not a hard invariant unless an approved ADR/spec maps it to this pipeline.
 
 ## 3. Entity: IssuePipelineStageSnapshot
@@ -71,7 +68,6 @@
 | `stage` | Pipeline stage enum. | Required. |
 | `label` | Display label. | Korean label from reference. |
 | `status` | Stage state. | `PENDING`, `ACTIVE`, `DONE`, `FAILED`. |
-| `substep` | Optional active substep. | Example: credential creation/user approval. |
 | `updatedAt` | Projection timestamp. | Audit. |
 
 ### Business Invariants
@@ -91,7 +87,6 @@
 | `recipientInstitutionId` | Receiving institution. | Required. |
 | `status` | Institution submission result. | `RECEIVED`, `VERIFYING`, `REJECTED`. |
 | `rejectionReason` | Reason when rejected. | Required when rejected if provided by institution. |
-| `authEventId` | Auth-owned event for `institution_submit`. | Nullable until Auth log integration finalized. |
 | `submittedAt` | Submission timestamp. | Required. |
 | `updatedAt` | Update timestamp. | Audit. |
 

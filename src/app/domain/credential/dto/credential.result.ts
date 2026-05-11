@@ -1,5 +1,5 @@
 import { CredentialIssueRequestStatus } from "../enum/credential-issue-request-status.enum";
-import { CredentialDocumentStageState } from "../enum/credential-document-stage-state.enum";
+import { CredentialIssuePipelineState } from "../enum/credential-issue-pipeline-state.enum";
 import { CredentialStatus } from "../enum/credential-status.enum";
 import { CredentialSubmissionStatus } from "../enum/credential-submission-status.enum";
 import { IssuePipelineStage } from "../enum/issue-pipeline-stage.enum";
@@ -10,7 +10,6 @@ export class IssuePipelineStageItemResult {
     public readonly stage: IssuePipelineStage,
     public readonly label: string,
     public readonly status: IssuePipelineStageStatus,
-    public readonly substep: string | null,
   ) {}
 }
 
@@ -20,8 +19,6 @@ export class CreateCredentialIssueRequestResult {
     public readonly status: CredentialIssueRequestStatus,
     public readonly pipeline: IssuePipelineStageItemResult[],
     public readonly currentStage: IssuePipelineStage,
-    public readonly currentSubstep: string | null,
-    public readonly authEventId: string | null,
   ) {}
 }
 
@@ -31,19 +28,10 @@ export class CredentialIssueRequestResult extends CreateCredentialIssueRequestRe
     status: CredentialIssueRequestStatus,
     pipeline: IssuePipelineStageItemResult[],
     currentStage: IssuePipelineStage,
-    currentSubstep: string | null,
-    authEventId: string | null,
     public readonly credentialId: string | null,
     public readonly submissionCount: number,
   ) {
-    super(
-      issueRequestId,
-      status,
-      pipeline,
-      currentStage,
-      currentSubstep,
-      authEventId,
-    );
+    super(issueRequestId, status, pipeline, currentStage);
   }
 }
 
@@ -58,7 +46,7 @@ export class CredentialSummaryResult {
     public readonly issuedAt: Date,
     public readonly expiresAt: Date,
     public readonly walletAddress: string,
-    public readonly isMock: boolean,
+    public readonly currentStage: string,
     public readonly xrplNetwork: string | null,
     public readonly xrplTxHash: string | null,
     public readonly xrplLedgerIndex: bigint | null,
@@ -77,7 +65,6 @@ export class CredentialSubmissionItemResult {
     public readonly status: CredentialSubmissionStatus,
     public readonly rejectionReason: string | null,
     public readonly submittedAt: Date,
-    public readonly authEventId: string | null,
   ) {}
 }
 
@@ -86,7 +73,6 @@ export class CredentialDetailResult extends CredentialSummaryResult {
     summary: CredentialSummaryResult,
     public readonly pipeline: IssuePipelineStageItemResult[],
     public readonly submissions: CredentialSubmissionItemResult[],
-    public readonly sourceDocumentRef: string | null,
   ) {
     super(
       summary.credentialId,
@@ -98,7 +84,7 @@ export class CredentialDetailResult extends CredentialSummaryResult {
       summary.issuedAt,
       summary.expiresAt,
       summary.walletAddress,
-      summary.isMock,
+      summary.currentStage,
       summary.xrplNetwork,
       summary.xrplTxHash,
       summary.xrplLedgerIndex,
@@ -113,10 +99,10 @@ export class ListCredentialsResult {
   constructor(public readonly credentials: CredentialSummaryResult[]) {}
 }
 
-export class CredentialDocumentStageResult extends CredentialSummaryResult {
+export class CredentialIssuePipelineStageResult extends CredentialSummaryResult {
   constructor(
     summary: CredentialSummaryResult,
-    public readonly credentialState: CredentialDocumentStageState,
+    public readonly credentialState: CredentialIssuePipelineState,
   ) {
     super(
       summary.credentialId,
@@ -128,7 +114,7 @@ export class CredentialDocumentStageResult extends CredentialSummaryResult {
       summary.issuedAt,
       summary.expiresAt,
       summary.walletAddress,
-      summary.isMock,
+      summary.currentStage,
       summary.xrplNetwork,
       summary.xrplTxHash,
       summary.xrplLedgerIndex,
@@ -139,9 +125,9 @@ export class CredentialDocumentStageResult extends CredentialSummaryResult {
   }
 }
 
-export class ListCredentialsByDocumentStageResult {
+export class ListCredentialsByIssuePipelineStageResult {
   constructor(
-    public readonly credentials: CredentialDocumentStageResult[],
+    public readonly credentials: CredentialIssuePipelineStageResult[],
   ) {}
 }
 
@@ -152,7 +138,6 @@ export class SubmitCredentialResult {
     public readonly recipientInstitutionId: string,
     public readonly status: CredentialSubmissionStatus,
     public readonly submittedAt: Date,
-    public readonly authEventId: string | null,
   ) {}
 }
 

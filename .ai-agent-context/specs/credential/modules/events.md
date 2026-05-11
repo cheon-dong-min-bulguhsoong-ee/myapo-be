@@ -1,7 +1,7 @@
 # Credential Domain Events
 
 ## 0. Draft Status
-- **Status**: Approved for MVP 1st implementation. Scope: 5-stage pipeline, Internal JWT, user-facing APIs, nullable authEventId references, and XRP Testnet XLS-70 adapter evidence for hackathon transaction-log review. Excluded: operator APIs, production/mainnet XRPL finality, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
+- **Status**: Approved for MVP 1st implementation. Scope: 4-stage pipeline, Internal JWT, user-facing APIs, and XRP Testnet XLS-70 adapter evidence for hackathon transaction-log review. Excluded: operator APIs, production/mainnet XRPL finality, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
 - **Event Infrastructure Caveat**: Events are business-event definitions. They can be implemented as outbox rows, synchronous service calls, or actual events after architecture approval.
 
 ## 1. CredentialIssueRequestCreated
@@ -14,36 +14,33 @@
 | `issueRequestId` | Created issue request id. | Primary Key |
 | `userId` | Request owner. | Required |
 | `documentTypeId` | Requested document type. | Required |
-| `currentStage` | Initial 5-stage pipeline stage. | Required |
-| `authEventId` | Auth-owned `issue_request` event id. | Optional/Required by integration policy |
+| `currentStage` | Initial 4-stage pipeline stage. | Required |
 | `timestamp` | Event time. | Audit |
 
 ## 2. IssuePipelineAdvanced
 - **Publisher**: `CredentialService`
 - **Subscriber(s)**: Console projection, Notification
-- **Trigger Condition**: Issue request moves stage/substep.
+- **Trigger Condition**: Issue request moves stage.
 
 | Field | Description | Importance |
 | :--- | :--- | :--- |
 | `issueRequestId` | Request id. | Required |
 | `fromStage` | Previous stage. | Audit |
 | `toStage` | New stage. | Required |
-| `substep` | Optional active substep. | Informational |
 | `timestamp` | Event time. | Audit |
 
-## 3. CredentialIssued
+## 3. CredentialCreated
 - **Publisher**: `CredentialService`
 - **Subscriber(s)**: Wallet projection, Operations Console, Notification
-- **Trigger Condition**: Issue pipeline completes and credential is created.
+- **Trigger Condition**: Issue pipeline completes and credential row is created.
 
 | Field | Description | Importance |
 | :--- | :--- | :--- |
 | `credentialId` | Issued credential id. | Primary Key |
 | `issueRequestId` | Source request. | Required |
 | `userId` | Owner. | Required |
-| `walletAddress` | Destination wallet address. | Required |
+| `xrplSubjectAddress` | Subject wallet address used for XRPL evidence. | Required |
 | `expiresAt` | Validity end. | Required |
-| `isMock` | Mock/testnet flag. | Required for MVP |
 
 ## 4. CredentialSubmitted
 - **Publisher**: `CredentialService`
@@ -56,7 +53,6 @@
 | `credentialId` | Submitted credential. | Required |
 | `userId` | Owner. | Required |
 | `recipientInstitutionId` | Receiving institution. | Required |
-| `authEventId` | Auth-owned `institution_submit` event id. | Required when Auth log integration is enabled |
 | `submittedAt` | Submission timestamp. | Audit |
 
 ## 5. CredentialSubmissionResultChanged

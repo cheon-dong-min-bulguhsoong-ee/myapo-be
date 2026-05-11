@@ -2,7 +2,6 @@ import { ApiProperty } from "@nestjs/swagger";
 import {
   IsBoolean,
   IsNotEmpty,
-  IsOptional,
   IsString,
   MaxLength,
 } from "class-validator";
@@ -20,14 +19,4 @@ export class SubmitCredentialReq {
   })
   @IsBoolean()
   readonly consentConfirmed!: boolean;
-
-  @ApiProperty({
-    description: "Auth 소유 인증 이벤트 ID. Credential은 참조만 저장한다.",
-    nullable: true,
-    required: false,
-  })
-  @IsString()
-  @IsOptional()
-  @MaxLength(80)
-  readonly authEventId?: string;
 }

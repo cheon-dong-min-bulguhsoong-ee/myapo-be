@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsOptional, IsString, MaxLength } from "class-validator";
+import { IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from "class-validator";
 
 export class CreateCredentialIssueRequestReq {
   @ApiProperty({
@@ -12,33 +12,14 @@ export class CreateCredentialIssueRequestReq {
   readonly documentTypeId!: string;
 
   @ApiProperty({
-    description: "원천 Document 참조 ID. 기존 Document 연동 시에만 사용한다.",
-    nullable: true,
-    required: false,
-  })
-  @IsString()
-  @IsOptional()
-  @MaxLength(80)
-  readonly documentId?: string;
-
-  @ApiProperty({
     description:
-      "Document stage 참조 ID. 문서 단계 기반 크레덴셜 추적이 필요할 때 사용한다.",
+      "원천 Document UUID. credential_issue_requests.document_code는 documents.document_code를 참조할 때만 사용한다.",
     nullable: true,
     required: false,
   })
-  @IsString()
+  @IsUUID()
   @IsOptional()
-  @MaxLength(80)
-  readonly documentStageId?: string;
+  @MaxLength(36)
+  readonly documentCode?: string;
 
-  @ApiProperty({
-    description: "Auth 소유 인증 이벤트 ID. Credential은 참조만 저장한다.",
-    nullable: true,
-    required: false,
-  })
-  @IsString()
-  @IsOptional()
-  @MaxLength(80)
-  readonly authEventId?: string;
 }

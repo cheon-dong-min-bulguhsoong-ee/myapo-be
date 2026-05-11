@@ -4,18 +4,18 @@ import { DomainError } from "../../common/error/domain.error";
 import { ErrorCode } from "../../common/error/error-code";
 import {
   CreateCredentialIssueRequestResult,
-  CredentialDocumentStageResult,
+  CredentialIssuePipelineStageResult,
   CredentialDetailResult,
   CredentialIssueRequestResult,
   CredentialSubmissionItemResult,
   CredentialSummaryResult,
-  ListCredentialsByDocumentStageResult,
+  ListCredentialsByIssuePipelineStageResult,
   IssuePipelineStageItemResult,
   ListCredentialSubmissionsResult,
   ListCredentialsResult,
   SubmitCredentialResult,
 } from "../dto/credential.result";
-import { CredentialDocumentStageState } from "../enum/credential-document-stage-state.enum";
+import { CredentialIssuePipelineState } from "../enum/credential-issue-pipeline-state.enum";
 import { Credential } from "../entity/credential.entity";
 import { CredentialIssueRequest } from "../entity/credential-issue-request.entity";
 import { CredentialSubmission } from "../entity/credential-submission.entity";
@@ -49,10 +49,8 @@ export class CredentialService {
   async createIssueRequest(
     userId: bigint,
     documentTypeId: string,
-    documentId: string | null,
-    authEventId: string | null,
+    documentCode: string | null,
     walletAddress: string,
-    sourceDocumentRef?: string | null,
   ): Promise<CreateCredentialIssueRequestResult> {
     const documentType =
       await this.credentialDocumentTypeRepository.findActiveByCode(
@@ -69,23 +67,42 @@ export class CredentialService {
       issueRequestCode: randomUUID(),
       userId,
       documentTypeCode: documentType.code,
-      documentId,
+      documentCode,
       status: CredentialIssueRequestStatus.ISSUED,
-      currentStage: IssuePipelineStage.ISSUED,
-      currentSubstep: null,
-      authEventId,
+      currentStage: IssuePipelineStage.APOSTILLE_RECEIVED,
       requestedAt: now,
     });
 
     const expiresAt = addMonths(now, documentType.defaultTtlMonths);
-    let xrplEvidence: XrplCredentialTransactionEvidenceResult | null;
     try {
-      xrplEvidence = await this.publishTestnetCredentialEvidence(
+      const xrplEvidence = await this.publishTestnetCredentialEvidence(
         walletAddress,
         documentType.code,
         request.issueRequestCode,
         expiresAt,
       );
+      const credential = await this.credentialRepository.createCredential({
+        credentialCode: randomUUID(),
+        issueRequestId: request.id,
+        userId,
+        documentTypeCode: documentType.code,
+        documentTypeName: documentType.name,
+        issuerCode: documentType.issuerCode,
+        status: CredentialStatus.CREATED,
+        currentStage: request.currentStage,
+        issuedAt: now,
+        expiresAt,
+      });
+
+      const createdXrplTransactionId =
+        await this.credentialRepository.createXrplTransaction({
+          credentialId: credential.id,
+          evidence: xrplEvidence,
+        });
+      await this.credentialRepository.updateCredentialCreatedXrplTransaction({
+        credentialId: credential.id,
+        createdXrplTransactionId,
+      });
     } catch (error) {
       await this.credentialRepository.markIssueRequestFailed({
         issueRequestId: request.id,
@@ -93,42 +110,6 @@ export class CredentialService {
         failureReason: this.toFailureReason(error),
       });
       throw error;
-    }
-
-    const credential = await this.credentialRepository.createCredential({
-      credentialCode: randomUUID(),
-      issueRequestId: request.id,
-      issueRequestCode: request.issueRequestCode,
-      userId,
-      documentTypeCode: documentType.code,
-      documentTypeName: documentType.name,
-      issuerCode: documentType.issuerCode,
-      status: CredentialStatus.ISSUED,
-      walletAddress,
-      isMock: xrplEvidence === null,
-      xrplCredentialId:
-        xrplEvidence === null
-          ? `mock:${request.issueRequestCode}`
-          : this.buildXrplCredentialIdentity(xrplEvidence),
-      xrplNetwork: xrplEvidence?.network ?? null,
-      xrplIssuerAddress: xrplEvidence?.issuer ?? null,
-      xrplSubjectAddress: xrplEvidence?.subject ?? null,
-      xrplCredentialType: xrplEvidence?.credentialType ?? null,
-      xrplTxHash: xrplEvidence?.transactionHash ?? null,
-      xrplLedgerIndex: xrplEvidence?.ledgerIndex ?? null,
-      xrplEngineResult: xrplEvidence?.engineResult ?? null,
-      xrplValidated: xrplEvidence?.validated ?? null,
-      sourceDocumentRef: sourceDocumentRef ?? documentId,
-      authEventId,
-      issuedAt: now,
-      expiresAt,
-    });
-
-    if (xrplEvidence !== null) {
-      await this.credentialRepository.createXrplTransaction({
-        credentialId: credential.id,
-        evidence: xrplEvidence,
-      });
     }
 
     return this.toIssueRequestCreateResult(request);
@@ -151,14 +132,8 @@ export class CredentialService {
     return new CredentialIssueRequestResult(
       request.issueRequestCode,
       request.status,
-      this.buildPipeline(
-        request.currentStage,
-        request.status,
-        request.currentSubstep,
-      ),
+      this.buildPipeline(request.currentStage, request.status),
       request.currentStage,
-      request.currentSubstep,
-      request.authEventId,
       credential?.credentialCode ?? null,
       submissionCount,
     );
@@ -179,66 +154,68 @@ export class CredentialService {
     );
   }
 
-  async listCredentialsByDocumentStageId(
+  async listCredentialsByIssuePipelineStage(
     userId: bigint,
-    documentStageId: string,
-  ): Promise<ListCredentialsByDocumentStageResult> {
-    const sourceDocumentRef = this.normalizeDocumentStageId(documentStageId);
+    currentStage: string,
+  ): Promise<ListCredentialsByIssuePipelineStageResult> {
+    const normalizedCurrentStage = this.normalizeCredentialCurrentStage(
+      currentStage,
+    );
     const credentials =
-      await this.credentialRepository.listCredentialsByUserIdAndSourceDocumentRef(
+      await this.credentialRepository.listCredentialsByUserIdAndCurrentStage(
         userId,
-        sourceDocumentRef,
+        normalizedCurrentStage,
       );
     const results = await Promise.all(
       credentials.map(async (credential) => {
-        const credentialState = await this.resolveDocumentStageCredentialState(
+        const credentialState = await this.resolveCredentialLifecycleState(
           credential,
         );
-        return new CredentialDocumentStageResult(
+        return new CredentialIssuePipelineStageResult(
           this.toCredentialSummaryResult(credential),
           credentialState,
         );
       }),
     );
-    return new ListCredentialsByDocumentStageResult(results);
+    return new ListCredentialsByIssuePipelineStageResult(results);
   }
 
-  private async resolveDocumentStageCredentialState(
+  private async resolveCredentialLifecycleState(
     credential: Credential,
-  ): Promise<CredentialDocumentStageState> {
+  ): Promise<CredentialIssuePipelineState> {
     if (credential.status === CredentialStatus.REVOKED) {
-      return CredentialDocumentStageState.REVOKED;
-    }
-    if (credential.status === CredentialStatus.FAILED) {
-      return CredentialDocumentStageState.FAILED;
+      return CredentialIssuePipelineState.REVOKED;
     }
     if (
       credential.status === CredentialStatus.EXPIRED ||
       credential.expiresAt <= new Date()
     ) {
-      return CredentialDocumentStageState.EXPIRED;
+      return CredentialIssuePipelineState.EXPIRED;
     }
 
     const accepted =
-      await this.credentialRepository.hasCredentialXrplTransaction(
+      credential.status === CredentialStatus.ACCEPTED ||
+      (await this.credentialRepository.hasCredentialXrplTransaction(
         credential.id,
         XrplCredentialTransactionKind.ACCEPT,
-      );
+      ));
     return accepted
-      ? CredentialDocumentStageState.ISSUED_ACCEPTED
-      : CredentialDocumentStageState.ISSUED_PENDING_ACCEPT;
+      ? CredentialIssuePipelineState.ACCEPTED
+      : CredentialIssuePipelineState.CREATED;
   }
 
-  private normalizeDocumentStageId(documentStageId: string): string {
+  private normalizeCredentialCurrentStage(
+    currentStage: string,
+  ): IssuePipelineStage {
     try {
-      const normalized = BigInt(documentStageId).toString();
-      if (normalized.length === 0) {
-        throw new Error("empty");
+      const normalized = currentStage.trim();
+      if (!issuePipelineStages.includes(normalized as IssuePipelineStage)) {
+        throw new Error("invalid-stage");
       }
-      return normalized;
+      return normalized as IssuePipelineStage;
     } catch {
       throw new DomainError(ErrorCode.Common.VALIDATION_ERROR, {
-        documentStageId,
+        currentStage,
       });
     }
   }
@@ -256,12 +233,11 @@ export class CredentialService {
     return new CredentialDetailResult(
       this.toCredentialSummaryResult(credential),
       this.buildPipeline(
-        IssuePipelineStage.ISSUED,
+        (credential.currentStage as IssuePipelineStage) ??
+          IssuePipelineStage.APOSTILLE_RECEIVED,
         CredentialIssueRequestStatus.ISSUED,
-        null,
       ),
       submissions.map((submission) => this.toSubmissionItemResult(submission)),
-      credential.sourceDocumentRef,
     );
   }
 
@@ -270,7 +246,6 @@ export class CredentialService {
     credentialId: string,
     submissionRequestId: string,
     consentConfirmed: boolean,
-    authEventId: string | null,
   ): Promise<SubmitCredentialResult> {
     if (!consentConfirmed) {
       throw new DomainError(ErrorCode.Credential.CONSENT_REQUIRED, {
@@ -291,7 +266,6 @@ export class CredentialService {
       recipientInstitutionId: submissionRequestId,
       recipientInstitutionName: submissionRequestId,
       status: CredentialSubmissionStatus.RECEIVED,
-      authEventId,
       submittedAt,
     });
 
@@ -301,7 +275,6 @@ export class CredentialService {
       submission.recipientInstitutionId,
       submission.status,
       submission.submittedAt,
-      submission.authEventId,
     );
   }
 
@@ -334,7 +307,6 @@ export class CredentialService {
    */
   async revoke(
     credentialCode: string,
-    authEventId: string | null,
   ): Promise<void> {
     const credential =
       await this.credentialRepository.findCredentialByCode(credentialCode);
@@ -348,18 +320,33 @@ export class CredentialService {
       return;
     }
 
-    // 1. XRPL 취소 (Mock이 아닌 경우)
-    if (!credential.isMock && this.xrplCredentialAdapter) {
-      await this.xrplCredentialAdapter.submitCredentialDeleteByIssuer({
-        submitterAddress: this.xrplCredentialAdapter.getIssuerAddress(),
-        issuerAddress: credential.xrplIssuerAddress,
-        subjectAddress: credential.xrplSubjectAddress,
-        credentialTypeHex: credential.xrplCredentialType!,
+    // 1. XRPL 취소 (증적이 있는 경우)
+    if (
+      this.xrplCredentialAdapter &&
+      credential.xrplIssuerAddress !== null &&
+      credential.xrplSubjectAddress !== null &&
+      credential.xrplCredentialType !== null
+    ) {
+      const evidence =
+        await this.xrplCredentialAdapter.submitCredentialDeleteByIssuer({
+          submitterAddress: this.xrplCredentialAdapter.getIssuerAddress(),
+          issuerAddress: credential.xrplIssuerAddress,
+          subjectAddress: credential.xrplSubjectAddress,
+          credentialTypeHex: credential.xrplCredentialType,
+        });
+      const revokedXrplTransactionId =
+        await this.credentialRepository.createXrplTransaction({
+        credentialId: credential.id,
+        evidence,
+      });
+      await this.credentialRepository.updateCredentialRevokedXrplTransaction({
+        credentialId: credential.id,
+        revokedXrplTransactionId,
       });
     }
 
     // 2. DB 상태 변경
-    credential.revoke(authEventId);
+    credential.revoke();
     await this.credentialRepository.updateCredential(credential);
   }
 
@@ -398,9 +385,17 @@ export class CredentialService {
       credentialTypeHex: credential.xrplCredentialType,
       signedTransactionBlob,
     });
-    await this.credentialRepository.createXrplTransaction({
+    const acceptedXrplTransactionId =
+      await this.credentialRepository.createXrplTransaction({
+        credentialId: credential.id,
+        evidence,
+      });
+    await this.credentialRepository.updateCredentialAcceptedXrplTransaction({
       credentialId: credential.id,
-      evidence,
+      acceptedXrplTransactionId,
+    });
+    await this.credentialRepository.markCredentialAccepted({
+      credentialId: credential.id,
     });
     return evidence;
   }
@@ -450,14 +445,18 @@ export class CredentialService {
       credentialTypeHex: credential.xrplCredentialType,
       signedTransactionBlob,
     });
-    await this.credentialRepository.createXrplTransaction({
+    const revokedXrplTransactionId =
+      await this.credentialRepository.createXrplTransaction({
+        credentialId: credential.id,
+        evidence,
+      });
+    await this.credentialRepository.updateCredentialRevokedXrplTransaction({
       credentialId: credential.id,
-      evidence,
+      revokedXrplTransactionId,
     });
     await this.credentialRepository.markCredentialRevoked({
       credentialId: credential.id,
       revokedAt: new Date(),
-      failureReason: null,
     });
     return evidence;
   }
@@ -476,28 +475,15 @@ export class CredentialService {
     documentTypeCode: string,
     issueRequestCode: string,
     expiresAt: Date,
-  ): Promise<XrplCredentialTransactionEvidenceResult | null> {
-    if (this.xrplCredentialAdapter === undefined) {
-      return null;
-    }
-
-    try {
-      return await this.xrplCredentialAdapter.submitCredentialCreate({
-        issuerAddress: this.xrplCredentialAdapter.getIssuerAddress(),
-        subjectAddress,
-        credentialTypeHex: this.buildCredentialTypeHex(documentTypeCode),
-        expiration: this.xrplCredentialAdapter.toXrplExpiration(expiresAt),
-        uri: `myapo://credentials/${issueRequestCode}`,
-      });
-    } catch (error) {
-      if (
-        error instanceof DomainError &&
-        error.errorCode === ErrorCode.Credential.XRPL_CONFIG_MISSING
-      ) {
-        return null;
-      }
-      throw error;
-    }
+  ): Promise<XrplCredentialTransactionEvidenceResult> {
+    const xrplCredentialAdapter = this.getXrplCredentialAdapterOrThrow();
+    return xrplCredentialAdapter.submitCredentialCreate({
+      issuerAddress: xrplCredentialAdapter.getIssuerAddress(),
+      subjectAddress,
+      credentialTypeHex: this.buildCredentialTypeHex(documentTypeCode),
+      expiration: xrplCredentialAdapter.toXrplExpiration(expiresAt),
+      uri: `myapo://credentials/${issueRequestCode}`,
+    });
   }
 
   private buildCredentialTypeHex(documentTypeCode: string): string {
@@ -505,12 +491,6 @@ export class CredentialService {
       .update(documentTypeCode)
       .digest("hex")
       .toUpperCase();
-  }
-
-  private buildXrplCredentialIdentity(
-    evidence: XrplCredentialTransactionEvidenceResult,
-  ): string {
-    return `${evidence.issuer}:${evidence.subject}:${evidence.credentialType}`;
   }
 
   private toFailureReason(error: unknown): string {
@@ -540,7 +520,6 @@ export class CredentialService {
     xrplCredentialType: string;
   } {
     if (
-      credential.isMock ||
       credential.xrplIssuerAddress === null ||
       credential.xrplSubjectAddress === null ||
       credential.xrplCredentialType === null
@@ -603,7 +582,7 @@ export class CredentialService {
         credentialId: credential.credentialCode,
       });
     }
-    if (credential.status !== CredentialStatus.ISSUED) {
+    if (credential.status !== CredentialStatus.ACCEPTED) {
       throw new DomainError(ErrorCode.Credential.NOT_SUBMITTABLE, {
         credentialId: credential.credentialCode,
       });
@@ -616,21 +595,14 @@ export class CredentialService {
     return new CreateCredentialIssueRequestResult(
       request.issueRequestCode,
       request.status,
-      this.buildPipeline(
-        request.currentStage,
-        request.status,
-        request.currentSubstep,
-      ),
+      this.buildPipeline(request.currentStage, request.status),
       request.currentStage,
-      request.currentSubstep,
-      request.authEventId,
     );
   }
 
   private buildPipeline(
     currentStage: IssuePipelineStage,
     requestStatus: CredentialIssueRequestStatus,
-    currentSubstep: string | null,
   ): IssuePipelineStageItemResult[] {
     const currentIndex = issuePipelineStages.indexOf(currentStage);
     return issuePipelineStages.map((stage, index) => {
@@ -648,7 +620,6 @@ export class CredentialService {
         stage,
         issuePipelineStageLabels[stage],
         status,
-        stage === currentStage ? currentSubstep : null,
       );
     });
   }
@@ -666,7 +637,7 @@ export class CredentialService {
       credential.issuedAt,
       credential.expiresAt,
       credential.walletAddress,
-      credential.isMock,
+      credential.currentStage,
       credential.xrplNetwork,
       credential.xrplTxHash,
       credential.xrplLedgerIndex,
@@ -687,7 +658,6 @@ export class CredentialService {
       submission.status,
       submission.rejectionReason,
       submission.submittedAt,
-      submission.authEventId,
     );
   }
 }

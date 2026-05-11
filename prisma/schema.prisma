@@ -151,6 +151,7 @@ model Document {
 
   user         User               @relation(fields: [userId], references: [id])
   documentType DocumentType       @relation(fields: [documentTypeCode], references: [code])
+  credentialIssueRequests CredentialIssueRequest[]
   stages       DocumentStage[]
   approvals    DocumentApproval[]
 
@@ -216,8 +217,8 @@ model DocumentStage {
 
 // ─────────────────────────────────────────────────────────────────────
 // CredentialIssueRequest · 최신 Credential 발급 요청 (Credential bounded context)
-//   MVP: 최신 frontend-design 기준 5-stage 파이프라인을 별도 컨텍스트에서 추적한다.
-//   Internal JWT protected API에서 생성되며 Auth 이벤트는 auth_event_id 참조만 저장한다.
+//   MVP: 최신 frontend-design 기준 4-stage 파이프라인을 별도 컨텍스트에서 추적한다.
+//   Internal JWT protected API에서 생성된다.
 // ─────────────────────────────────────────────────────────────────────
 
 model CredentialIssueRequest {
@@ -225,11 +226,9 @@ model CredentialIssueRequest {
   issueRequestCode String    @unique @map("issue_request_code") @db.Uuid
   userId           BigInt    @map("user_id")
   documentTypeCode String    @map("document_type_code") @db.VarChar(40)
-  documentId        String?   @map("document_id") @db.VarChar(80)
-  status           String    @db.VarChar(30)
+  documentCode        String?   @map("document_code") @db.Uuid
+  status           String    @db.VarChar(20)
   currentStage     String    @map("current_stage") @db.VarChar(30)
-  currentSubstep   String?   @map("current_substep") @db.VarChar(100)
-  authEventId      String?   @map("auth_event_id") @db.VarChar(80)
   requestedAt      DateTime  @map("requested_at") @db.Timestamp(0)
   issuedAt         DateTime? @map("issued_at") @db.Timestamp(0)
   failedAt         DateTime? @map("failed_at") @db.Timestamp(0)
@@ -240,47 +239,38 @@ model CredentialIssueRequest {
 
   user         User         @relation(fields: [userId], references: [id])
   documentType DocumentType @relation(fields: [documentTypeCode], references: [code])
+  document     Document?    @relation(fields: [documentCode], references: [documentCode])
   credential   Credential?
 
   @@index([userId, requestedAt(sort: Desc)], map: "idx_credential_issue_requests_user_time")
+  @@index([documentCode], map: "idx_credential_issue_requests_document")
   @@index([status, currentStage], map: "idx_credential_issue_requests_status_stage")
   @@map("credential_issue_requests")
   @@schema("tosalpee")
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// Credential · 사용자 재사용 크리덴셜
-//   MVP는 production XLS-70 finality를 주장하지 않고 mock/testnet 메타데이터만 저장한다.
+// Credential · 사용자 보유 크리덴셜
+//   XRP Testnet 증적은 credential_xrpl_transactions 에 저장하고,
+//   Credential 은 보유/만료/폐기 같은 수명주기와 current_stage snapshot만 보관한다.
 // ─────────────────────────────────────────────────────────────────────
 
 model Credential {
   id                 BigInt    @id @default(autoincrement())
   credentialCode     String    @unique @map("credential_code") @db.Uuid
   issueRequestId     BigInt    @unique @map("issue_request_id")
-  issueRequestCode   String    @map("issue_request_code") @db.Uuid
   userId             BigInt    @map("user_id")
   documentTypeCode   String    @map("document_type_code") @db.VarChar(40)
   documentTypeName   String    @map("document_type_name") @db.VarChar(100)
   issuerCode         String    @map("issuer_code") @db.VarChar(20)
   status             String    @db.VarChar(20)
-  walletAddress      String    @map("wallet_address") @db.VarChar(35)
-  isMock             Boolean   @default(true) @map("is_mock")
-  xrplCredentialId   String?   @map("xrpl_credential_id") @db.VarChar(120)
-  xrplNetwork        String?   @map("xrpl_network") @db.VarChar(40)
-  xrplIssuerAddress  String?   @map("xrpl_issuer_address") @db.VarChar(35)
-  xrplSubjectAddress String?   @map("xrpl_subject_address") @db.VarChar(35)
-  xrplCredentialType String?   @map("xrpl_credential_type") @db.VarChar(128)
-  xrplTxHash         String?   @map("xrpl_tx_hash") @db.Char(64)
-  xrplLedgerIndex    BigInt?   @map("xrpl_ledger_index")
-  xrplEngineResult   String?   @map("xrpl_engine_result") @db.VarChar(40)
-  xrplValidated      Boolean?  @map("xrpl_validated")
-  payloadHash        String?   @map("payload_hash") @db.Char(64)
-  sourceDocumentRef  String?   @map("source_document_ref") @db.VarChar(80)
-  authEventId        String?   @map("auth_event_id") @db.VarChar(80)
-  issuedAt           DateTime  @map("issued_at") @db.Timestamp(0)
+  currentStage       String    @map("current_stage") @db.VarChar(30)
+  createdXrplTransactionId  BigInt? @unique @map("created_xrpl_transaction_id")
+  acceptedXrplTransactionId  BigInt? @unique @map("accepted_xrpl_transaction_id")
+  revokedXrplTransactionId   BigInt? @unique @map("revoked_xrpl_transaction_id")
+  issuedAt           DateTime  @map("credential_created_at") @db.Timestamp(0)
   expiresAt          DateTime  @map("expires_at") @db.Timestamp(0)
   revokedAt          DateTime? @map("revoked_at") @db.Timestamp(0)
-  failureReason      String?   @map("failure_reason") @db.Text
   createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
   updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
   isDelete           Boolean   @default(false) @map("is_delete")
@@ -289,9 +279,13 @@ model Credential {
   user         User                   @relation(fields: [userId], references: [id])
   documentType DocumentType           @relation(fields: [documentTypeCode], references: [code])
   submissions      CredentialSubmission[]
-  xrplTransactions CredentialXrplTransaction[]
+  createdXrplTransaction CredentialXrplTransaction? @relation("CredentialCreatedXrplTransaction", fields: [createdXrplTransactionId], references: [id])
+  acceptedXrplTransaction CredentialXrplTransaction? @relation("CredentialAcceptedXrplTransaction", fields: [acceptedXrplTransactionId], references: [id])
+  revokedXrplTransaction CredentialXrplTransaction? @relation("CredentialRevokedXrplTransaction", fields: [revokedXrplTransactionId], references: [id])
+  xrplTransactions CredentialXrplTransaction[] @relation("CredentialAllXrplTransactions")
 
-  @@index([userId, issuedAt(sort: Desc)], map: "idx_credentials_user_issued")
+  @@index([userId, issuedAt(sort: Desc)], map: "idx_credentials_user_created")
+  @@index([userId, currentStage], map: "idx_credentials_user_stage")
   @@index([status, expiresAt], map: "idx_credentials_status_expires")
   @@map("credentials")
   @@schema("tosalpee")
@@ -313,7 +307,6 @@ model CredentialSubmission {
   recipientInstitutionName String   @map("recipient_institution_name") @db.VarChar(120)
   status                   String   @db.VarChar(20)
   rejectionReason          String?  @map("rejection_reason") @db.Text
-  authEventId              String?  @map("auth_event_id") @db.VarChar(80)
   submittedAt              DateTime @map("submitted_at") @db.Timestamp(0)
   createdAt                DateTime @default(now()) @map("created_at") @db.Timestamp(0)
   updatedAt                DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
@@ -341,6 +334,7 @@ model CredentialXrplTransaction {
   network        String   @db.VarChar(40)
   txHash         String   @map("tx_hash") @db.Char(64)
   engineResult   String   @map("engine_result") @db.VarChar(40)
+  failureReason  String?  @map("failure_reason") @db.Text
   ledgerIndex    BigInt?  @map("ledger_index")
   validated      Boolean  @default(false)
   feeDrops       String?  @map("fee_drops") @db.VarChar(40)
@@ -354,7 +348,10 @@ model CredentialXrplTransaction {
   updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
   isDelete       Boolean  @default(false) @map("is_delete")
 
-  credential         Credential @relation(fields: [credentialId], references: [id])
+  credential         Credential @relation("CredentialAllXrplTransactions", fields: [credentialId], references: [id])
+  createdForCredential Credential? @relation("CredentialCreatedXrplTransaction")
+  acceptedForCredential Credential? @relation("CredentialAcceptedXrplTransaction")
+  revokedForCredential Credential? @relation("CredentialRevokedXrplTransaction")
 
   @@unique([txHash], map: "uniq_credential_xrpl_transactions_tx_hash")
   @@index([credentialId, transactionKind], map: "idx_credential_xrpl_transactions_credential_kind")
@@ -402,4 +399,3 @@ model CredentialXrplTransaction {
   @@map("dispute_timeline")
   @@schema("tosalpee")
   }
-
