@@ -4,7 +4,6 @@ import { PersonaType } from "../../common/enum/persona-type.enum";
 import { DomainError } from "../../common/error/domain.error";
 import { ErrorCode } from "../../common/error/error-code";
 import { AdvanceDocumentStageResult } from "../dto/advance-document-stage.result";
-import { ApproveDocumentResult } from "../dto/approve-document.result";
 import { CreateDocumentResult } from "../dto/create-document.result";
 import {
   DocumentDetailResult,
@@ -105,69 +104,29 @@ export class DocumentService {
   }
 
   /**
-   * 사용자가 현재 stage 의 크레덴셜에 서명해 "다음 stage 진입 OK" 를 알린다.
+   * 사용자 승인 + 단계 전이를 한 번에 처리한다.
+   *
+   * 기존엔 (1) 사용자 서명 증거 누적용 `approve` 와 (2) `current_stage` 를 다음 stage 로
+   * 옮기는 `advanceStage` 가 분리되어 있었지만, FE 흐름에서 두 호출이 항상 짝으로 묶여
+   * 갔고 사이에 어정쩡한 중간 상태가 새어 나갈 위험이 있어 단일 액션으로 통합했다.
    *
    * 1) documentCode 로 Document 조회 + 소유자 검증 (X-User-Id 와 일치)
    * 2) 현재 currentStage 다음 stage 계산 — 종착지(WALLET_STORED) 면 거부
-   * 3) DocumentApproval 1행 INSERT — stage = "통과시킨 다음 stage"
-   *
-   * 본 메서드는 currentStage 전이를 수행하지 않는다 (별도 stage update 책임).
-   * 같은 단계 중복 승인은 (document_id, stage) UNIQUE 제약으로 repository 레이어에서 차단.
-   */
-  async approve(
-    userId: bigint,
-    documentCode: string,
-    xrplTxHash: string,
-  ): Promise<ApproveDocumentResult> {
-    const document = await this.documentRepository.findByCode(documentCode);
-    if (document === null) {
-      throw new DomainError(ErrorCode.Document.NOT_FOUND, { documentCode });
-    }
-    if (document.userId !== userId) {
-      throw new DomainError(ErrorCode.Document.NOT_OWNED, { documentCode });
-    }
-
-    const approvedStage = nextDocumentStage(document.currentStage);
-    if (approvedStage === null) {
-      throw new DomainError(ErrorCode.Document.ALREADY_FINAL_STAGE, {
-        documentCode,
-        currentStage: document.currentStage,
-      });
-    }
-
-    const approvedAt = new Date();
-    const approval = await this.documentApprovalRepository.create({
-      documentId: document.id,
-      stage: approvedStage,
-      xrplTxHash,
-      approvedAt,
-    });
-
-    return new ApproveDocumentResult(
-      document.documentCode,
-      approval.stage,
-      approval.xrplTxHash,
-      approval.approvedAt,
-    );
-  }
-
-  /**
-   * 사용자 승인이 누적된 문서를 다음 stage 로 전이시킨다.
-   *
-   * 1) documentCode 로 Document 조회 + 소유자 검증
-   * 2) 다음 stage 계산 — 종착지(WALLET_STORED 다음) 면 거부
-   * 3) 다음 stage 에 대한 DocumentApproval 존재 검증 — 없으면 STAGE_NOT_APPROVED
+   * 3) DocumentApproval 1행 INSERT — stage = "통과시킨 다음 stage", xrplTxHash 기록
    * 4) 현 stage 의 미완료 DocumentStage 이벤트를 DONE 으로 마감
    * 5) documents.current_stage 를 다음 stage 로 갱신.
    *    WALLET_STORED 도달 시 status=VALID + issuedAt=now, 그 외엔 status=AWAITING_APPROVAL 유지
    * 6) 다음 stage 의 DocumentStage 이벤트 신규 INSERT
    *    (WALLET_STORED 는 종착지이므로 startedAt+completedAt 모두 채워 DONE 으로 기록)
    *
+   * 같은 단계 중복 호출은 (document_id, stage) UNIQUE 제약으로 repository 레이어에서 차단.
+   *
    * 트랜잭션 래핑은 일단 안 함 — 기존 create 흐름과 일관 (PrismaService 트랜잭션 추상화 도입 시 일괄 묶을 것).
    */
   async advanceStage(
     userId: bigint,
     documentCode: string,
+    xrplTxHash: string,
   ): Promise<AdvanceDocumentStageResult> {
     const document = await this.documentRepository.findByCode(documentCode);
     if (document === null) {
@@ -185,19 +144,14 @@ export class DocumentService {
       });
     }
 
-    const approval =
-      await this.documentApprovalRepository.findByDocumentIdAndStage(
-        document.id,
-        nextStage,
-      );
-    if (approval === null) {
-      throw new DomainError(ErrorCode.Document.STAGE_NOT_APPROVED, {
-        documentCode,
-        nextStage,
-      });
-    }
-
     const now = new Date();
+    const approval = await this.documentApprovalRepository.create({
+      documentId: document.id,
+      stage: nextStage,
+      xrplTxHash,
+      approvedAt: now,
+    });
+
     const isFinal = nextStage === DocumentStage.WALLET_STORED;
     const nextStatus = isFinal
       ? DocumentStatus.VALID
@@ -227,9 +181,12 @@ export class DocumentService {
 
     return new AdvanceDocumentStageResult(
       updated.documentCode,
+      approval.stage,
       updated.currentStage,
       updated.status,
       updated.issuedAt,
+      approval.xrplTxHash,
+      approval.approvedAt,
     );
   }
 
