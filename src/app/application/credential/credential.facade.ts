@@ -16,6 +16,9 @@ import {
   ListCredentialsRes,
 } from "../../interfaces/credential/res/credential.res";
 import {
+  ListCredentialsByDocumentStageRes,
+} from "../../interfaces/credential/res/credential-document-stage.res";
+import {
   ListCredentialSubmissionsRes,
   SubmitCredentialRes,
 } from "../../interfaces/credential/res/credential-submission.res";
@@ -40,6 +43,7 @@ export class CredentialFacade {
       req.documentId ?? null,
       req.authEventId ?? null,
       user.wallet.xrplAddress,
+      req.documentStageId ?? req.documentId ?? null,
     );
     return CreateCredentialIssueRequestRes.from(result);
   }
@@ -61,6 +65,18 @@ export class CredentialFacade {
   ): Promise<ListCredentialsRes> {
     const result = await this.credentialService.listCredentials(userId, status);
     return ListCredentialsRes.from(result);
+  }
+
+  async listCredentialsByDocumentStageId(
+    userId: bigint,
+    documentStageId: string,
+  ): Promise<ListCredentialsByDocumentStageRes> {
+    const result =
+      await this.credentialService.listCredentialsByDocumentStageId(
+        userId,
+        documentStageId,
+      );
+    return ListCredentialsByDocumentStageRes.from(result);
   }
 
   async getCredentialDetail(

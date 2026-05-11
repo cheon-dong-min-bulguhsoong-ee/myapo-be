@@ -3,10 +3,12 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiOperation,
+  ApiParam,
   ApiQuery,
   ApiTags,
 } from "@nestjs/swagger";
 import { ApiCommonRes } from "../../common/api-common-res.decorator";
+import { CredentialStatus } from "../../../domain/credential/enum/credential-status.enum";
 import { AcceptTestnetCredentialReq } from "../req/accept-testnet-credential.req";
 import { DeleteTestnetCredentialReq } from "../req/delete-testnet-credential.req";
 import { PrepareDeleteTestnetCredentialReq } from "../req/prepare-delete-testnet-credential.req";
@@ -14,6 +16,7 @@ import {
   CreateCredentialIssueRequestRes,
   CredentialIssueRequestRes,
 } from "../res/credential-issue-request.res";
+import { ListCredentialsByDocumentStageRes } from "../res/credential-document-stage.res";
 import { CredentialDetailRes, ListCredentialsRes } from "../res/credential.res";
 import {
   ListCredentialSubmissionsRes,
@@ -51,8 +54,28 @@ export const ListCredentialsSwaggerApi = (): MethodDecorator =>
   withBearer(
     applyDecorators(
       ApiOperation({ summary: "내 크리덴셜 목록 조회" }),
-      ApiQuery({ name: "status", required: false }),
+      ApiQuery({
+        name: "status",
+        required: false,
+        enum: CredentialStatus,
+        description: "입력하지 않으면 현재 사용자의 모든 크리덴셜 상태를 조회합니다.",
+      }),
       ApiCommonRes(ListCredentialsRes),
+    ),
+  );
+
+export const ListCredentialsByDocumentStageSwaggerApi = (): MethodDecorator =>
+  withBearer(
+    applyDecorators(
+      ApiOperation({
+        summary: "특정 document_stages.id 기준 크리덴셜 목록 조회",
+      }),
+      ApiParam({
+        name: "documentStageId",
+        required: true,
+        description: "document_stages.id 값",
+      }),
+      ApiCommonRes(ListCredentialsByDocumentStageRes),
     ),
   );
 

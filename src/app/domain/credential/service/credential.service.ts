@@ -4,15 +4,18 @@ import { DomainError } from "../../common/error/domain.error";
 import { ErrorCode } from "../../common/error/error-code";
 import {
   CreateCredentialIssueRequestResult,
+  CredentialDocumentStageResult,
   CredentialDetailResult,
   CredentialIssueRequestResult,
   CredentialSubmissionItemResult,
   CredentialSummaryResult,
+  ListCredentialsByDocumentStageResult,
   IssuePipelineStageItemResult,
   ListCredentialSubmissionsResult,
   ListCredentialsResult,
   SubmitCredentialResult,
 } from "../dto/credential.result";
+import { CredentialDocumentStageState } from "../enum/credential-document-stage-state.enum";
 import { Credential } from "../entity/credential.entity";
 import { CredentialIssueRequest } from "../entity/credential-issue-request.entity";
 import { CredentialSubmission } from "../entity/credential-submission.entity";
@@ -49,6 +52,7 @@ export class CredentialService {
     documentId: string | null,
     authEventId: string | null,
     walletAddress: string,
+    sourceDocumentRef?: string | null,
   ): Promise<CreateCredentialIssueRequestResult> {
     const documentType =
       await this.credentialDocumentTypeRepository.findActiveByCode(
@@ -114,7 +118,7 @@ export class CredentialService {
       xrplLedgerIndex: xrplEvidence?.ledgerIndex ?? null,
       xrplEngineResult: xrplEvidence?.engineResult ?? null,
       xrplValidated: xrplEvidence?.validated ?? null,
-      sourceDocumentRef: documentId,
+      sourceDocumentRef: sourceDocumentRef ?? documentId,
       authEventId,
       issuedAt: now,
       expiresAt,
@@ -173,6 +177,70 @@ export class CredentialService {
         this.toCredentialSummaryResult(credential),
       ),
     );
+  }
+
+  async listCredentialsByDocumentStageId(
+    userId: bigint,
+    documentStageId: string,
+  ): Promise<ListCredentialsByDocumentStageResult> {
+    const sourceDocumentRef = this.normalizeDocumentStageId(documentStageId);
+    const credentials =
+      await this.credentialRepository.listCredentialsByUserIdAndSourceDocumentRef(
+        userId,
+        sourceDocumentRef,
+      );
+    const results = await Promise.all(
+      credentials.map(async (credential) => {
+        const credentialState = await this.resolveDocumentStageCredentialState(
+          credential,
+        );
+        return new CredentialDocumentStageResult(
+          this.toCredentialSummaryResult(credential),
+          credentialState,
+        );
+      }),
+    );
+    return new ListCredentialsByDocumentStageResult(results);
+  }
+
+  private async resolveDocumentStageCredentialState(
+    credential: Credential,
+  ): Promise<CredentialDocumentStageState> {
+    if (credential.status === CredentialStatus.REVOKED) {
+      return CredentialDocumentStageState.REVOKED;
+    }
+    if (credential.status === CredentialStatus.FAILED) {
+      return CredentialDocumentStageState.FAILED;
+    }
+    if (
+      credential.status === CredentialStatus.EXPIRED ||
+      credential.expiresAt <= new Date()
+    ) {
+      return CredentialDocumentStageState.EXPIRED;
+    }
+
+    const accepted =
+      await this.credentialRepository.hasCredentialXrplTransaction(
+        credential.id,
+        XrplCredentialTransactionKind.ACCEPT,
+      );
+    return accepted
+      ? CredentialDocumentStageState.ISSUED_ACCEPTED
+      : CredentialDocumentStageState.ISSUED_PENDING_ACCEPT;
+  }
+
+  private normalizeDocumentStageId(documentStageId: string): string {
+    try {
+      const normalized = BigInt(documentStageId).toString();
+      if (normalized.length === 0) {
+        throw new Error("empty");
+      }
+      return normalized;
+    } catch {
+      throw new DomainError(ErrorCode.Common.VALIDATION_ERROR, {
+        documentStageId,
+      });
+    }
   }
 
   async getCredentialDetail(
