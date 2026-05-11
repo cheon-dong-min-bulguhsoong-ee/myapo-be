@@ -1,7 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { DisputeService } from "../../domain/dispute/service/dispute.service";
 import { CredentialService } from "../../domain/credential/service/credential.service";
-import { DisputeResult } from "../../domain/dispute/dto/dispute.result";
+import {
+  DisputeResult,
+  DisputeSummaryResult,
+} from "../../domain/dispute/dto/dispute.result";
 import { DisputeStatus } from "../../domain/dispute/enum/dispute-status.enum";
 import { DisputeType } from "../../domain/dispute/enum/dispute-type.enum";
 
@@ -21,6 +24,13 @@ export class DisputeFacade {
     requesterId: bigint;
   }): Promise<DisputeResult> {
     return this.disputeService.createDispute(input);
+  }
+
+  /**
+   * 사용자의 분쟁 목록을 조회한다.
+   */
+  async getMyDisputes(requesterId: bigint): Promise<DisputeSummaryResult[]> {
+    return this.disputeService.getMyDisputes(requesterId);
   }
 
   /**

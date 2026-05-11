@@ -1,7 +1,7 @@
 import { applyDecorators } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { ApiCommonRes } from "../../common/api-common-res.decorator";
-import { DisputeRes } from "../res/dispute.res";
+import { DisputeRes, ListDisputesRes } from "../res/dispute.res";
 
 export const DisputeApiTags = (): ClassDecorator =>
   applyDecorators(ApiTags("Disputes"), ApiBearerAuth("InternalJwtBearer"));
@@ -13,6 +13,15 @@ export const CreateDisputeSwaggerApi = (): MethodDecorator =>
       description: "발급된 증명서에 대해 이의제기를 생성합니다.",
     }),
     ApiCommonRes(DisputeRes),
+  );
+
+export const GetMyDisputesSwaggerApi = (): MethodDecorator =>
+  applyDecorators(
+    ApiOperation({
+      summary: "내 분쟁 목록 조회",
+      description: "내가 제기한 분쟁들의 목록을 조회합니다.",
+    }),
+    ApiCommonRes(ListDisputesRes),
   );
 
 export const GetDisputeSwaggerApi = (): MethodDecorator =>

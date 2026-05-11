@@ -1,9 +1,5 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import {
-  IsISO31661Alpha2,
-  IsOptional,
-  IsString,
-} from "class-validator";
+import { IsISO31661Alpha2, IsOptional, IsString } from "class-validator";
 
 export class SignInReq {
   @ApiPropertyOptional({ example: "홍길동" })
