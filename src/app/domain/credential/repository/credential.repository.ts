@@ -5,7 +5,10 @@ import { CredentialIssueRequestStatus } from "../enum/credential-issue-request-s
 import { CredentialStatus } from "../enum/credential-status.enum";
 import { CredentialSubmissionStatus } from "../enum/credential-submission-status.enum";
 import { IssuePipelineStage } from "../enum/issue-pipeline-stage.enum";
-import { XrplCredentialTransactionEvidenceResult } from "../dto/xrpl-credential-evidence.result";
+import {
+  XrplCredentialTransactionEvidenceResult,
+  XrplCredentialTransactionKind,
+} from "../dto/xrpl-credential-evidence.result";
 
 export interface CreateCredentialIssueRequestInput {
   issueRequestCode: string;
@@ -102,6 +105,14 @@ export abstract class CredentialRepository {
     userId: bigint,
     status?: CredentialStatus,
   ): Promise<Credential[]>;
+  abstract listCredentialsByUserIdAndSourceDocumentRef(
+    userId: bigint,
+    sourceDocumentRef: string,
+  ): Promise<Credential[]>;
+  abstract hasCredentialXrplTransaction(
+    credentialId: bigint,
+    transactionKind: XrplCredentialTransactionKind,
+  ): Promise<boolean>;
   abstract countSubmissionsByIssueRequestId(
     issueRequestId: bigint,
   ): Promise<number>;

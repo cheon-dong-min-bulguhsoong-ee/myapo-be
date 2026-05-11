@@ -108,6 +108,12 @@
 - **Expected Outcome**: No access token or session token is persisted in Credential objects
 - **Logic**: ADR-002 prohibits server-side JWT session storage.
 
+### Scenario: Document stage credential list derives accept pending vs accepted state
+- **Target**: `CredentialService.listCredentialsByDocumentStageId(...)`
+- **Input**: Two credentials that share the same `sourceDocumentRef`; one has `CredentialCreate` only, one has both `CredentialCreate` and `CredentialAccept`
+- **Expected Outcome**: Returns `ISSUED_PENDING_ACCEPT` for the create-only credential and `ISSUED_ACCEPTED` for the accepted credential
+- **Logic**: Base credential status remains `ISSUED`; acceptance is a derived view state.
+
 
 ## 5. XRPL Testnet Evidence API Tests
 

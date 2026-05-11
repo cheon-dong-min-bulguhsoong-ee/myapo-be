@@ -23,6 +23,7 @@
 | **사용자 승인 / 서명** | `UserApproval` / `UserSignature` | Reference Evidence | User confirmation required for heavy actions and credential-related progress. Exact signature count remains a product decision. | `사용자 승인`, previous wireframe `사용자 서명`. |
 | **사용자 지갑** | `UserWallet` | Reference Evidence | Destination/account associated with issued credential metadata. | Request detail `지갑 주소`. |
 | **유효한 문서** | `ISSUED` | Reference Evidence | Credential is issued and can be used before expiration/revocation. | Document management `valid` tab. |
+| **문서 stage 기반 크레덴셜** | `DocumentStageCredential` | Spec Inference | Credentials that are grouped by `document_stages.id` through `sourceDocumentRef`. The list view derives whether `CredentialAccept` has completed. | Document stage detail -> credential list. |
 | **기관 제출** | `CredentialSubmission` | Reference Evidence | One submission event for a credential to an institution. Row unit is submission, not credential. | `SUB-...`; one credential submitted to N institutions creates N rows. |
 | **기관 제출 결과** | `CredentialSubmissionStatus` | Reference Evidence | Institution submission result state: received, verifying, or rejected. | `received`, `verifying`, `rejected` badges. |
 | **제출 시 인증 ID** | `authEventId` | Reference Evidence | Authentication log event linked to an institution submission. | Submission accordion -> auth log jump. |
@@ -32,6 +33,8 @@
 | **만료된 문서** | `EXPIRED` | Reference Evidence | Credential validity period has ended. Submission must be blocked. | Document management `expired` tab. |
 | **폐기된 문서** | `REVOKED` | Reference Evidence | Credential has been invalidated by expiration cleanup, dispute/operator action, or lifecycle policy. | Document management `revoked` tab; dispute action `크리덴셜 폐기`. |
 | **분쟁 전환** | `DisputeConversion` | Reference Evidence | Rejected institution submission can start a dispute with prefilled rejection context. Dispute owns the case. | Submitted row accordion `분쟁 신고로 전환`. |
+| **수락 대기 크레덴셜** | `ISSUED_PENDING_ACCEPT` | Spec Inference | CredentialCreate has completed but no CredentialAccept evidence exists yet. | Document stage credential list. |
+| **수락 완료 크레덴셜** | `ISSUED_ACCEPTED` | Spec Inference | CredentialCreate and CredentialAccept evidence both exist. | Document stage credential list. |
 | **Internal JWT** | `InternalJwtBearer` | ADR Evidence | Server-issued stateless JWT used for protected APIs after Web3Auth login. | `Authorization: Bearer <accessToken>`. |
 | **X-User-Id** | `LegacyUserIdHeader` | Spec Inference | Legacy/test-only fallback seen in older code; not the preferred contract for new Credential APIs after ADR-002. | `X-User-Id` temporary header. |
 

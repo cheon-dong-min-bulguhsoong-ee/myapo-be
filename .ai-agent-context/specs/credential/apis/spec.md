@@ -12,6 +12,7 @@ Credential APIs support the latest frontend-design model:
 - Credential issue requests appear in the 5-stage issue pipeline.
 - Credential submission is a heavy auth-gated action and creates one row per institution submission.
 - Submission rows can link to an Auth-owned auth event id.
+- Document-driven credential issuance may carry an optional `documentStageId`; when present, the created credential stores that stage reference in `sourceDocumentRef` so the UI can list credentials by `document_stages.id`.
 - Rejected submissions can be converted to Dispute context, but Dispute owns case lifecycle.
 - Operator actions remain draft-only until Admin/Auth/Dispute permissions are approved.
 
@@ -97,7 +98,7 @@ paths:
 - **Method**: `GET`
 - **Path**: `/api/v1/credentials`
 - **Source Level**: Reference Evidence
-- **Description**: Returns current user's credentials with optional lifecycle tab/status filter.
+- **Description**: Returns current user's credentials with optional lifecycle tab/status filter. If `status` is omitted, return all credentials for the current user.
 
 ```yaml
 paths:
@@ -125,7 +126,40 @@ paths:
           description: Unauthorized Internal JWT
 ```
 
-### 3.4. Get My Credential Detail
+### 3.4. List Credentials by Document Stage
+- **Method**: `GET`
+- **Path**: `/api/v1/credentials/document-stages/{documentStageId}`
+- **Source Level**: Spec Inference
+- **Description**: Returns the current user's credentials linked to a specific `document_stages.id`. Response includes basic credential metadata plus a derived `credentialState` that distinguishes `CredentialCreate` completed / `CredentialAccept` pending from accepted credentials.
+
+```yaml
+paths:
+  /api/v1/credentials/document-stages/{documentStageId}:
+    get:
+      summary: List credentials by document stage id
+      operationId: listCredentialsByDocumentStageId
+      security:
+        - InternalJwtBearer: []
+      parameters:
+        - in: path
+          name: documentStageId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Credential list returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonResListCredentialsByDocumentStageRes'
+        '401':
+          description: Unauthorized Internal JWT
+        '400':
+          description: Invalid document stage id
+```
+
+### 3.5. Get My Credential Detail
 - **Method**: `GET`
 - **Path**: `/api/v1/credentials/{credentialId}`
 - **Source Level**: Reference Evidence
@@ -160,7 +194,7 @@ paths:
           description: Credential not found
 ```
 
-### 3.5. Submit Credential to Institution Request
+### 3.6. Submit Credential to Institution Request
 - **Method**: `POST`
 - **Path**: `/api/v1/credentials/{credentialId}/submissions`
 - **Source Level**: Reference + ADR Evidence
@@ -205,7 +239,7 @@ paths:
           description: Credential expired, revoked, failed, or duplicate submission
 ```
 
-### 3.6. List Credential Submissions
+### 3.7. List Credential Submissions
 - **Method**: `GET`
 - **Path**: `/api/v1/credentials/{credentialId}/submissions`
 - **Source Level**: Reference Evidence
@@ -469,6 +503,9 @@ components:
         documentId:
           type: string
           nullable: true
+        documentStageId:
+          type: string
+          nullable: true
         authEventId:
           type: string
           nullable: true
@@ -551,6 +588,21 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CredentialSummary'
+    CredentialDocumentStageRes:
+      allOf:
+        - $ref: '#/components/schemas/CredentialSummary'
+        - type: object
+          properties:
+            credentialState:
+              type: string
+              enum: [ISSUED_PENDING_ACCEPT, ISSUED_ACCEPTED, EXPIRED, REVOKED, FAILED]
+    ListCredentialsByDocumentStageRes:
+      type: object
+      properties:
+        credentials:
+          type: array
+          items:
+            $ref: '#/components/schemas/CredentialDocumentStageRes'
     CredentialDetailRes:
       allOf:
         - $ref: '#/components/schemas/CredentialSummary'

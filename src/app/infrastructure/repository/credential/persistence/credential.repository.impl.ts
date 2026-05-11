@@ -14,6 +14,7 @@ import { CredentialIssueRequestStatus } from "../../../../domain/credential/enum
 import { CredentialStatus } from "../../../../domain/credential/enum/credential-status.enum";
 import { CredentialSubmissionStatus } from "../../../../domain/credential/enum/credential-submission-status.enum";
 import { IssuePipelineStage } from "../../../../domain/credential/enum/issue-pipeline-stage.enum";
+import { XrplCredentialTransactionKind } from "../../../../domain/credential/dto/xrpl-credential-evidence.result";
 import {
   CreateCredentialInput,
   CreateCredentialIssueRequestInput,
@@ -168,10 +169,44 @@ export class CredentialRepositoryImpl extends CredentialRepository {
     status?: CredentialStatus,
   ): Promise<Credential[]> {
     const rows = await this.prisma.credential.findMany({
-      where: { userId, status, isDelete: false },
+      where: {
+        userId,
+        isDelete: false,
+        ...(status === undefined ? {} : { status }),
+      },
       orderBy: { issuedAt: "desc" },
     });
     return rows.map((row) => this.toCredentialEntity(row));
+  }
+
+  async listCredentialsByUserIdAndSourceDocumentRef(
+    userId: bigint,
+    sourceDocumentRef: string,
+  ): Promise<Credential[]> {
+    const rows = await this.prisma.credential.findMany({
+      where: {
+        userId,
+        isDelete: false,
+        sourceDocumentRef,
+      },
+      orderBy: { issuedAt: "desc" },
+    });
+    return rows.map((row) => this.toCredentialEntity(row));
+  }
+
+  async hasCredentialXrplTransaction(
+    credentialId: bigint,
+    transactionKind: XrplCredentialTransactionKind,
+  ): Promise<boolean> {
+    const row = await this.prisma.credentialXrplTransaction.findFirst({
+      where: {
+        credentialId,
+        transactionKind,
+        isDelete: false,
+      },
+      select: { id: true },
+    });
+    return row !== null;
   }
 
   async countSubmissionsByIssueRequestId(

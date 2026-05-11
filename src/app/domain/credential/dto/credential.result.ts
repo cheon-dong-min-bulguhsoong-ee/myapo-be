@@ -1,4 +1,5 @@
 import { CredentialIssueRequestStatus } from "../enum/credential-issue-request-status.enum";
+import { CredentialDocumentStageState } from "../enum/credential-document-stage-state.enum";
 import { CredentialStatus } from "../enum/credential-status.enum";
 import { CredentialSubmissionStatus } from "../enum/credential-submission-status.enum";
 import { IssuePipelineStage } from "../enum/issue-pipeline-stage.enum";
@@ -110,6 +111,38 @@ export class CredentialDetailResult extends CredentialSummaryResult {
 
 export class ListCredentialsResult {
   constructor(public readonly credentials: CredentialSummaryResult[]) {}
+}
+
+export class CredentialDocumentStageResult extends CredentialSummaryResult {
+  constructor(
+    summary: CredentialSummaryResult,
+    public readonly credentialState: CredentialDocumentStageState,
+  ) {
+    super(
+      summary.credentialId,
+      summary.issueRequestId,
+      summary.documentTypeId,
+      summary.documentTypeName,
+      summary.issuerId,
+      summary.status,
+      summary.issuedAt,
+      summary.expiresAt,
+      summary.walletAddress,
+      summary.isMock,
+      summary.xrplNetwork,
+      summary.xrplTxHash,
+      summary.xrplLedgerIndex,
+      summary.xrplEngineResult,
+      summary.xrplValidated,
+      summary.xrplCredentialType,
+    );
+  }
+}
+
+export class ListCredentialsByDocumentStageResult {
+  constructor(
+    public readonly credentials: CredentialDocumentStageResult[],
+  ) {}
 }
 
 export class SubmitCredentialResult {

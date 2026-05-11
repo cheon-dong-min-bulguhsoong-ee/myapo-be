@@ -17,7 +17,7 @@
 6. **Output**: Return request id, status, current stage, pipeline, and auth event link.
 
 ### Input / Output
-- **Inputs**: `userId`, `documentTypeId`, optional `documentId`, optional `authEventId`.
+- **Inputs**: `userId`, `documentTypeId`, optional `documentId`, optional `documentStageId`, optional `authEventId`.
 - **Outputs**: `issueRequestId`, `status`, `currentStage`, `currentSubstep`, `pipeline`, `authEventId`.
 
 ## 2. AdvanceIssuePipeline
@@ -56,7 +56,18 @@
 3. **Load Context**: Load issue pipeline projection and submission history.
 4. **Privacy Guard**: Return metadata and references only.
 
-## 5. SubmitCredential
+## 5. ListCredentialsByDocumentStageId
+- **Actor**: Authenticated User
+- **Trigger**: User opens the credential list for a specific `document_stages.id`.
+
+### Service Flow
+1. **Auth Context**: Use JWT `userId`.
+2. **Reference Lookup**: Load credentials by `sourceDocumentRef` matching the given `documentStageId`.
+3. **Derived State**: Return `ISSUED_PENDING_ACCEPT` when `CredentialCreate` exists but no `ACCEPT` evidence exists; return `ISSUED_ACCEPTED` when `ACCEPT` evidence exists.
+4. **Lifecycle State**: Preserve base states `EXPIRED`, `REVOKED`, and `FAILED` as-is.
+5. **Map**: Return summaries plus the derived `credentialState`.
+
+## 6. SubmitCredential
 - **Actor**: Authenticated User
 - **Trigger**: User submits credential to an institution request.
 - **Auth**: Internal JWT required; action is Auth trigger `institution_submit`.
@@ -70,7 +81,7 @@
 6. **Create Submission Row**: Save one `CredentialSubmission` with initial status `RECEIVED` or configured initial status.
 7. **Output**: Return submission id, recipient institution, status, submitted time, and auth event id.
 
-## 6. UpdateSubmissionResult
+## 7. UpdateSubmissionResult
 - **Actor**: Institution/System/Operator integration
 - **Trigger**: Institution marks submission as received, verifying, or rejected.
 
@@ -81,7 +92,7 @@
 4. **Persist**: Save updated status and audit metadata.
 5. **Dispute Context**: If rejected, expose context for Dispute conversion without creating Dispute directly.
 
-## 7. ReissueCredential
+## 8. ReissueCredential
 - **Actor**: Authenticated User
 - **Trigger**: User starts reissue for expired/revoked/reissuable credential.
 
@@ -91,7 +102,7 @@
 3. **Reissue Guard**: Ensure credential is reissuable by approved policy.
 4. **Create New Request**: Start a new issue request with the original document type/issuer policy.
 
-## 8. RevokeCredential
+## 9. RevokeCredential
 - **Actor**: System or approved operator/dispute flow
 - **Trigger**: Expiration cleanup, dispute resolution, or operator action.
 - **Implementation Gate**: Operator/dispute action requires approved Admin/Auth/Dispute specs.
@@ -104,7 +115,7 @@
 5. **Block Submission**: Ensure future submissions are rejected.
 
 
-## 9. PrepareAcceptTestnetCredential
+## 10. PrepareAcceptTestnetCredential
 - **Actor**: Authenticated User
 - **Trigger**: Frontend needs an XRP Testnet `CredentialAccept` payload for wallet signing.
 - **Scope Gate**: MVP/Testnet-only; production/mainnet finality remains out of scope.
@@ -116,7 +127,7 @@
 4. **Build Payload**: Build XLS-70 `CredentialAccept` with `Account = Subject`, `Issuer = credential.xrplIssuerAddress`, and `CredentialType = credential.xrplCredentialType`.
 5. **Output**: Return unsigned transaction JSON and network for frontend wallet signing. Backend must not receive or store private keys.
 
-## 10. AcceptTestnetCredential
+## 11. AcceptTestnetCredential
 - **Actor**: Authenticated User
 - **Trigger**: Frontend submits the user wallet-signed XRP Testnet `CredentialAccept` transaction blob.
 - **Scope Gate**: MVP/Testnet-only; production/mainnet finality remains out of scope.
@@ -130,7 +141,7 @@
 6. **Persist Evidence**: Save one `CredentialXrplTransaction` row with `transactionKind = ACCEPT`.
 7. **Output**: Return transaction hash, ledger index, validation result, and object snapshot when available.
 
-## 11. PrepareDeleteTestnetCredential
+## 12. PrepareDeleteTestnetCredential
 - **Actor**: Authenticated User
 - **Trigger**: Frontend needs an XRP Testnet `CredentialDelete` payload for wallet signing.
 - **Scope Gate**: MVP/Testnet-only; production/mainnet finality remains out of scope.
@@ -143,7 +154,7 @@
 5. **Build Payload**: Build XLS-70 `CredentialDelete` with `Account = Subject` for `SUBJECT` submitter or `Account = Issuer` for `ISSUER` submitter; include both `Subject` and `Issuer` to target the exact credential.
 6. **Output**: Return unsigned transaction JSON and network for frontend wallet signing. Backend must not receive or store private keys.
 
-## 12. DeleteTestnetCredential
+## 13. DeleteTestnetCredential
 - **Actor**: Authenticated User
 - **Trigger**: Frontend submits the selected wallet-signed XRP Testnet `CredentialDelete` transaction blob.
 - **Scope Gate**: MVP/Testnet-only; production/mainnet finality remains out of scope.
