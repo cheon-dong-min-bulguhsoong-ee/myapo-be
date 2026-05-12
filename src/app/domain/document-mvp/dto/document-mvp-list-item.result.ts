@@ -35,6 +35,10 @@ export class DocumentMvpListItemResult {
     return DOCUMENT_MVP_STAGE_LABELS[this.currentStage];
   }
 
+  get isSuccess(): boolean {
+    return this.status === DocumentMvpStatus.VALID;
+  }
+
   get currentUiStep(): { step: number; label: string; totalSteps: number } {
     return toCurrentUiStep(this.currentStage, this.status);
   }
