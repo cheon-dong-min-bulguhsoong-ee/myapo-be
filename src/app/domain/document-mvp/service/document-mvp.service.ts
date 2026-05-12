@@ -45,22 +45,8 @@ export class DocumentMvpService {
 
     const seededStages: CreateMvpStageEventInput[] = [
       {
-        documentId: BigInt(0), // 채워서 INSERT 할 자리, repo 가 documentId 갱신
+        documentId: BigInt(0),
         stage: DocumentMvpStage.USER_DOC_REQUESTED,
-        status: DocumentMvpStageStatus.DONE,
-        startedAt: now,
-        completedAt: now,
-      },
-      {
-        documentId: BigInt(0),
-        stage: DocumentMvpStage.AUTHORITY_DOC_ISSUED,
-        status: DocumentMvpStageStatus.DONE,
-        startedAt: now,
-        completedAt: now,
-      },
-      {
-        documentId: BigInt(0),
-        stage: DocumentMvpStage.TRANSLATOR_DOC_RECEIVED,
         status: DocumentMvpStageStatus.PENDING,
         startedAt: now,
         completedAt: null,
@@ -73,7 +59,7 @@ export class DocumentMvpService {
         userId,
         documentTypeCode,
         status: DocumentMvpStatus.AWAITING_USER_APPROVAL,
-        currentStage: DocumentMvpStage.TRANSLATOR_DOC_RECEIVED,
+        currentStage: DocumentMvpStage.USER_DOC_REQUESTED,
         requestedAt: now,
       },
       seededStages,
@@ -125,6 +111,42 @@ export class DocumentMvpService {
     }
 
     const now = new Date();
+
+    if (document.currentStage === DocumentMvpStage.USER_DOC_REQUESTED) {
+      // step 1 → step 2 (발급 신청 → 번역·공증)
+      await this.repository.completePendingStage(
+        document.id,
+        DocumentMvpStage.USER_DOC_REQUESTED,
+        now,
+      );
+      // step 1 안에 묶인 sub-stage: 기관 발급도 자동 완료 처리.
+      await this.repository.createStageEvent({
+        documentId: document.id,
+        stage: DocumentMvpStage.AUTHORITY_DOC_ISSUED,
+        status: DocumentMvpStageStatus.DONE,
+        startedAt: now,
+        completedAt: now,
+      });
+      // step 2 진입.
+      await this.repository.createStageEvent({
+        documentId: document.id,
+        stage: DocumentMvpStage.TRANSLATOR_DOC_RECEIVED,
+        status: DocumentMvpStageStatus.PENDING,
+        startedAt: now,
+        completedAt: null,
+      });
+      const updated = await this.repository.updateStage(document.id, {
+        currentStage: DocumentMvpStage.TRANSLATOR_DOC_RECEIVED,
+        status: DocumentMvpStatus.AWAITING_USER_APPROVAL,
+        issuedAt: null,
+      });
+      return new AdvanceDocumentMvpResult(
+        updated.documentCode,
+        updated.currentStage,
+        updated.status,
+        updated.issuedAt,
+      );
+    }
 
     if (document.currentStage === DocumentMvpStage.TRANSLATOR_DOC_RECEIVED) {
       // step 2 → step 3 (번역·공증 → 아포스티유)

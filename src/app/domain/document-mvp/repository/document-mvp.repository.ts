@@ -34,12 +34,7 @@ export interface FindMvpListInput {
 
 export abstract class DocumentMvpRepository {
   /**
-   * 문서 1건 생성 + 5단계 stage 이벤트들 시드 (atomic).
-   *
-   * 시드 규칙:
-   *   stage 1·2 → DONE (mock 즉시 통과)
-   *   stage 3   → PENDING (current_stage)
-   *   stage 4·5 → 미시작 (행 자체를 INSERT 하지 않음)
+   * 문서 1건 생성 + stage 이벤트들 시드 (atomic).
    */
   abstract createWithSeedStages(
     input: CreateDocumentMvpInput,
