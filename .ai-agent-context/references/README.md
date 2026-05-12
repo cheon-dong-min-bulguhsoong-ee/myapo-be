@@ -6,6 +6,8 @@ A curated list of resources for reference during the LLM design and implementati
 *The blueprint of the service we are building.*
 
 - [MyApo Service Full Specification](./frontend-design/Readme.md)
+- [NestJS Transactional Prisma](./nestjs-transactional-index.md)  
+- [NestJS Transactional Prisma Adapter](./nestjs-transactional-prisma-adapter.md) - nestjs-transactional은 모든 도메인이 트랜잭션 관리를 위해 공통적으로 사용
 
 ## Frontend Design & Wireframes
 *Interactive wireframes and functional screen specifications.*
