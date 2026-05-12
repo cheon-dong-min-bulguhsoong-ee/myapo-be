@@ -379,6 +379,7 @@ CREATE TABLE IF NOT EXISTS tosalpee.credentials (
                                                     credential_code       UUID          NOT NULL,
                                                     issue_request_id      BIGINT        NOT NULL,
                                                     user_id               BIGINT        NOT NULL,
+                                                    document_code         UUID          NOT NULL,
                                                     document_type_code    VARCHAR(40)   NOT NULL,
     document_type_name    VARCHAR(100)  NOT NULL,
     issuer_code           VARCHAR(20)   NOT NULL,
@@ -400,12 +401,16 @@ CREATE TABLE IF NOT EXISTS tosalpee.credentials (
     REFERENCES tosalpee.credential_issue_requests (id),
     CONSTRAINT credentials_user_fk FOREIGN KEY (user_id)
     REFERENCES tosalpee.users (id),
+    CONSTRAINT credentials_document_fk FOREIGN KEY (document_code)
+    REFERENCES tosalpee.documents (document_code),
     CONSTRAINT credentials_doctype_fk FOREIGN KEY (document_type_code)
     REFERENCES tosalpee.document_types (code)
     );
 
 CREATE INDEX IF NOT EXISTS idx_credentials_user_created
     ON tosalpee.credentials (user_id, credential_created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_credentials_document
+    ON tosalpee.credentials (document_code);
 CREATE INDEX IF NOT EXISTS idx_credentials_user_stage
     ON tosalpee.credentials (user_id, current_stage);
 CREATE INDEX IF NOT EXISTS idx_credentials_status_expires
@@ -416,6 +421,7 @@ COMMENT ON COLUMN tosalpee.credentials.id                   IS '내부 PK. 외�
 COMMENT ON COLUMN tosalpee.credentials.credential_code      IS '외부 노출용 Credential UUID. API path/response에서 credentialId로 사용한다.';
 COMMENT ON COLUMN tosalpee.credentials.issue_request_id     IS 'Credential을 생성한 발급 요청 FK — credential_issue_requests(id). 한 발급 요청은 하나의 Credential만 생성한다.';
 COMMENT ON COLUMN tosalpee.credentials.user_id              IS 'Credential 소유 사용자 FK — users(id). 사용자별 조회/권한 검증 기준이다.';
+COMMENT ON COLUMN tosalpee.credentials.document_code        IS '원본 Document FK — documents(document_code). document 연동이 있는 credential만 채운다.';
 COMMENT ON COLUMN tosalpee.credentials.document_type_code   IS 'Credential의 문서 종류 코드 — document_types(code).';
 COMMENT ON COLUMN tosalpee.credentials.document_type_name   IS '발급 시점의 문서 종류 표시명 snapshot. 카탈로그 명칭 변경 후에도 이력을 보존한다.';
 COMMENT ON COLUMN tosalpee.credentials.issuer_code          IS '발급 기관 코드 snapshot. 예: KR-NTS.';
