@@ -140,6 +140,12 @@ export class DocumentMvpDetailRes {
   readonly issuedAt!: string | null;
 
   @ApiProperty({
+    description: "발급 완료 여부 (status === VALID).",
+    example: false,
+  })
+  readonly isSuccess!: boolean;
+
+  @ApiProperty({
     type: [DocumentMvpUiStepRes],
     description:
       "FE 4단계 step. 발급 신청 / 번역·공증 / 아포스티유 / 발급 완료 4개 고정.",
@@ -166,6 +172,7 @@ export class DocumentMvpDetailRes {
       currentStageLabel: r.currentStageLabel,
       requestedAt: r.requestedAt.toISOString(),
       issuedAt: r.issuedAt?.toISOString() ?? null,
+      isSuccess: r.isSuccess,
       uiSteps: r.uiSteps.map(DocumentMvpUiStepRes.from),
       stages: r.stages.map(DocumentMvpStageDetailRes.from),
     };

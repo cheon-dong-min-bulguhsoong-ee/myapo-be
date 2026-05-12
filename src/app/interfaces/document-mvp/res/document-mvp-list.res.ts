@@ -61,6 +61,12 @@ export class DocumentMvpListItemRes {
   @ApiProperty({ nullable: true })
   readonly issuedAt!: string | null;
 
+  @ApiProperty({
+    description: "발급 완료 여부 (status === VALID).",
+    example: false,
+  })
+  readonly isSuccess!: boolean;
+
   static from(r: DocumentMvpListItemResult): DocumentMvpListItemRes {
     const ui = r.currentUiStep;
     return {
@@ -79,6 +85,7 @@ export class DocumentMvpListItemRes {
       totalSteps: ui.totalSteps,
       requestedAt: r.requestedAt.toISOString(),
       issuedAt: r.issuedAt?.toISOString() ?? null,
+      isSuccess: r.isSuccess,
     };
   }
 }

@@ -66,4 +66,8 @@ export class DocumentMvpDetailResult {
   get currentStageLabel(): string {
     return DOCUMENT_MVP_STAGE_LABELS[this.currentStage];
   }
+
+  get isSuccess(): boolean {
+    return this.status === DocumentMvpStatus.VALID;
+  }
 }
