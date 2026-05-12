@@ -24,6 +24,7 @@ export interface CreateCredentialInput {
   credentialCode: string;
   issueRequestId: bigint;
   userId: bigint;
+  documentCode: string;
   documentTypeCode: string;
   documentTypeName: string;
   issuerCode: string;

@@ -19,6 +19,7 @@ export class CreateCredentialIssueRequestResult {
     public readonly status: CredentialIssueRequestStatus,
     public readonly pipeline: IssuePipelineStageItemResult[],
     public readonly currentStage: IssuePipelineStage,
+    public readonly credentialId: string | null,
   ) {}
 }
 
@@ -31,7 +32,7 @@ export class CredentialIssueRequestResult extends CreateCredentialIssueRequestRe
     public readonly credentialId: string | null,
     public readonly submissionCount: number,
   ) {
-    super(issueRequestId, status, pipeline, currentStage);
+    super(issueRequestId, status, pipeline, currentStage, credentialId);
   }
 }
 
@@ -39,6 +40,7 @@ export class CredentialSummaryResult {
   constructor(
     public readonly credentialId: string,
     public readonly issueRequestId: string,
+    public readonly documentCode: string,
     public readonly documentTypeId: string,
     public readonly documentTypeName: string,
     public readonly issuerId: string,
@@ -77,6 +79,7 @@ export class CredentialDetailResult extends CredentialSummaryResult {
     super(
       summary.credentialId,
       summary.issueRequestId,
+      summary.documentCode,
       summary.documentTypeId,
       summary.documentTypeName,
       summary.issuerId,
@@ -107,6 +110,7 @@ export class CredentialIssuePipelineStageResult extends CredentialSummaryResult 
     super(
       summary.credentialId,
       summary.issueRequestId,
+      summary.documentCode,
       summary.documentTypeId,
       summary.documentTypeName,
       summary.issuerId,

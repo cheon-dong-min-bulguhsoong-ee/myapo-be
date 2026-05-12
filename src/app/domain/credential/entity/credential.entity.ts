@@ -7,6 +7,7 @@ export class Credential {
     public readonly issueRequestId: bigint,
     public readonly issueRequestCode: string,
     public readonly userId: bigint,
+    public readonly documentCode: string,
     public readonly documentTypeCode: string,
     public readonly documentTypeName: string,
     public readonly issuerCode: string,

@@ -87,9 +87,21 @@ export class CredentialRepositoryImpl extends CredentialRepository {
     const row = await this.prisma.credentialIssueRequest.create({
       data: {
         issueRequestCode: input.issueRequestCode,
-        userId: input.userId,
-        documentTypeCode: input.documentTypeCode,
-        documentCode: input.documentCode,
+        user: {
+          connect: {
+            id: input.userId,
+          },
+        },
+        document: {
+          connect: {
+            documentCode: input.documentCode,
+          },
+        },
+        documentType: {
+          connect: {
+            code: input.documentTypeCode,
+          },
+        },
         status: input.status,
         currentStage: input.currentStage,
         requestedAt: input.requestedAt,
@@ -132,25 +144,39 @@ export class CredentialRepositoryImpl extends CredentialRepository {
   }
 
   async createCredential(input: CreateCredentialInput): Promise<Credential> {
-    const row = await this.prisma.credential.create({
+    const row: CredentialRowWithRelations = await this.prisma.credential.create({
       data: {
         credentialCode: input.credentialCode,
-        issueRequestId: input.issueRequestId,
-        userId: input.userId,
-        documentTypeCode: input.documentTypeCode,
+        issueRequest: {
+          connect: {
+            id: input.issueRequestId,
+          },
+        },
+        user: {
+          connect: {
+            id: input.userId,
+          },
+        },
+        documentType: {
+          connect: {
+            code: input.documentTypeCode,
+          },
+        },
+        document: {
+          connect: {
+            documentCode: input.documentCode,
+          },
+        },
         documentTypeName: input.documentTypeName,
         issuerCode: input.issuerCode,
         status: input.status,
         currentStage: input.currentStage,
-        createdXrplTransactionId: null,
-        acceptedXrplTransactionId: null,
-        revokedXrplTransactionId: null,
         issuedAt: input.issuedAt,
         expiresAt: input.expiresAt,
       },
       ...credentialRowInclude,
     });
-    return this.toCredentialEntity(row);
+    return this.toCredentialEntity(row as CredentialRowWithRelations);
   }
 
   async markCredentialRevoked(
@@ -412,6 +438,7 @@ export class CredentialRepositoryImpl extends CredentialRepository {
       row.issueRequestId,
       row.issueRequest.issueRequestCode,
       row.userId,
+      row.documentCode,
       row.documentTypeCode,
       row.documentTypeName,
       row.issuerCode,
