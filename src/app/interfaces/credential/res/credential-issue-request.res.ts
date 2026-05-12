@@ -11,6 +11,9 @@ export class CreateCredentialIssueRequestRes {
   @ApiProperty()
   readonly issueRequestId!: string;
 
+  @ApiProperty({ nullable: true })
+  readonly credentialId!: string | null;
+
   @ApiProperty({ enum: CredentialIssueRequestStatus })
   readonly status!: CredentialIssueRequestStatus;
 
@@ -25,6 +28,7 @@ export class CreateCredentialIssueRequestRes {
   ): CreateCredentialIssueRequestRes {
     return {
       issueRequestId: result.issueRequestId,
+      credentialId: result.credentialId,
       status: result.status,
       pipeline: result.pipeline.map(IssuePipelineStageItemRes.from),
       currentStage: result.currentStage,
@@ -33,9 +37,6 @@ export class CreateCredentialIssueRequestRes {
 }
 
 export class CredentialIssueRequestRes extends CreateCredentialIssueRequestRes {
-  @ApiProperty({ nullable: true })
-  readonly credentialId!: string | null;
-
   @ApiProperty()
   readonly submissionCount!: number;
 

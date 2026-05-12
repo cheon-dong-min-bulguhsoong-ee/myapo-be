@@ -86,6 +86,7 @@ export class CredentialService {
         credentialCode: randomUUID(),
         issueRequestId: request.id,
         userId,
+        documentCode: request.documentCode,
         documentTypeCode: documentType.code,
         documentTypeName: documentType.name,
         issuerCode: documentType.issuerCode,
@@ -104,6 +105,8 @@ export class CredentialService {
         credentialId: credential.id,
         createdXrplTransactionId,
       });
+
+      return this.toIssueRequestCreateResult(request, credential.credentialCode);
     } catch (error) {
       await this.credentialRepository.markIssueRequestFailed({
         issueRequestId: request.id,
@@ -112,8 +115,6 @@ export class CredentialService {
       });
       throw error;
     }
-
-    return this.toIssueRequestCreateResult(request);
   }
 
   async getIssueRequest(
@@ -611,6 +612,7 @@ export class CredentialService {
 
   private toIssueRequestCreateResult(
     request: CredentialIssueRequest,
+    credentialId: string | null = null,
   ): CreateCredentialIssueRequestResult {
     return new CreateCredentialIssueRequestResult(
       request.issueRequestCode,
@@ -618,6 +620,7 @@ export class CredentialService {
       this.buildPipeline(request.currentStage, request.status, request.isSuspended),
       request.currentStage,
       request.isSuspended,
+      credentialId,
     );
   }
 
@@ -658,6 +661,7 @@ export class CredentialService {
     return new CredentialSummaryResult(
       credential.credentialCode,
       credential.issueRequestCode,
+      credential.documentCode,
       credential.documentTypeCode,
       credential.documentTypeName,
       credential.issuerCode,

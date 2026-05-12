@@ -16,6 +16,9 @@ export class CredentialSummaryRes {
   readonly issueRequestId!: string;
 
   @ApiProperty()
+  readonly documentCode!: string;
+
+  @ApiProperty()
   readonly documentTypeId!: string;
 
   @ApiProperty()
@@ -61,6 +64,7 @@ export class CredentialSummaryRes {
     return {
       credentialId: result.credentialId,
       issueRequestId: result.issueRequestId,
+      documentCode: result.documentCode,
       documentTypeId: result.documentTypeId,
       documentTypeName: result.documentTypeName,
       issuerId: result.issuerId,

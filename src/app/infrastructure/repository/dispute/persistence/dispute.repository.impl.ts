@@ -33,7 +33,7 @@ export class DisputeRepositoryImpl extends DisputeRepository {
         requestId: input.requestId,
         requesterId: input.requesterId,
         slaDeadline: input.slaDeadline,
-      },
+      } as any,
     });
     return this.toEntity(row);
   }
@@ -124,18 +124,19 @@ export class DisputeRepositoryImpl extends DisputeRepository {
   }
 
   private toEntity(row: DisputeRow, timeline: TimelineRow[] = []): Dispute {
+    const disputeRow = row as DisputeRow & { targetStage: IssuePipelineStage };
     const dispute = new Dispute(
-      row.id,
-      row.status as DisputeStatus,
-      row.type as DisputeType,
-      row.targetStage as IssuePipelineStage,
-      row.requestId,
-      row.requesterId,
-      row.operatorId,
-      row.slaDeadline,
-      row.isSlaPaused,
-      row.createdAt,
-      row.updatedAt,
+      disputeRow.id,
+      disputeRow.status as DisputeStatus,
+      disputeRow.type as DisputeType,
+      disputeRow.targetStage,
+      disputeRow.requestId,
+      disputeRow.requesterId,
+      disputeRow.operatorId,
+      disputeRow.slaDeadline,
+      disputeRow.isSlaPaused,
+      disputeRow.createdAt,
+      disputeRow.updatedAt,
     );
 
     timeline.forEach((t) => {

@@ -152,6 +152,7 @@ model Document {
   user         User               @relation(fields: [userId], references: [id])
   documentType DocumentType       @relation(fields: [documentTypeCode], references: [code])
   credentialIssueRequests CredentialIssueRequest[]
+  credentials  Credential[]
   stages       DocumentStage[]
   approvals    DocumentApproval[]
 
@@ -226,7 +227,7 @@ model CredentialIssueRequest {
   issueRequestCode String    @unique @map("issue_request_code") @db.Uuid
   userId           BigInt    @map("user_id")
   documentTypeCode String    @map("document_type_code") @db.VarChar(40)
-  documentCode        String    @map("document_code") @db.Uuid
+  documentCode     String    @map("document_code") @db.Uuid
   status           String    @db.VarChar(20)
   currentStage     String    @map("current_stage") @db.VarChar(30)
   isSuspended      Boolean   @default(false) @map("is_suspended")
@@ -261,6 +262,7 @@ model Credential {
   credentialCode     String    @unique @map("credential_code") @db.Uuid
   issueRequestId     BigInt    @unique @map("issue_request_id")
   userId             BigInt    @map("user_id")
+  documentCode       String    @map("document_code") @db.Uuid
   documentTypeCode   String    @map("document_type_code") @db.VarChar(40)
   documentTypeName   String    @map("document_type_name") @db.VarChar(100)
   issuerCode         String    @map("issuer_code") @db.VarChar(20)
@@ -278,6 +280,7 @@ model Credential {
 
   issueRequest CredentialIssueRequest @relation(fields: [issueRequestId], references: [id])
   user         User                   @relation(fields: [userId], references: [id])
+  document     Document               @relation(fields: [documentCode], references: [documentCode])
   documentType DocumentType           @relation(fields: [documentTypeCode], references: [code])
   submissions      CredentialSubmission[]
   createdXrplTransaction CredentialXrplTransaction? @relation("CredentialCreatedXrplTransaction", fields: [createdXrplTransactionId], references: [id])
@@ -286,6 +289,7 @@ model Credential {
   xrplTransactions CredentialXrplTransaction[] @relation("CredentialAllXrplTransactions")
 
   @@index([userId, issuedAt(sort: Desc)], map: "idx_credentials_user_created")
+  @@index([documentCode], map: "idx_credentials_document")
   @@index([userId, currentStage], map: "idx_credentials_user_stage")
   @@index([status, expiresAt], map: "idx_credentials_status_expires")
   @@map("credentials")
