@@ -132,8 +132,9 @@ export class CredentialService {
     return new CredentialIssueRequestResult(
       request.issueRequestCode,
       request.status,
-      this.buildPipeline(request.currentStage, request.status),
+      this.buildPipeline(request.currentStage, request.status, request.isSuspended),
       request.currentStage,
+      request.isSuspended,
       credential?.credentialCode ?? null,
       submissionCount,
     );
@@ -152,6 +153,24 @@ export class CredentialService {
         this.toCredentialSummaryResult(credential),
       ),
     );
+  }
+
+  /**
+   * 발급 요청을 일시 중지한다.
+   */
+  async suspendIssueRequest(issueRequestCode: string): Promise<void> {
+    const request = await this.credentialRepository.findIssueRequestByCode(issueRequestCode);
+    if (!request) throw new DomainError(ErrorCode.Credential.ISSUE_REQUEST_NOT_FOUND);
+    await this.credentialRepository.updateIssueRequestSuspension(request.id, true);
+  }
+
+  /**
+   * 발급 요청을 재개한다.
+   */
+  async resumeIssueRequest(issueRequestCode: string): Promise<void> {
+    const request = await this.credentialRepository.findIssueRequestByCode(issueRequestCode);
+    if (!request) throw new DomainError(ErrorCode.Credential.ISSUE_REQUEST_NOT_FOUND);
+    await this.credentialRepository.updateIssueRequestSuspension(request.id, false);
   }
 
   async listCredentialsByIssuePipelineStage(
@@ -595,18 +614,20 @@ export class CredentialService {
     return new CreateCredentialIssueRequestResult(
       request.issueRequestCode,
       request.status,
-      this.buildPipeline(request.currentStage, request.status),
+      this.buildPipeline(request.currentStage, request.status, request.isSuspended),
       request.currentStage,
+      request.isSuspended,
     );
   }
 
   private buildPipeline(
     currentStage: IssuePipelineStage,
     requestStatus: CredentialIssueRequestStatus,
+    isSuspended: boolean = false,
   ): IssuePipelineStageItemResult[] {
     const currentIndex = issuePipelineStages.indexOf(currentStage);
     return issuePipelineStages.map((stage, index) => {
-      const status =
+      let status =
         requestStatus === CredentialIssueRequestStatus.FAILED &&
         stage === currentStage
           ? IssuePipelineStageStatus.FAILED
@@ -616,6 +637,12 @@ export class CredentialService {
             : index === currentIndex
               ? IssuePipelineStageStatus.ACTIVE
               : IssuePipelineStageStatus.PENDING;
+
+      // 일시 중지 상태이면 ACTIVE 단계를 SUSPENDED로 표시
+      if (isSuspended && status === IssuePipelineStageStatus.ACTIVE) {
+        status = IssuePipelineStageStatus.SUSPENDED;
+      }
+
       return new IssuePipelineStageItemResult(
         stage,
         issuePipelineStageLabels[stage],

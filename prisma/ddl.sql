@@ -327,6 +327,7 @@ CREATE TABLE IF NOT EXISTS tosalpee.credential_issue_requests (
     document_code       UUID,
     status              VARCHAR(20)   NOT NULL,
     current_stage       VARCHAR(30)   NOT NULL,
+    is_suspended        BOOLEAN       NOT NULL DEFAULT false,
     requested_at        TIMESTAMP(0)  NOT NULL,
     issued_at           TIMESTAMP(0),
     failed_at           TIMESTAMP(0),
@@ -359,6 +360,7 @@ COMMENT ON COLUMN tosalpee.credential_issue_requests.document_type_code IS '요�
 COMMENT ON COLUMN tosalpee.credential_issue_requests.document_code       IS '원본 Document FK — documents(document_code). nullable 이며 문서 연동이 있는 발급 요청만 채운다.';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.status             IS '발급 요청 상태. 예: ISSUED | FAILED.';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.current_stage      IS '4-stage 발급 파이프라인 현재 단계. 예: MYDATA_RECEIVED | DOCUMENT_MOVED | TRANSLATION_RECEIVED | APOSTILLE_RECEIVED.';
+COMMENT ON COLUMN tosalpee.credential_issue_requests.is_suspended       IS '이의제기 등으로 인한 프로세스 일시 중지 여부.';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.requested_at       IS '사용자가 발급 요청을 생성한 시각.';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.issued_at          IS '발급 완료 시각. 발급 전 또는 실패 시 NULL일 수 있다.';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.failed_at          IS '발급 실패 시각. 실패 전에는 NULL.';
@@ -560,6 +562,7 @@ CREATE TABLE tosalpee.disputes (
     id            VARCHAR(20)   PRIMARY KEY,
     status        VARCHAR(20)   NOT NULL,
     type          VARCHAR(20)   NOT NULL,
+    target_stage  VARCHAR(30)   NOT NULL,
     request_id    VARCHAR(40)   NOT NULL,
     requester_id  BIGINT        NOT NULL,
     operator_id   BIGINT,
@@ -577,7 +580,8 @@ CREATE INDEX idx_disputes_operator_status ON tosalpee.disputes (operator_id, sta
 COMMENT ON TABLE  tosalpee.disputes               IS '분쟁(Dispute) 마스터 테이블.';
 COMMENT ON COLUMN tosalpee.disputes.id            IS '분쟁 ID (DSP-YYYY-NNNN).';
 COMMENT ON COLUMN tosalpee.disputes.status        IS '분쟁 상태 (RECEIVED | ASSIGNED | IN_REVIEW | INFO_REQUESTED | RESOLVED | REJECTED).';
-COMMENT ON COLUMN tosalpee.disputes.type          IS '분쟁 유형 (TYPO | IDENTITY_MISMATCH | DOCUMENT_INVALID | OTHER).';
+COMMENT ON COLUMN tosalpee.disputes.type          IS '분쟁 유형 (TYPO | MISSING_CONTENT | IMAGE_QUALITY | REISSUE_REQUIRED | IDENTITY_MISMATCH | DOCUMENT_INVALID | OTHERS).';
+COMMENT ON COLUMN tosalpee.disputes.target_stage  IS '이의제기 대상이 된 발급 단계 코드.';
 COMMENT ON COLUMN tosalpee.disputes.request_id    IS '원문 발급 요청 코드 (issue_request_code).';
 COMMENT ON COLUMN tosalpee.disputes.requester_id  IS '분쟁 제기 사용자 ID (FK).';
 COMMENT ON COLUMN tosalpee.disputes.operator_id   IS '담당 운영자 ID (FK).';
@@ -607,6 +611,12 @@ COMMENT ON COLUMN tosalpee.dispute_timeline.status        IS '기록 시점의 �
 COMMENT ON COLUMN tosalpee.dispute_timeline.note          IS '처리 메모 또는 사유.';
 COMMENT ON COLUMN tosalpee.dispute_timeline.operator_id   IS '작성 운영자 ID.';
 COMMENT ON COLUMN tosalpee.dispute_timeline.is_internal   IS '내부 전용 여부 (true면 사용자에게 비노출).';
-a = 'tosalpee'
+
+-- ───────────────────────────────────────────────────────────────────────────
+-- 최종 확인
+-- ───────────────────────────────────────────────────────────────────────────
+SELECT table_name, COUNT(*) AS column_count
+FROM information_schema.columns
+WHERE table_schema = 'tosalpee'
 GROUP BY table_name
 ORDER BY table_name;

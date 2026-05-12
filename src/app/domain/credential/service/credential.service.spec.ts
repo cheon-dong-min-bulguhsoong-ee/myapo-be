@@ -206,6 +206,7 @@ class FakeCredentialRepository extends CredentialRepository {
       input.documentCode,
       input.status,
       input.currentStage,
+      false,
       input.requestedAt,
       null,
       null,
@@ -235,6 +236,7 @@ class FakeCredentialRepository extends CredentialRepository {
       request.documentCode,
       CredentialIssueRequestStatus.FAILED,
       request.currentStage,
+      request.isSuspended,
       request.requestedAt,
       request.issuedAt,
       input.failedAt,
@@ -244,6 +246,35 @@ class FakeCredentialRepository extends CredentialRepository {
     );
     this.issueRequests[requestIndex] = failedRequest;
     return failedRequest;
+  }
+
+  async updateIssueRequestSuspension(
+    issueRequestId: bigint,
+    isSuspended: boolean,
+  ): Promise<void> {
+    const requestIndex = this.issueRequests.findIndex(
+      (request) => request.id === issueRequestId,
+    );
+    const request = this.issueRequests[requestIndex];
+    if (request === undefined) {
+      throw new DomainError(ErrorCode.Credential.ISSUE_REQUEST_NOT_FOUND);
+    }
+    this.issueRequests[requestIndex] = new CredentialIssueRequest(
+      request.id,
+      request.issueRequestCode,
+      request.userId,
+      request.documentTypeCode,
+      request.documentCode,
+      request.status,
+      request.currentStage,
+      isSuspended,
+      request.requestedAt,
+      request.issuedAt,
+      request.failedAt,
+      request.failureReason,
+      request.createdAt,
+      new Date(),
+    );
   }
 
   async findIssueRequestByCode(

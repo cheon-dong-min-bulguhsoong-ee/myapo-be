@@ -5,13 +5,18 @@
 - **Trigger**: Submitting the dispute form in the mobile app.
 
 ### Service Flow
-1.  **Validation**: Verify that the `requestId` belongs to the user and is `COMPLETED`.
-2.  **Domain Logic**: Create a `Dispute` aggregate with initial `RECEIVED` status.
+1.  **Validation**: 
+    - Verify that the `requestId` belongs to the user.
+    - Verify that the `targetStage` status is `DONE`.
+    - Verify that no other active dispute exists for this stage/request.
+2.  **Domain Logic**: Create a `Dispute` aggregate with initial `RECEIVED` status, linking it to the `requestId` and `targetStage`.
 3.  **Persistence**: Save the dispute and its associated evidence metadata.
-4.  **Side Effects**: Fire `DisputeCreatedEvent`.
+4.  **Side Effects**: 
+    - Fire `DisputeCreatedEvent`.
+    - Fire `SuspendIssuanceRequestEvent` to pause the original pipeline.
 
 ### Input / Output
-- **Inputs**: `requestId`, `type`, `headline`, `reason`, `evidenceFiles`
+- **Inputs**: `requestId`, `targetStage`, `type`, `headline`, `reason`, `evidenceFiles`
 - **Outputs**: `disputeId`, `initialStatus`
 
 ## 2. GetMyDisputes (User)

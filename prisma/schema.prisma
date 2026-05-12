@@ -229,6 +229,7 @@ model CredentialIssueRequest {
   documentCode        String?   @map("document_code") @db.Uuid
   status           String    @db.VarChar(20)
   currentStage     String    @map("current_stage") @db.VarChar(30)
+  isSuspended      Boolean   @default(false) @map("is_suspended")
   requestedAt      DateTime  @map("requested_at") @db.Timestamp(0)
   issuedAt         DateTime? @map("issued_at") @db.Timestamp(0)
   failedAt         DateTime? @map("failed_at") @db.Timestamp(0)
@@ -368,6 +369,7 @@ model CredentialXrplTransaction {
   id            String   @id @map("id") @db.VarChar(20)
   status        String   @db.VarChar(20)
   type          String   @db.VarChar(20)
+  targetStage   String   @map("target_stage") @db.VarChar(30)
   requestId     String   @map("request_id") @db.VarChar(40)
   requesterId   BigInt   @map("requester_id")
   operatorId    BigInt?  @map("operator_id")
