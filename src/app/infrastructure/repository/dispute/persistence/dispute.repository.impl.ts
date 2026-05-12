@@ -7,6 +7,7 @@ import {
   Dispute,
   TimelineEntry,
 } from "../../../../domain/dispute/entity/dispute.entity";
+import { IssuePipelineStage } from "../../../../domain/credential/enum/issue-pipeline-stage.enum";
 import { DisputeStatus } from "../../../../domain/dispute/enum/dispute-status.enum";
 import { DisputeType } from "../../../../domain/dispute/enum/dispute-type.enum";
 import {
@@ -28,10 +29,11 @@ export class DisputeRepositoryImpl extends DisputeRepository {
         id: input.id,
         status: input.status,
         type: input.type,
+        targetStage: input.targetStage,
         requestId: input.requestId,
         requesterId: input.requesterId,
         slaDeadline: input.slaDeadline,
-      },
+      } as any,
     });
     return this.toEntity(row);
   }
@@ -122,17 +124,19 @@ export class DisputeRepositoryImpl extends DisputeRepository {
   }
 
   private toEntity(row: DisputeRow, timeline: TimelineRow[] = []): Dispute {
+    const disputeRow = row as DisputeRow & { targetStage: IssuePipelineStage };
     const dispute = new Dispute(
-      row.id,
-      row.status as DisputeStatus,
-      row.type as DisputeType,
-      row.requestId,
-      row.requesterId,
-      row.operatorId,
-      row.slaDeadline,
-      row.isSlaPaused,
-      row.createdAt,
-      row.updatedAt,
+      disputeRow.id,
+      disputeRow.status as DisputeStatus,
+      disputeRow.type as DisputeType,
+      disputeRow.targetStage,
+      disputeRow.requestId,
+      disputeRow.requesterId,
+      disputeRow.operatorId,
+      disputeRow.slaDeadline,
+      disputeRow.isSlaPaused,
+      disputeRow.createdAt,
+      disputeRow.updatedAt,
     );
 
     timeline.forEach((t) => {

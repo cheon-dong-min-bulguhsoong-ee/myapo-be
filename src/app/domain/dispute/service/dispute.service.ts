@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { DomainError } from "../../common/error/domain.error";
 import { ErrorCode } from "../../common/error/error-code";
+import { IssuePipelineStage } from "../../credential/enum/issue-pipeline-stage.enum";
 import {
   DisputeResult,
   DisputeSummaryResult,
@@ -13,13 +14,16 @@ import { DisputeRepository } from "../repository/dispute.repository";
 
 @Injectable()
 export class DisputeService {
-  constructor(private readonly disputeRepository: DisputeRepository) {}
+  constructor(
+    private readonly disputeRepository: DisputeRepository,
+  ) {}
 
   /**
    * 새로운 분쟁을 생성한다.
    */
   async createDispute(input: {
     type: DisputeType;
+    targetStage: IssuePipelineStage;
     requestId: string;
     requesterId: bigint;
   }): Promise<DisputeResult> {
@@ -29,6 +33,7 @@ export class DisputeService {
     const dispute = await this.disputeRepository.create({
       id,
       type: input.type,
+      targetStage: input.targetStage,
       requestId: input.requestId,
       requesterId: input.requesterId,
       status: DisputeStatus.RECEIVED,
@@ -38,7 +43,7 @@ export class DisputeService {
     await this.logTimeline(
       id,
       DisputeStatus.RECEIVED,
-      "Dispute created.",
+      `Dispute created for stage: ${input.targetStage}`,
       null,
       false,
     );
@@ -77,6 +82,7 @@ export class DisputeService {
           d.id,
           d.status,
           d.type,
+          d.targetStage,
           d.requestId,
           d.operatorId?.toString() ?? null,
           d.slaDeadline,
@@ -197,6 +203,7 @@ export class DisputeService {
       dispute.id,
       dispute.status,
       dispute.type,
+      dispute.targetStage,
       dispute.requestId,
       dispute.requesterId.toString(),
       dispute.operatorId?.toString() ?? null,

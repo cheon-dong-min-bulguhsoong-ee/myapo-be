@@ -1,6 +1,7 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { DisputeService } from "./dispute.service";
 import { DisputeRepository } from "../repository/dispute.repository";
+import { IssuePipelineStage } from "../../credential/enum/issue-pipeline-stage.enum";
 import { DisputeType } from "../enum/dispute-type.enum";
 import { DisputeStatus } from "../enum/dispute-status.enum";
 import { Dispute, TimelineEntry } from "../entity/dispute.entity";
@@ -36,6 +37,7 @@ describe("DisputeService", () => {
     it("새로운 분쟁을 성공적으로 생성한다", async () => {
       const input = {
         type: DisputeType.TYPO,
+        targetStage: IssuePipelineStage.TRANSLATION_RECEIVED,
         requestId: "REQ-123",
         requesterId: BigInt(1),
       };
@@ -45,6 +47,7 @@ describe("DisputeService", () => {
           "DSP-2026-0001",
           DisputeStatus.RECEIVED,
           input.type,
+          input.targetStage,
           input.requestId,
           input.requesterId,
           null,
@@ -71,6 +74,7 @@ describe("DisputeService", () => {
         disputeId,
         DisputeStatus.RECEIVED,
         DisputeType.TYPO,
+        IssuePipelineStage.TRANSLATION_RECEIVED,
         "REQ-123",
         BigInt(1),
         null,
@@ -101,6 +105,7 @@ describe("DisputeService", () => {
         disputeId,
         DisputeStatus.ASSIGNED,
         DisputeType.TYPO,
+        IssuePipelineStage.TRANSLATION_RECEIVED,
         "REQ-123",
         BigInt(1),
         BigInt(11),
@@ -139,6 +144,7 @@ describe("DisputeService", () => {
           "DSP-2026-0001",
           DisputeStatus.RECEIVED,
           DisputeType.TYPO,
+          IssuePipelineStage.TRANSLATION_RECEIVED,
           "REQ-123",
           requesterId,
           null,

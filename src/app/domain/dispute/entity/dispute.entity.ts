@@ -1,5 +1,6 @@
 import { DomainError } from "../../common/error/domain.error";
 import { ErrorCode } from "../../common/error/error-code";
+import { IssuePipelineStage } from "../../credential/enum/issue-pipeline-stage.enum";
 import { DisputeStatus } from "../enum/dispute-status.enum";
 import { DisputeType } from "../enum/dispute-type.enum";
 
@@ -23,6 +24,7 @@ export class Dispute {
     public readonly id: string, // DSP-YYYY-NNNN 형식
     private _status: DisputeStatus,
     public readonly type: DisputeType,
+    public readonly targetStage: IssuePipelineStage, // 이의제기 대상 단계
     public readonly requestId: string, // 원본 발급 요청 ID (CredentialIssueRequest.issueRequestCode)
     public readonly requesterId: bigint, // 이의제기한 사용자 ID
     private _operatorId: bigint | null, // 담당 운영자 ID

@@ -404,23 +404,37 @@ export class CredentialRepositoryImpl extends CredentialRepository {
     });
   }
 
+  async updateIssueRequestSuspension(
+    issueRequestId: bigint,
+    isSuspended: boolean,
+  ): Promise<void> {
+    await this.prisma.credentialIssueRequest.update({
+      where: { id: issueRequestId },
+      data: { isSuspended } as any,
+    });
+  }
+
   private toIssueRequestEntity(
     row: CredentialIssueRequestRow,
   ): CredentialIssueRequest {
+    const issueRequestRow = row as CredentialIssueRequestRow & {
+      isSuspended: boolean;
+    };
     return new CredentialIssueRequest(
-      row.id,
-      row.issueRequestCode,
-      row.userId,
-      row.documentTypeCode,
-      row.documentCode,
-      row.status as CredentialIssueRequestStatus,
-      row.currentStage as IssuePipelineStage,
-      row.requestedAt,
-      row.issuedAt,
-      row.failedAt,
-      row.failureReason,
-      row.createdAt,
-      row.updatedAt,
+      issueRequestRow.id,
+      issueRequestRow.issueRequestCode,
+      issueRequestRow.userId,
+      issueRequestRow.documentTypeCode,
+      issueRequestRow.documentCode,
+      issueRequestRow.status as CredentialIssueRequestStatus,
+      issueRequestRow.currentStage as IssuePipelineStage,
+      issueRequestRow.isSuspended,
+      issueRequestRow.requestedAt,
+      issueRequestRow.issuedAt,
+      issueRequestRow.failedAt,
+      issueRequestRow.failureReason,
+      issueRequestRow.createdAt,
+      issueRequestRow.updatedAt,
     );
   }
 

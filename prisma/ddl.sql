@@ -19,6 +19,8 @@ CREATE SCHEMA IF NOT EXISTS tosalpee;
 -- ───────────────────────────────────────────────────────────────────────────
 -- DROP (FK 역순)
 -- ───────────────────────────────────────────────────────────────────────────
+DROP TABLE IF EXISTS tosalpee.dispute_timeline    CASCADE;
+DROP TABLE IF EXISTS tosalpee.disputes            CASCADE;
 DROP TABLE IF EXISTS tosalpee.credential_xrpl_transactions CASCADE;
 DROP TABLE IF EXISTS tosalpee.credential_submissions  CASCADE;
 DROP TABLE IF EXISTS tosalpee.credentials             CASCADE;
@@ -38,18 +40,18 @@ DROP TABLE IF EXISTS tosalpee.users              CASCADE;
 --    지갑은 self-custodial — 사용자 디바이스에서 seed 생성/보관, 서버는 주소·검증 정보만.
 -- ═══════════════════════════════════════════════════════════════════════════
 CREATE TABLE tosalpee.users (
-    id            BIGSERIAL PRIMARY KEY,
-    email         VARCHAR(255)  NOT NULL,
-    name          VARCHAR(50)   NOT NULL,
-    nationality   VARCHAR(2)    NOT NULL,
-    role          VARCHAR(20)   NOT NULL DEFAULT 'USER',
-    status        VARCHAR(20)   NOT NULL DEFAULT 'ACTIVE',
-    last_login_at TIMESTAMPTZ(0),
-    created_at    TIMESTAMPTZ(0) NOT NULL DEFAULT now(),
-    updated_at    TIMESTAMPTZ(0) NOT NULL DEFAULT now(),
-    is_delete     BOOLEAN       NOT NULL DEFAULT false,
+                                id            BIGSERIAL PRIMARY KEY,
+                                email         VARCHAR(255)  NOT NULL,
+                                name          VARCHAR(50)   NOT NULL,
+                                nationality   VARCHAR(2)    NOT NULL,
+                                role          VARCHAR(20)   NOT NULL DEFAULT 'USER',
+                                status        VARCHAR(20)   NOT NULL DEFAULT 'ACTIVE',
+                                last_login_at TIMESTAMPTZ(0),
+                                created_at    TIMESTAMPTZ(0) NOT NULL DEFAULT now(),
+                                updated_at    TIMESTAMPTZ(0) NOT NULL DEFAULT now(),
+                                is_delete     BOOLEAN       NOT NULL DEFAULT false,
 
-    CONSTRAINT users_email_unique UNIQUE (email)
+                                CONSTRAINT users_email_unique UNIQUE (email)
 );
 
 CREATE INDEX idx_users_status ON tosalpee.users (status);
@@ -72,21 +74,21 @@ COMMENT ON COLUMN tosalpee.users.is_delete     IS 'Soft-delete 플래그. true �
 --    XRPL 주소는 전역 UNIQUE — 같은 지갑이 여러 사용자에 연결되는 것 차단.
 -- ═══════════════════════════════════════════════════════════════════════════
 CREATE TABLE tosalpee.user_wallets (
-    id           BIGSERIAL PRIMARY KEY,
-    user_id      BIGINT        NOT NULL,
-    verifier     VARCHAR(20)   NOT NULL,
-    verifier_id  VARCHAR(255)  NOT NULL,
-    xrpl_address VARCHAR(35)   NOT NULL,
-    public_key   VARCHAR(66)   NOT NULL,
-    status       VARCHAR(20)   NOT NULL DEFAULT 'ACTIVE',
-    requested_at TIMESTAMPTZ(0) NOT NULL DEFAULT now(),
-    activated_at TIMESTAMPTZ(0) NOT NULL DEFAULT now(),
-    updated_at   TIMESTAMPTZ(0) NOT NULL DEFAULT now(),
+                                       id           BIGSERIAL PRIMARY KEY,
+                                       user_id      BIGINT        NOT NULL,
+                                       verifier     VARCHAR(20)   NOT NULL,
+                                       verifier_id  VARCHAR(255)  NOT NULL,
+                                       xrpl_address VARCHAR(35)   NOT NULL,
+                                       public_key   VARCHAR(66)   NOT NULL,
+                                       status       VARCHAR(20)   NOT NULL DEFAULT 'ACTIVE',
+                                       requested_at TIMESTAMPTZ(0) NOT NULL DEFAULT now(),
+                                       activated_at TIMESTAMPTZ(0) NOT NULL DEFAULT now(),
+                                       updated_at   TIMESTAMPTZ(0) NOT NULL DEFAULT now(),
 
-    CONSTRAINT user_wallets_user_id_unique    UNIQUE (user_id),
-    CONSTRAINT user_wallets_xrpl_addr_unique  UNIQUE (xrpl_address),
-    CONSTRAINT user_wallets_user_fk           FOREIGN KEY (user_id)
-        REFERENCES tosalpee.users (id) ON DELETE CASCADE
+                                       CONSTRAINT user_wallets_user_id_unique    UNIQUE (user_id),
+                                       CONSTRAINT user_wallets_xrpl_addr_unique  UNIQUE (xrpl_address),
+                                       CONSTRAINT user_wallets_user_fk           FOREIGN KEY (user_id)
+                                           REFERENCES tosalpee.users (id) ON DELETE CASCADE
 );
 
 CREATE UNIQUE INDEX idx_user_wallets_verifier_composite
@@ -112,17 +114,17 @@ COMMENT ON COLUMN tosalpee.user_wallets.updated_at    IS '레코드 갱신 시�
 --    KR-NTS(국세청) · KR-MOJ(법무부) · VN-MOFA(베트남 외교부) 등.
 -- ═══════════════════════════════════════════════════════════════════════════
 CREATE TABLE tosalpee.issuers (
-    code           VARCHAR(20)  PRIMARY KEY,
-    name           VARCHAR(50)  NOT NULL,
-    country_code   VARCHAR(2)   NOT NULL,
-    icon_label     VARCHAR(20)  NOT NULL,
-    wallet_address VARCHAR(35),
-    status         VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',
-    created_at     TIMESTAMP(0) NOT NULL DEFAULT now(),
-    updated_at     TIMESTAMP(0) NOT NULL DEFAULT now(),
-    is_delete      BOOLEAN      NOT NULL DEFAULT false,
+                                  code           VARCHAR(20)  PRIMARY KEY,
+                                  name           VARCHAR(50)  NOT NULL,
+                                  country_code   VARCHAR(2)   NOT NULL,
+                                  icon_label     VARCHAR(20)  NOT NULL,
+                                  wallet_address VARCHAR(35),
+                                  status         VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',
+                                  created_at     TIMESTAMP(0) NOT NULL DEFAULT now(),
+                                  updated_at     TIMESTAMP(0) NOT NULL DEFAULT now(),
+                                  is_delete      BOOLEAN      NOT NULL DEFAULT false,
 
-    CONSTRAINT issuers_wallet_addr_unique UNIQUE (wallet_address)
+                                  CONSTRAINT issuers_wallet_addr_unique UNIQUE (wallet_address)
 );
 
 CREATE INDEX idx_issuers_country_status ON tosalpee.issuers (country_code, status);
@@ -145,20 +147,20 @@ COMMENT ON COLUMN tosalpee.issuers.is_delete      IS 'Soft-delete 플래그.';
 --    persona_type 으로 신청 가능 사용자 풀(KOREAN/FOREIGNER) 을 구분.
 -- ═══════════════════════════════════════════════════════════════════════════
 CREATE TABLE tosalpee.document_types (
-    code               VARCHAR(40)  PRIMARY KEY,
-    name               VARCHAR(100) NOT NULL,
-    english_name       VARCHAR(100),
-    issuer_code        VARCHAR(20)  NOT NULL,
-    persona_type       VARCHAR(20)  NOT NULL,
-    use_case           VARCHAR(200),
-    default_ttl_months INT          NOT NULL DEFAULT 6,
-    status             VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',
-    created_at         TIMESTAMP(0) NOT NULL DEFAULT now(),
-    updated_at         TIMESTAMP(0) NOT NULL DEFAULT now(),
-    is_delete          BOOLEAN      NOT NULL DEFAULT false,
+                                         code               VARCHAR(40)  PRIMARY KEY,
+                                         name               VARCHAR(100) NOT NULL,
+                                         english_name       VARCHAR(100),
+                                         issuer_code        VARCHAR(20)  NOT NULL,
+                                         persona_type       VARCHAR(20)  NOT NULL,
+                                         use_case           VARCHAR(200),
+                                         default_ttl_months INT          NOT NULL DEFAULT 6,
+                                         status             VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',
+                                         created_at         TIMESTAMP(0) NOT NULL DEFAULT now(),
+                                         updated_at         TIMESTAMP(0) NOT NULL DEFAULT now(),
+                                         is_delete          BOOLEAN      NOT NULL DEFAULT false,
 
-    CONSTRAINT document_types_issuer_fk FOREIGN KEY (issuer_code)
-        REFERENCES tosalpee.issuers (code)
+                                         CONSTRAINT document_types_issuer_fk FOREIGN KEY (issuer_code)
+                                             REFERENCES tosalpee.issuers (code)
 );
 
 CREATE INDEX idx_document_types_persona_status ON tosalpee.document_types (persona_type, status);
@@ -189,29 +191,29 @@ COMMENT ON COLUMN tosalpee.document_types.is_delete          IS 'Soft-delete 플
 --      WALLET_STORED 도달 시 status=VALID.
 -- ═══════════════════════════════════════════════════════════════════════════
 CREATE TABLE tosalpee.documents (
-    id                  BIGSERIAL PRIMARY KEY,
-    document_code       UUID          NOT NULL,
-    user_id             BIGINT        NOT NULL,
-    document_type_code  VARCHAR(40)   NOT NULL,
-    status              VARCHAR(20)   NOT NULL DEFAULT 'PROGRESS',
-    current_stage       VARCHAR(20)   NOT NULL DEFAULT 'RECEIVED',
-    failure_reason      TEXT,
-    xrpl_create_tx_hash CHAR(64),
-    xrpl_ledger_index   BIGINT,
-    payload_hash        CHAR(64),
-    requested_at        TIMESTAMP(0)  NOT NULL DEFAULT now(),
-    issued_at           TIMESTAMP(0),
-    expires_at          TIMESTAMP(0),
-    revoked_at          TIMESTAMP(0),
-    created_at          TIMESTAMP(0)  NOT NULL DEFAULT now(),
-    updated_at          TIMESTAMP(0)  NOT NULL DEFAULT now(),
-    is_delete           BOOLEAN       NOT NULL DEFAULT false,
+                                    id                  BIGSERIAL PRIMARY KEY,
+                                    document_code       UUID          NOT NULL,
+                                    user_id             BIGINT        NOT NULL,
+                                    document_type_code  VARCHAR(40)   NOT NULL,
+                                    status              VARCHAR(40)   NOT NULL DEFAULT 'PROGRESS',
+                                    current_stage       VARCHAR(40)   NOT NULL DEFAULT 'RECEIVED',
+                                    failure_reason      TEXT,
+                                    xrpl_create_tx_hash CHAR(64),
+                                    xrpl_ledger_index   BIGINT,
+                                    payload_hash        CHAR(64),
+                                    requested_at        TIMESTAMP(0)  NOT NULL DEFAULT now(),
+                                    issued_at           TIMESTAMP(0),
+                                    expires_at          TIMESTAMP(0),
+                                    revoked_at          TIMESTAMP(0),
+                                    created_at          TIMESTAMP(0)  NOT NULL DEFAULT now(),
+                                    updated_at          TIMESTAMP(0)  NOT NULL DEFAULT now(),
+                                    is_delete           BOOLEAN       NOT NULL DEFAULT false,
 
-    CONSTRAINT documents_code_unique     UNIQUE (document_code),
-    CONSTRAINT documents_user_fk         FOREIGN KEY (user_id)
-        REFERENCES tosalpee.users (id),
-    CONSTRAINT documents_doctype_fk      FOREIGN KEY (document_type_code)
-        REFERENCES tosalpee.document_types (code)
+                                    CONSTRAINT documents_code_unique     UNIQUE (document_code),
+                                    CONSTRAINT documents_user_fk         FOREIGN KEY (user_id)
+                                        REFERENCES tosalpee.users (id),
+                                    CONSTRAINT documents_doctype_fk      FOREIGN KEY (document_type_code)
+                                        REFERENCES tosalpee.document_types (code)
 );
 
 CREATE INDEX idx_documents_user_time     ON tosalpee.documents (user_id, requested_at DESC);
@@ -245,17 +247,17 @@ COMMENT ON COLUMN tosalpee.documents.is_delete           IS 'Soft-delete 플래�
 --    stage = "이 승인이 통과시킨 다음 stage" — 같은 stage 중복 승인은 UNIQUE 로 차단.
 -- ═══════════════════════════════════════════════════════════════════════════
 CREATE TABLE tosalpee.document_approvals (
-    id           BIGSERIAL PRIMARY KEY,
-    document_id  BIGINT        NOT NULL,
-    stage        VARCHAR(20)   NOT NULL,
-    xrpl_tx_hash CHAR(64)      NOT NULL,
-    approved_at  TIMESTAMP(0)  NOT NULL,
-    created_at   TIMESTAMP(0)  NOT NULL DEFAULT now(),
-    updated_at   TIMESTAMP(0)  NOT NULL DEFAULT now(),
-    is_delete    BOOLEAN       NOT NULL DEFAULT false,
+                                             id           BIGSERIAL PRIMARY KEY,
+                                             document_id  BIGINT        NOT NULL,
+                                             stage        VARCHAR(40)   NOT NULL,
+                                             xrpl_tx_hash CHAR(64)      NOT NULL,
+                                             approved_at  TIMESTAMP(0)  NOT NULL,
+                                             created_at   TIMESTAMP(0)  NOT NULL DEFAULT now(),
+                                             updated_at   TIMESTAMP(0)  NOT NULL DEFAULT now(),
+                                             is_delete    BOOLEAN       NOT NULL DEFAULT false,
 
-    CONSTRAINT document_approvals_document_fk FOREIGN KEY (document_id)
-        REFERENCES tosalpee.documents (id)
+                                             CONSTRAINT document_approvals_document_fk FOREIGN KEY (document_id)
+                                                 REFERENCES tosalpee.documents (id)
 );
 
 CREATE UNIQUE INDEX uniq_document_approvals_doc_stage
@@ -280,21 +282,21 @@ COMMENT ON COLUMN tosalpee.document_approvals.is_delete    IS 'Soft-delete 플�
 --    상태 흐름: PENDING → IN_PROGRESS → DONE | FAILED.
 -- ═══════════════════════════════════════════════════════════════════════════
 CREATE TABLE tosalpee.document_stages (
-    id             BIGSERIAL PRIMARY KEY,
-    document_id    BIGINT        NOT NULL,
-    stage          VARCHAR(20)   NOT NULL,
-    status         VARCHAR(20)   NOT NULL,
-    tx_hash        CHAR(64),
-    s3_object_key  VARCHAR(255),
-    started_at     TIMESTAMP(0),
-    completed_at   TIMESTAMP(0),
-    failure_reason TEXT,
-    created_at     TIMESTAMP(0)  NOT NULL DEFAULT now(),
-    updated_at     TIMESTAMP(0)  NOT NULL DEFAULT now(),
-    is_delete      BOOLEAN       NOT NULL DEFAULT false,
+                                          id             BIGSERIAL PRIMARY KEY,
+                                          document_id    BIGINT        NOT NULL,
+                                          stage          VARCHAR(40)   NOT NULL,
+                                          status         VARCHAR(40)   NOT NULL,
+                                          tx_hash        CHAR(64),
+                                          s3_object_key  VARCHAR(255),
+                                          started_at     TIMESTAMP(0),
+                                          completed_at   TIMESTAMP(0),
+                                          failure_reason TEXT,
+                                          created_at     TIMESTAMP(0)  NOT NULL DEFAULT now(),
+                                          updated_at     TIMESTAMP(0)  NOT NULL DEFAULT now(),
+                                          is_delete      BOOLEAN       NOT NULL DEFAULT false,
 
-    CONSTRAINT document_stages_document_fk FOREIGN KEY (document_id)
-        REFERENCES tosalpee.documents (id)
+                                          CONSTRAINT document_stages_document_fk FOREIGN KEY (document_id)
+                                              REFERENCES tosalpee.documents (id)
 );
 
 CREATE INDEX idx_document_stages_doc_time     ON tosalpee.document_stages (document_id, created_at);
@@ -320,11 +322,11 @@ COMMENT ON COLUMN tosalpee.document_stages.is_delete      IS 'Soft-delete 플래
 --    MVP: 4-stage pipeline + Internal JWT.
 -- ═══════════════════════════════════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS tosalpee.credential_issue_requests (
-    id                  BIGSERIAL PRIMARY KEY,
-    issue_request_code  UUID          NOT NULL,
-    user_id             BIGINT        NOT NULL,
-    document_type_code  VARCHAR(40)   NOT NULL,
-    document_code       UUID          NOT NULL,
+                                                                  id                  BIGSERIAL PRIMARY KEY,
+                                                                  issue_request_code  UUID          NOT NULL,
+                                                                  user_id             BIGINT        NOT NULL,
+                                                                  document_type_code  VARCHAR(40)   NOT NULL,
+    document_code       UUID,
     status              VARCHAR(20)   NOT NULL,
     current_stage       VARCHAR(30)   NOT NULL,
     requested_at        TIMESTAMP(0)  NOT NULL,
@@ -337,12 +339,12 @@ CREATE TABLE IF NOT EXISTS tosalpee.credential_issue_requests (
 
     CONSTRAINT credential_issue_requests_code_unique UNIQUE (issue_request_code),
     CONSTRAINT credential_issue_requests_user_fk FOREIGN KEY (user_id)
-        REFERENCES tosalpee.users (id),
+    REFERENCES tosalpee.users (id),
     CONSTRAINT credential_issue_requests_doctype_fk FOREIGN KEY (document_type_code)
-        REFERENCES tosalpee.document_types (code),
+    REFERENCES tosalpee.document_types (code),
     CONSTRAINT credential_issue_requests_document_fk FOREIGN KEY (document_code)
-        REFERENCES tosalpee.documents (document_code)
-);
+    REFERENCES tosalpee.documents (document_code)
+    );
 
 CREATE INDEX IF NOT EXISTS idx_credential_issue_requests_user_time
     ON tosalpee.credential_issue_requests (user_id, requested_at DESC);
@@ -356,7 +358,7 @@ COMMENT ON COLUMN tosalpee.credential_issue_requests.id                 IS '내�
 COMMENT ON COLUMN tosalpee.credential_issue_requests.issue_request_code IS '외부 노출용 발급 요청 UUID. API path/response에서 issueRequestId로 사용한다.';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.user_id            IS '발급 요청 사용자 FK — users(id). Internal JWT에서 식별된 사용자와 매칭된다.';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.document_type_code IS '요청한 문서/credential 종류 코드 — document_types(code).';
-COMMENT ON COLUMN tosalpee.credential_issue_requests.document_code       IS '원본 Document FK — documents(document_code). credential 발급 요청은 반드시 원천 문서와 연결된다.';
+COMMENT ON COLUMN tosalpee.credential_issue_requests.document_code       IS '원본 Document FK — documents(document_code). nullable 이며 문서 연동이 있는 발급 요청만 채운다.';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.status             IS '발급 요청 상태. 예: ISSUED | FAILED.';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.current_stage      IS '4-stage 발급 파이프라인 현재 단계. 예: MYDATA_RECEIVED | DOCUMENT_MOVED | TRANSLATION_RECEIVED | APOSTILLE_RECEIVED.';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.requested_at       IS '사용자가 발급 요청을 생성한 시각.';
@@ -373,11 +375,11 @@ COMMENT ON COLUMN tosalpee.credential_issue_requests.is_delete          IS 'Soft
 --    XRP Testnet evidence is allowed for hackathon review. Mainnet finality is not claimed.
 -- ═══════════════════════════════════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS tosalpee.credentials (
-    id                    BIGSERIAL PRIMARY KEY,
-    credential_code       UUID          NOT NULL,
-    issue_request_id      BIGINT        NOT NULL,
-    user_id               BIGINT        NOT NULL,
-    document_type_code    VARCHAR(40)   NOT NULL,
+                                                    id                    BIGSERIAL PRIMARY KEY,
+                                                    credential_code       UUID          NOT NULL,
+                                                    issue_request_id      BIGINT        NOT NULL,
+                                                    user_id               BIGINT        NOT NULL,
+                                                    document_type_code    VARCHAR(40)   NOT NULL,
     document_type_name    VARCHAR(100)  NOT NULL,
     issuer_code           VARCHAR(20)   NOT NULL,
     status                VARCHAR(20)   NOT NULL,
@@ -395,12 +397,12 @@ CREATE TABLE IF NOT EXISTS tosalpee.credentials (
     CONSTRAINT credentials_code_unique UNIQUE (credential_code),
     CONSTRAINT credentials_issue_request_unique UNIQUE (issue_request_id),
     CONSTRAINT credentials_issue_request_fk FOREIGN KEY (issue_request_id)
-        REFERENCES tosalpee.credential_issue_requests (id),
+    REFERENCES tosalpee.credential_issue_requests (id),
     CONSTRAINT credentials_user_fk FOREIGN KEY (user_id)
-        REFERENCES tosalpee.users (id),
+    REFERENCES tosalpee.users (id),
     CONSTRAINT credentials_doctype_fk FOREIGN KEY (document_type_code)
-        REFERENCES tosalpee.document_types (code)
-);
+    REFERENCES tosalpee.document_types (code)
+    );
 
 CREATE INDEX IF NOT EXISTS idx_credentials_user_created
     ON tosalpee.credentials (user_id, credential_created_at DESC);
@@ -434,9 +436,9 @@ COMMENT ON COLUMN tosalpee.credentials.is_delete            IS 'Soft-delete 플�
 -- 10) credential_xrpl_transactions — XRP Testnet XLS-70 transaction evidence
 -- ═══════════════════════════════════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS tosalpee.credential_xrpl_transactions (
-    id                BIGSERIAL PRIMARY KEY,
-    credential_id     BIGINT        NOT NULL,
-    transaction_kind  VARCHAR(20)   NOT NULL,
+                                                                     id                BIGSERIAL PRIMARY KEY,
+                                                                     credential_id     BIGINT        NOT NULL,
+                                                                     transaction_kind  VARCHAR(20)   NOT NULL,
     network           VARCHAR(40)   NOT NULL,
     tx_hash           CHAR(64)      NOT NULL,
     engine_result     VARCHAR(40)   NOT NULL,
@@ -455,8 +457,8 @@ CREATE TABLE IF NOT EXISTS tosalpee.credential_xrpl_transactions (
     is_delete         BOOLEAN       NOT NULL DEFAULT false,
 
     CONSTRAINT credential_xrpl_transactions_credential_fk FOREIGN KEY (credential_id)
-        REFERENCES tosalpee.credentials (id)
-);
+    REFERENCES tosalpee.credentials (id)
+    );
 
 CREATE UNIQUE INDEX IF NOT EXISTS uniq_credential_xrpl_transactions_tx_hash
     ON tosalpee.credential_xrpl_transactions (tx_hash);
@@ -499,12 +501,12 @@ ALTER TABLE tosalpee.credentials
 -- 11) credential_submissions — institution submission rows
 -- ═══════════════════════════════════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS tosalpee.credential_submissions (
-    id                         BIGSERIAL PRIMARY KEY,
-    submission_code            UUID          NOT NULL,
-    credential_id              BIGINT        NOT NULL,
-    credential_code            UUID          NOT NULL,
-    user_id                    BIGINT        NOT NULL,
-    submission_request_id      VARCHAR(80)   NOT NULL,
+                                                               id                         BIGSERIAL PRIMARY KEY,
+                                                               submission_code            UUID          NOT NULL,
+                                                               credential_id              BIGINT        NOT NULL,
+                                                               credential_code            UUID          NOT NULL,
+                                                               user_id                    BIGINT        NOT NULL,
+                                                               submission_request_id      VARCHAR(80)   NOT NULL,
     recipient_institution_id   VARCHAR(80)   NOT NULL,
     recipient_institution_name VARCHAR(120)  NOT NULL,
     status                     VARCHAR(20)   NOT NULL,
@@ -516,10 +518,10 @@ CREATE TABLE IF NOT EXISTS tosalpee.credential_submissions (
 
     CONSTRAINT credential_submissions_code_unique UNIQUE (submission_code),
     CONSTRAINT credential_submissions_credential_fk FOREIGN KEY (credential_id)
-        REFERENCES tosalpee.credentials (id),
+    REFERENCES tosalpee.credentials (id),
     CONSTRAINT credential_submissions_user_fk FOREIGN KEY (user_id)
-        REFERENCES tosalpee.users (id)
-);
+    REFERENCES tosalpee.users (id)
+    );
 
 CREATE UNIQUE INDEX IF NOT EXISTS uniq_credential_submissions_credential_request
     ON tosalpee.credential_submissions (credential_id, submission_request_id);
@@ -557,18 +559,18 @@ ORDER BY table_name;
 -- 12) disputes — 분쟁 관리
 -- ═══════════════════════════════════════════════════════════════════════════
 CREATE TABLE tosalpee.disputes (
-    id            VARCHAR(20)   PRIMARY KEY,
-    status        VARCHAR(20)   NOT NULL,
-    type          VARCHAR(20)   NOT NULL,
-    request_id    VARCHAR(40)   NOT NULL,
-    requester_id  BIGINT        NOT NULL,
-    operator_id   BIGINT,
-    sla_deadline  TIMESTAMPTZ(0) NOT NULL,
-    is_sla_paused BOOLEAN       NOT NULL DEFAULT false,
-    created_at    TIMESTAMPTZ(0) NOT NULL DEFAULT now(),
-    updated_at    TIMESTAMPTZ(0) NOT NULL DEFAULT now(),
+                                   id            VARCHAR(20)   PRIMARY KEY,
+                                   status        VARCHAR(20)   NOT NULL,
+                                   type          VARCHAR(20)   NOT NULL,
+                                   request_id    VARCHAR(40)   NOT NULL,
+                                   requester_id  BIGINT        NOT NULL,
+                                   operator_id   BIGINT,
+                                   sla_deadline  TIMESTAMPTZ(0) NOT NULL,
+                                   is_sla_paused BOOLEAN       NOT NULL DEFAULT false,
+                                   created_at    TIMESTAMPTZ(0) NOT NULL DEFAULT now(),
+                                   updated_at    TIMESTAMPTZ(0) NOT NULL DEFAULT now(),
 
-    CONSTRAINT disputes_requester_fk FOREIGN KEY (requester_id) REFERENCES tosalpee.users(id)
+                                   CONSTRAINT disputes_requester_fk FOREIGN KEY (requester_id) REFERENCES tosalpee.users(id)
 );
 
 CREATE INDEX idx_disputes_requester ON tosalpee.disputes (requester_id);
@@ -588,15 +590,15 @@ COMMENT ON COLUMN tosalpee.disputes.is_sla_paused IS 'SLA 일시정지 여부 (I
 -- 13) dispute_timeline — 분쟁 타임라인/로그
 -- ═══════════════════════════════════════════════════════════════════════════
 CREATE TABLE tosalpee.dispute_timeline (
-    id          BIGSERIAL PRIMARY KEY,
-    dispute_id  VARCHAR(20)   NOT NULL,
-    status      VARCHAR(20)   NOT NULL,
-    note        TEXT,
-    operator_id BIGINT,
-    is_internal BOOLEAN       NOT NULL DEFAULT false,
-    created_at  TIMESTAMPTZ(0) NOT NULL DEFAULT now(),
+                                           id          BIGSERIAL PRIMARY KEY,
+                                           dispute_id  VARCHAR(20)   NOT NULL,
+                                           status      VARCHAR(20)   NOT NULL,
+                                           note        TEXT,
+                                           operator_id BIGINT,
+                                           is_internal BOOLEAN       NOT NULL DEFAULT false,
+                                           created_at  TIMESTAMPTZ(0) NOT NULL DEFAULT now(),
 
-    CONSTRAINT dispute_timeline_dispute_fk FOREIGN KEY (dispute_id) REFERENCES tosalpee.disputes(id) ON DELETE CASCADE
+                                           CONSTRAINT dispute_timeline_dispute_fk FOREIGN KEY (dispute_id) REFERENCES tosalpee.disputes(id) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_dispute_timeline_dispute_time ON tosalpee.dispute_timeline (dispute_id, created_at);
@@ -607,6 +609,13 @@ COMMENT ON COLUMN tosalpee.dispute_timeline.status        IS '기록 시점의 �
 COMMENT ON COLUMN tosalpee.dispute_timeline.note          IS '처리 메모 또는 사유.';
 COMMENT ON COLUMN tosalpee.dispute_timeline.operator_id   IS '작성 운영자 ID.';
 COMMENT ON COLUMN tosalpee.dispute_timeline.is_internal   IS '내부 전용 여부 (true면 사용자에게 비노출).';
-a = 'tosalpee'
+
+
+-- ───────────────────────────────────────────────────────────────────────────
+-- 적용 결과 확인 (dispute 포함 최종)
+-- ───────────────────────────────────────────────────────────────────────────
+SELECT table_name, COUNT(*) AS column_count
+FROM information_schema.columns
+WHERE table_schema = 'tosalpee'
 GROUP BY table_name
 ORDER BY table_name;
