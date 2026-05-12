@@ -14,7 +14,7 @@ export interface CreateCredentialIssueRequestInput {
   issueRequestCode: string;
   userId: bigint;
   documentTypeCode: string;
-  documentCode: string | null;
+  documentCode: string;
   status: CredentialIssueRequestStatus;
   currentStage: IssuePipelineStage;
   requestedAt: Date;

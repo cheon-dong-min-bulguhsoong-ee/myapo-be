@@ -578,7 +578,8 @@ describe("CredentialService", () => {
     const result = await service.createIssueRequest(
       BigInt(1),
       documentType.code,
-      null,
+      "550e8400-e29b-41d4-a716-446655440000",
+      IssuePipelineStage.APOSTILLE_RECEIVED,
       "rUserWallet",
     );
 
@@ -601,7 +602,8 @@ describe("CredentialService", () => {
     await service.createIssueRequest(
       BigInt(1),
       documentType.code,
-      null,
+      "550e8400-e29b-41d4-a716-446655440000",
+      IssuePipelineStage.APOSTILLE_RECEIVED,
       "rUserWallet",
     );
 
@@ -628,7 +630,8 @@ describe("CredentialService", () => {
     await service.createIssueRequest(
       BigInt(1),
       documentType.code,
-      null,
+      "550e8400-e29b-41d4-a716-446655440000",
+      IssuePipelineStage.APOSTILLE_RECEIVED,
       "rUserWallet",
     );
     await service.acceptTestnetCredential(
@@ -661,13 +664,15 @@ describe("CredentialService", () => {
     await service.createIssueRequest(
       BigInt(1),
       documentType.code,
-      null,
+      "550e8400-e29b-41d4-a716-446655440000",
+      IssuePipelineStage.APOSTILLE_RECEIVED,
       "rUserWallet",
     );
     await service.createIssueRequest(
       BigInt(1),
       documentType.code,
-      null,
+      "550e8400-e29b-41d4-a716-446655440000",
+      IssuePipelineStage.APOSTILLE_RECEIVED,
       "rUserWallet",
     );
 
@@ -696,13 +701,15 @@ describe("CredentialService", () => {
     await service.createIssueRequest(
       BigInt(1),
       documentType.code,
-      null,
+      "550e8400-e29b-41d4-a716-446655440000",
+      IssuePipelineStage.APOSTILLE_RECEIVED,
       "rUserWallet",
     );
     await service.createIssueRequest(
       BigInt(1),
       documentType.code,
-      null,
+      "550e8400-e29b-41d4-a716-446655440000",
+      IssuePipelineStage.APOSTILLE_RECEIVED,
       "rUserWallet",
     );
     await service.acceptTestnetCredential(
@@ -737,7 +744,8 @@ describe("CredentialService", () => {
     await service.createIssueRequest(
       BigInt(1),
       documentType.code,
-      null,
+      "550e8400-e29b-41d4-a716-446655440000",
+      IssuePipelineStage.APOSTILLE_RECEIVED,
       "rSUBJECT",
     );
 
@@ -759,7 +767,8 @@ describe("CredentialService", () => {
       service.createIssueRequest(
         BigInt(1),
         documentType.code,
-        null,
+        "550e8400-e29b-41d4-a716-446655440000",
+        IssuePipelineStage.APOSTILLE_RECEIVED,
         "rSUBJECT",
       ),
     ).rejects.toMatchObject({
@@ -789,7 +798,8 @@ describe("CredentialService", () => {
       service.createIssueRequest(
         BigInt(1),
         documentType.code,
-        null,
+        "550e8400-e29b-41d4-a716-446655440000",
+        IssuePipelineStage.APOSTILLE_RECEIVED,
         "rSUBJECT",
       ),
     ).rejects.toMatchObject({
@@ -815,7 +825,8 @@ describe("CredentialService", () => {
     await service.createIssueRequest(
       BigInt(1),
       documentType.code,
-      null,
+      "550e8400-e29b-41d4-a716-446655440000",
+      IssuePipelineStage.APOSTILLE_RECEIVED,
       "rSUBJECT",
     );
 
@@ -857,7 +868,8 @@ describe("CredentialService", () => {
     await service.createIssueRequest(
       BigInt(1),
       documentType.code,
-      null,
+      "550e8400-e29b-41d4-a716-446655440000",
+      IssuePipelineStage.APOSTILLE_RECEIVED,
       "rSUBJECT",
     );
 
@@ -905,7 +917,8 @@ describe("CredentialService", () => {
     await service.createIssueRequest(
       BigInt(1),
       documentType.code,
-      null,
+      "550e8400-e29b-41d4-a716-446655440000",
+      IssuePipelineStage.APOSTILLE_RECEIVED,
       "rSUBJECT",
     );
 
@@ -938,7 +951,8 @@ describe("CredentialService", () => {
     await service.createIssueRequest(
       BigInt(1),
       documentType.code,
-      null,
+      "550e8400-e29b-41d4-a716-446655440000",
+      IssuePipelineStage.APOSTILLE_RECEIVED,
       "rUserWallet",
     );
 
