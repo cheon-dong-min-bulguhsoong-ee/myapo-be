@@ -1,3 +1,4 @@
+import { IssuePipelineStage } from "../../credential/enum/issue-pipeline-stage.enum";
 import { Dispute } from "../entity/dispute.entity";
 import { DisputeStatus } from "../enum/dispute-status.enum";
 import { DisputeType } from "../enum/dispute-type.enum";
@@ -5,6 +6,7 @@ import { DisputeType } from "../enum/dispute-type.enum";
 export interface CreateDisputeInput {
   id: string;
   type: DisputeType;
+  targetStage: IssuePipelineStage;
   requestId: string;
   requesterId: bigint;
   status: DisputeStatus;

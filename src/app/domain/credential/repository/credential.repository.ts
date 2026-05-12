@@ -125,4 +125,8 @@ export abstract class CredentialRepository {
   abstract markCredentialAccepted(input: {
     credentialId: bigint;
   }): Promise<Credential>;
+  abstract updateIssueRequestSuspension(
+    issueRequestId: bigint,
+    isSuspended: boolean,
+  ): Promise<void>;
 }

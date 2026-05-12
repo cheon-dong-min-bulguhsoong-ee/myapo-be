@@ -119,9 +119,10 @@ components:
   schemas:
     FileDisputeRequest:
       type: object
-      required: [requestId, type, headline, reason]
+      required: [requestId, targetStage, type, headline, reason]
       properties:
         requestId: { type: string }
+        targetStage: { type: string, description: "The pipeline stage being disputed (e.g., MYDATA_RECEIVED, TRANSLATION_RECEIVED)" }
         type: { type: string, enum: [TYPO, MISSING_CONTENT, IMAGE_QUALITY, REISSUE_REQUIRED, OTHERS] }
         sourceCode: { type: string }
         headline: { type: string }
@@ -144,6 +145,7 @@ components:
         id: { type: string }
         status: { type: string }
         type: { type: string }
+        targetStage: { type: string }
         requestId: { type: string }
         requesterId: { type: string }
         operatorId: { type: string, nullable: true }
@@ -159,6 +161,7 @@ components:
         id: { type: string }
         status: { type: string }
         type: { type: string }
+        targetStage: { type: string }
         requestId: { type: string }
         operatorId: { type: string, nullable: true }
         slaDeadline: { type: string, format: date-time }

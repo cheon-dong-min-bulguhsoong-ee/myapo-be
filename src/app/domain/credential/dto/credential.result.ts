@@ -19,6 +19,7 @@ export class CreateCredentialIssueRequestResult {
     public readonly status: CredentialIssueRequestStatus,
     public readonly pipeline: IssuePipelineStageItemResult[],
     public readonly currentStage: IssuePipelineStage,
+    public readonly isSuspended: boolean,
   ) {}
 }
 
@@ -28,10 +29,11 @@ export class CredentialIssueRequestResult extends CreateCredentialIssueRequestRe
     status: CredentialIssueRequestStatus,
     pipeline: IssuePipelineStageItemResult[],
     currentStage: IssuePipelineStage,
+    isSuspended: boolean,
     public readonly credentialId: string | null,
     public readonly submissionCount: number,
   ) {
-    super(issueRequestId, status, pipeline, currentStage);
+    super(issueRequestId, status, pipeline, currentStage, isSuspended);
   }
 }
 

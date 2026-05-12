@@ -10,6 +10,7 @@ export class CredentialIssueRequest {
     public readonly documentCode: string,
     public readonly status: CredentialIssueRequestStatus,
     public readonly currentStage: IssuePipelineStage,
+    public readonly isSuspended: boolean,
     public readonly requestedAt: Date,
     public readonly issuedAt: Date | null,
     public readonly failedAt: Date | null,

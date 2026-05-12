@@ -39,6 +39,8 @@ export class DisputeRes {
   @ApiProperty()
   readonly type!: string;
   @ApiProperty()
+  readonly targetStage!: string;
+  @ApiProperty()
   readonly requestId!: string;
   @ApiProperty()
   readonly requesterId!: string;
@@ -58,6 +60,7 @@ export class DisputeRes {
       id: result.id,
       status: result.status,
       type: result.type,
+      targetStage: result.targetStage,
       requestId: result.requestId,
       requesterId: result.requesterId,
       operatorId: result.operatorId,
@@ -80,6 +83,9 @@ export class DisputeSummaryRes {
   readonly type!: string;
 
   @ApiProperty()
+  readonly targetStage!: string;
+
+  @ApiProperty()
   readonly requestId!: string;
 
   @ApiProperty({ required: false })
@@ -96,6 +102,7 @@ export class DisputeSummaryRes {
       id: result.id,
       status: result.status,
       type: result.type,
+      targetStage: result.targetStage,
       requestId: result.requestId,
       operatorId: result.operatorId,
       slaDeadline: result.slaDeadline.toISOString(),

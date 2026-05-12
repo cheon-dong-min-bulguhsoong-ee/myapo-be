@@ -3,4 +3,5 @@ export enum IssuePipelineStageStatus {
   ACTIVE = "ACTIVE",
   DONE = "DONE",
   FAILED = "FAILED",
+  SUSPENDED = "SUSPENDED",
 }

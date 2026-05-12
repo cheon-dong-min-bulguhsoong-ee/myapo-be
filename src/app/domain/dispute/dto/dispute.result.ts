@@ -1,3 +1,4 @@
+import { IssuePipelineStage } from "../../credential/enum/issue-pipeline-stage.enum";
 import { DisputeStatus } from "../enum/dispute-status.enum";
 import { DisputeType } from "../enum/dispute-type.enum";
 
@@ -17,6 +18,7 @@ export class DisputeResult {
     public readonly id: string,
     public readonly status: DisputeStatus,
     public readonly type: DisputeType,
+    public readonly targetStage: IssuePipelineStage,
     public readonly requestId: string,
     public readonly requesterId: string,
     public readonly operatorId: string | null,
@@ -33,6 +35,7 @@ export class DisputeSummaryResult {
     public readonly id: string,
     public readonly status: DisputeStatus,
     public readonly type: DisputeType,
+    public readonly targetStage: IssuePipelineStage,
     public readonly requestId: string,
     public readonly operatorId: string | null,
     public readonly slaDeadline: Date,

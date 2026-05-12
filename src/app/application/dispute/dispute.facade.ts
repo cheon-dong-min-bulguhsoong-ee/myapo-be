@@ -1,6 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { DisputeService } from "../../domain/dispute/service/dispute.service";
 import { CredentialService } from "../../domain/credential/service/credential.service";
+import { IssuePipelineStage } from "../../domain/credential/enum/issue-pipeline-stage.enum";
+import { IssuePipelineStageStatus } from "../../domain/credential/enum/issue-pipeline-stage-status.enum";
+import { DomainError } from "../../domain/common/error/domain.error";
+import { ErrorCode } from "../../domain/common/error/error-code";
 import {
   DisputeResult,
   DisputeSummaryResult,
@@ -20,10 +24,32 @@ export class DisputeFacade {
    */
   async createDispute(input: {
     type: DisputeType;
+    targetStage: IssuePipelineStage;
     requestId: string;
     requesterId: bigint;
   }): Promise<DisputeResult> {
-    return this.disputeService.createDispute(input);
+    // 1. 발급 요청 정보 조회
+    const request = await this.credentialService.getIssueRequest(
+      input.requesterId,
+      input.requestId,
+    );
+
+    // 2. 대상 단계가 완료(DONE) 상태인지 확인 (ADR-003 & User Req)
+    const stageInfo = request.pipeline.find((p) => p.stage === input.targetStage);
+    if (!stageInfo || stageInfo.status !== IssuePipelineStageStatus.DONE) {
+      throw new DomainError(ErrorCode.Common.BAD_REQUEST, {
+        message: "Only completed stages can be disputed.",
+        targetStage: input.targetStage,
+        currentStatus: stageInfo?.status ?? "UNKNOWN",
+      });
+    }
+
+    const result = await this.disputeService.createDispute(input);
+
+    // 3. 프로세스 일시 중지 (ADR-003 & User Req)
+    await this.credentialService.suspendIssueRequest(input.requestId);
+
+    return result;
   }
 
   /**
@@ -67,6 +93,14 @@ export class DisputeFacade {
     if (input.newStatus === DisputeStatus.RESOLVED && input.credentialCode) {
       // CredentialService의 revoke API 사용
       await this.credentialService.revoke(input.credentialCode);
+    }
+
+    // 분쟁이 해결(RESOLVED)되거나 기각(REJECTED)되면 프로세스 재개
+    if (
+      input.newStatus === DisputeStatus.RESOLVED ||
+      input.newStatus === DisputeStatus.REJECTED
+    ) {
+      await this.credentialService.resumeIssueRequest(result.requestId);
     }
 
     return result;
