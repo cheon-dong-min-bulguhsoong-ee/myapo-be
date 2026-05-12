@@ -226,7 +226,7 @@ model CredentialIssueRequest {
   issueRequestCode String    @unique @map("issue_request_code") @db.Uuid
   userId           BigInt    @map("user_id")
   documentTypeCode String    @map("document_type_code") @db.VarChar(40)
-  documentCode        String?   @map("document_code") @db.Uuid
+  documentCode        String    @map("document_code") @db.Uuid
   status           String    @db.VarChar(20)
   currentStage     String    @map("current_stage") @db.VarChar(30)
   requestedAt      DateTime  @map("requested_at") @db.Timestamp(0)
@@ -239,7 +239,7 @@ model CredentialIssueRequest {
 
   user         User         @relation(fields: [userId], references: [id])
   documentType DocumentType @relation(fields: [documentTypeCode], references: [code])
-  document     Document?    @relation(fields: [documentCode], references: [documentCode])
+  document     Document     @relation(fields: [documentCode], references: [documentCode])
   credential   Credential?
 
   @@index([userId, requestedAt(sort: Desc)], map: "idx_credential_issue_requests_user_time")

@@ -40,7 +40,8 @@ export class CredentialFacade {
     const result = await this.credentialService.createIssueRequest(
       userId,
       req.documentTypeId,
-      req.documentCode ?? null,
+      req.documentCode,
+      req.currentStage,
       user.wallet.xrplAddress,
     );
     return CreateCredentialIssueRequestRes.from(result);

@@ -49,7 +49,8 @@ export class CredentialService {
   async createIssueRequest(
     userId: bigint,
     documentTypeId: string,
-    documentCode: string | null,
+    documentCode: string,
+    currentStage: IssuePipelineStage,
     walletAddress: string,
   ): Promise<CreateCredentialIssueRequestResult> {
     const documentType =
@@ -69,7 +70,7 @@ export class CredentialService {
       documentTypeCode: documentType.code,
       documentCode,
       status: CredentialIssueRequestStatus.ISSUED,
-      currentStage: IssuePipelineStage.APOSTILLE_RECEIVED,
+      currentStage,
       requestedAt: now,
     });
 

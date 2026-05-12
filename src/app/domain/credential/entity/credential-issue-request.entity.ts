@@ -7,7 +7,7 @@ export class CredentialIssueRequest {
     public readonly issueRequestCode: string,
     public readonly userId: bigint,
     public readonly documentTypeCode: string,
-    public readonly documentCode: string | null,
+    public readonly documentCode: string,
     public readonly status: CredentialIssueRequestStatus,
     public readonly currentStage: IssuePipelineStage,
     public readonly requestedAt: Date,

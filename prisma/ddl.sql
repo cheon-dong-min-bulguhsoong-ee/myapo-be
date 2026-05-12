@@ -324,7 +324,7 @@ CREATE TABLE IF NOT EXISTS tosalpee.credential_issue_requests (
     issue_request_code  UUID          NOT NULL,
     user_id             BIGINT        NOT NULL,
     document_type_code  VARCHAR(40)   NOT NULL,
-    document_code       UUID,
+    document_code       UUID          NOT NULL,
     status              VARCHAR(20)   NOT NULL,
     current_stage       VARCHAR(30)   NOT NULL,
     requested_at        TIMESTAMP(0)  NOT NULL,
@@ -356,7 +356,7 @@ COMMENT ON COLUMN tosalpee.credential_issue_requests.id                 IS '내�
 COMMENT ON COLUMN tosalpee.credential_issue_requests.issue_request_code IS '외부 노출용 발급 요청 UUID. API path/response에서 issueRequestId로 사용한다.';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.user_id            IS '발급 요청 사용자 FK — users(id). Internal JWT에서 식별된 사용자와 매칭된다.';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.document_type_code IS '요청한 문서/credential 종류 코드 — document_types(code).';
-COMMENT ON COLUMN tosalpee.credential_issue_requests.document_code       IS '원본 Document FK — documents(document_code). nullable 이며 문서 연동이 있는 발급 요청만 채운다.';
+COMMENT ON COLUMN tosalpee.credential_issue_requests.document_code       IS '원본 Document FK — documents(document_code). credential 발급 요청은 반드시 원천 문서와 연결된다.';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.status             IS '발급 요청 상태. 예: ISSUED | FAILED.';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.current_stage      IS '4-stage 발급 파이프라인 현재 단계. 예: MYDATA_RECEIVED | DOCUMENT_MOVED | TRANSLATION_RECEIVED | APOSTILLE_RECEIVED.';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.requested_at       IS '사용자가 발급 요청을 생성한 시각.';
