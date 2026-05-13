@@ -80,7 +80,8 @@ export class DocumentMvpService {
   /**
    * 다음 FE step 으로 전이 — advance 1회 = step 한 칸 이동.
    *
-   * 신청 직후 (AUTHORITY_DOC_ISSUED PENDING) → advance 1회 (step 2) → advance 2회 (step 3) → advance 3회 (step 4 종착).
+   * 신청 직후 (AUTHORITY_DOC_ISSUED PENDING) →
+   *   advance 1회 (step 2) → 2회 (step 3) → 3회 (step 4 = VALID) → 4회 (INSTITUTION_DOC_SUBMIT 후속).
    *
    * 시나리오 1: current_stage = AUTHORITY_DOC_ISSUED (step 1 진행 중)
    *   - AUTHORITY_DOC_ISSUED PENDING → DONE 마감
@@ -93,10 +94,15 @@ export class DocumentMvpService {
    *   - APOSTILLE_DOC_ISSUED PENDING 신규 INSERT (step 3 시작)
    *   - documents.current_stage = APOSTILLE_DOC_ISSUED
    *
-   * 시나리오 3: current_stage = APOSTILLE_DOC_ISSUED (step 3 진행 중)
+   * 시나리오 3: current_stage = APOSTILLE_DOC_ISSUED (step 3 진행 중, status != VALID)
    *   - APOSTILLE_DOC_ISSUED PENDING → DONE 마감
    *   - documents.status = VALID, issuedAt = now (current_stage 그대로)
    *
+   * 시나리오 4: status = VALID & current_stage = APOSTILLE_DOC_ISSUED (파이프라인 종료 후 기관 제출 후속)
+   *   - INSTITUTION_DOC_SUBMIT DONE 신규 INSERT (`5-{문서명}_기관제출.pdf` s3_object_key)
+   *   - documents.current_stage = INSTITUTION_DOC_SUBMIT (status=VALID 유지)
+   *
+   * status=VALID & current_stage=INSTITUTION_DOC_SUBMIT 면 진짜 마지막 — 거부.
    * 그 외 stage (TRANSLATOR_DOC_NOTARIZED) 가 current_stage 인 경우는 비정상 — 거부.
    */
   async advance(
@@ -111,7 +117,12 @@ export class DocumentMvpService {
       throw new DomainError(ErrorCode.Document.NOT_OWNED, { documentCode });
     }
 
-    if (document.status === DocumentMvpStatus.VALID) {
+    // 파이프라인 종료(status=VALID) 후 한 번 더 advance 로 INSTITUTION_DOC_SUBMIT 후속 이벤트를 기록한다.
+    // 이미 INSTITUTION_DOC_SUBMIT 까지 도달했으면 진짜 마지막 — 거부.
+    if (
+      document.status === DocumentMvpStatus.VALID &&
+      document.currentStage === DocumentMvpStage.INSTITUTION_DOC_SUBMIT
+    ) {
       throw new DomainError(ErrorCode.Document.ALREADY_FINAL_STAGE, {
         documentCode,
         currentStage: document.currentStage,
@@ -119,6 +130,36 @@ export class DocumentMvpService {
     }
 
     const now = new Date();
+
+    if (
+      document.status === DocumentMvpStatus.VALID &&
+      document.currentStage === DocumentMvpStage.APOSTILLE_DOC_ISSUED
+    ) {
+      // step 4 종료 후 기관 제출 이벤트 — `5-{문서명}_기관제출.pdf` 를 stage 로 기록.
+      // ORDERED_MVP_STAGES 미포함이라 detail 응답의 stages[]/uiSteps[] 에는 노출되지 않음.
+      await this.repository.createStageEvent({
+        documentId: document.id,
+        stage: DocumentMvpStage.INSTITUTION_DOC_SUBMIT,
+        status: DocumentMvpStageStatus.DONE,
+        startedAt: now,
+        completedAt: now,
+        s3ObjectKey: toMvpRawStagePdfUrl(
+          document.documentTypeCode,
+          DocumentMvpStage.INSTITUTION_DOC_SUBMIT,
+        ),
+      });
+      const updated = await this.repository.updateStage(document.id, {
+        currentStage: DocumentMvpStage.INSTITUTION_DOC_SUBMIT,
+        status: DocumentMvpStatus.VALID,
+        issuedAt: document.issuedAt,
+      });
+      return new AdvanceDocumentMvpResult(
+        updated.documentCode,
+        updated.currentStage,
+        updated.status,
+        updated.issuedAt,
+      );
+    }
 
     if (document.currentStage === DocumentMvpStage.AUTHORITY_DOC_ISSUED) {
       // step 1 → step 2 (기관 발급 → 번역·공증)
@@ -197,25 +238,12 @@ export class DocumentMvpService {
     }
 
     if (document.currentStage === DocumentMvpStage.APOSTILLE_DOC_ISSUED) {
-      // step 3 → step 4 (아포스티유 → 발급 완료, 종착)
+      // step 3 → step 4 (아포스티유 → 발급 완료, 파이프라인 종료)
       await this.repository.completePendingStage(
         document.id,
         DocumentMvpStage.APOSTILLE_DOC_ISSUED,
         now,
       );
-      // 파이프라인 종료 후속 이벤트 — 기관 제출 산출물(`5-{문서명}_기관제출.pdf`) 을 stage 로 기록.
-      // ORDERED_MVP_STAGES 미포함이라 detail 응답의 stages[]/uiSteps[] 에는 노출되지 않음.
-      await this.repository.createStageEvent({
-        documentId: document.id,
-        stage: DocumentMvpStage.INSTITUTION_DOC_SUBMIT,
-        status: DocumentMvpStageStatus.DONE,
-        startedAt: now,
-        completedAt: now,
-        s3ObjectKey: toMvpRawStagePdfUrl(
-          document.documentTypeCode,
-          DocumentMvpStage.INSTITUTION_DOC_SUBMIT,
-        ),
-      });
       const updated = await this.repository.updateStage(document.id, {
         currentStage: DocumentMvpStage.APOSTILLE_DOC_ISSUED,
         status: DocumentMvpStatus.VALID,
