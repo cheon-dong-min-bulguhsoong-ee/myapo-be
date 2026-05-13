@@ -1,101 +1,134 @@
-# MyApoBE
+## Intro
 
-XRPL 표준을 아포스티유 발행 인증 및 추적 서비스 "MyApo"의 Backend 레포지토리입니다. 
+`MyApo`는 재한 외국인과 재외 한국인이 해외 금융·행정 절차에 필요한 공문서와 아포스티유를 더 빠르고 안전하게 제출할 수 있도록, 발급 주체·문서 단계·검증 기록을 표준화하는 디지털 아포스티유 플랫폼입니다.
 
-- English Version: [Click this!](./README.en.md)
+> 🚀 KFIP 2026 카테고리 기준으로 `MyApo`는 **디지털 신원**, **기타 금융/인프라**에 해당합니다.
 
----
+## Background & Problem
 
-## 기술 스택
+재한 외국인이 본국 금융기관, 학교, 행정기관에 한국 발급 서류를 제출하거나 재외 한국인이 해외 발급 서류를 한국 기관에 제출하려면 정부 발급, 번역공증, 아포스티유, 국제 송부를 직접 처리해야 합니다.
 
-| 항목 | 기술 | 버전 |
-| :--- | :--- | :--- |
-| 프레임워크 | NestJS | 10.x |
-| 언어 | TypeScript | 5.x |
-| ORM | Prisma | 5.x |
-| 데이터베이스 | PostgreSQL | 15+ |
-| API 문서 | Swagger / OpenAPI | 3.0 |
+- 현재 이 과정은 평균 약 8주가 걸리고 종합 비용이 30만 원 이상 발생합니다.
+- 문서 위조가 적발돼도 발급, 번역공증, 아포스티유, 송부 중 어느 단계에서 문제가 들어왔는지 입증하기 어렵습니다.
 
----
+## Solution
 
-## AI 에이전트 컨텍스트
+MyApo는 이 네 단계를 하나의 디지털 플로우로 묶습니다.
 
-이 프로젝트는 아키텍처 일관성과 사양 중심 개발을 보장하기 위해 AI 에이전트(Gemini, Claude 등)를 위한 구조화된 컨텍스트 시스템을 사용합니다.
+- 사용자는 최초 신청 후 단계별 확인과 동의만 수행하고, 정부 발급 주체, 번역공증사, 아포스티유 처리 기관, 최종 수령자는 XRPL 위의 검증 가능한 인증서와 권한 도메인을 통해 각자의 역할을 수행합니다.
+- 원본 문서와 개인정보는 온체인에 올리지 않고 암호화해 오프체인에 보관하며, XRPL에는 발급 주체, 권한, 단계별 검증 기록, 분쟁 추적에 필요한 증명 정보만 남깁니다.
 
-모든 AI 세션은 반드시 Control Plane을 읽는 것으로 시작해야 합니다:
-[.ai-agent-context/.orchestrator.md](./.ai-agent-context/.orchestrator.md)
+## Result
 
-### 컨텍스트 구조
-- Rules (.ai-agent-context/rules/): 아키텍처 원칙, 코딩 컨벤션, 명명 규칙 및 테스트 전략에 대한 단일 진실 공급원(SSOT)입니다.
-- Specs (.ai-agent-context/specs/): 도메인 주도 설계 사양, 유비쿼터스 언어 및 API 계약입니다.
-- ADRs (.ai-agent-context/adrs/): 기술적 선택의 배경인 "이유"를 기록한 아키텍처 결정 기록입니다.
-- References (.ai-agent-context/references/): 외부 표준(XRPL, W3C) 및 기술 문서입니다.
+- 외국인과 재외 국민이 해외 금융 계좌 개설, 송금, 유학, 취업, 가족관계 증빙 등 cross-border 금융·행정 절차를 진행할 때 필요한 신원·문서 검증 병목을 해결합니다.
+- 동시에 XLS-70 Credentials와 XLS-80 Permissioned Domains를 활용하는 compliance-first 금융 인프라로서 XRPL 생태계의 규제 친화적 활용 사례를 제시합니다.
 
 ---
 
-## 환경 설정
+> 🎯 여기서부터 `myapo-be`를 구현 및 실행하기 위해 필요한 정보를 제공합니다.
 
-1. 환경 변수 템플릿 복사
-   ```bash
-   cp .env.example .env
-   ```
+## Requirements
 
-2. 데이터베이스 연결 설정
-   .env 파일을 편집하여 PostgreSQL 접속 정보를 설정하십시오:
-   ```text
-   DATABASE_URL="postgresql://<USER>:<PASSWORD>@<HOST>:5432/<NAME>?schema=<SCHEMA>"
-   PORT=4000
-   NODE_ENV=development
-   ```
+### Accounts
 
-3. 특수 문자 URL 인코딩
-   비밀번호에 특수 문자가 포함된 경우 반드시 URL 인코딩을 해야 합니다:
+- Google ID
+- Kakao, Naver, Line **(지원 예정)**
 
-   - `#` -> %23
-   - `$` -> %24
-   - `@` -> %40
+### Dev Environments
 
----
+| Type           | Name                     |
+| -------------- | ------------------------ |
+| Runtime        | Node.js                  |
+| Database       | PostgreSQL               |
+| Object Storage | S3                       |
+| Blockchain     | XRPL                     |
+| AI             | Claude Code/Gemini/Codex |
 
-## 주의 사항 및 제약 조건
 
-- prisma migrate 사용 금지: 데이터베이스 스키마는 외부에서 관리됩니다. prisma db pull을 사용하여 동기화하고 prisma generate로 클라이언트를 업데이트하십시오.
-- 의존성 방향: 의존성 규칙을 엄격히 준수하십시오: Interfaces -> Application -> Domain <- Infrastructure.
-- 에러 모델: rules/conventions/coding-convention.md에 정의된 통합 DomainError + ErrorCode 모델을 사용하십시오.
-- 데이터베이스 권한: 사용자가 스키마 및 시퀀스에 대해 적절한 GRANT 권한을 가지고 있는지 확인하십시오.
+## Demo & API
 
----
+- ⭐️ Our demo: https://app.myapo.xyz
+- Check API in Swagger: https://api.myapo.xyz/docs
 
-## 시작하기
+## Tech Stack
 
-### 설치 및 빌드
-```bash
-npm install
+| Type          | Tech            | Version      |
+| ------------- | --------------- | ------------ |
+| Language      | TypeScript      | 5.6.2        |
+| Web Framework | NestJS          | 11.0.7       |
+| XRPL          | xrpl.js         | 4.6.0        |
+| ORM           | Prisma          | 5.22.0       |
+| Runtime       | Node.js         | 24.4.1       |
+| Testing       | Jest/Supertest  | 29.7.0/7.0.0 |
+| Docs          | Swagger/OpenAPI | 3.0          |
+
+## XRPL Natvie Tech Stack
+
+| Standards | Name                 | Status |
+| --------- | -------------------- | ------ |
+| XLS-70    | Credentials          | 적용     |
+| XLS-80    | Permissioned Domains | 구현예정   |
+| XLS-85    | Token Escrow         | 구현예정   |
+| -         | RLUSD                | 검토중    |
+
+## How to start myapo-be
+
+### Install & Build
+
+```
+npm install 
 npx prisma generate
-npm run build
+npm run build 
 ```
 
-### 실행 명령
-| 모드 | 명령 |
-| :--- | :--- |
-| 개발 모드 | npm run start:dev (Watch 모드) |
-| 1회 실행 | npm run start |
-| 운영 모드 | npm run build && npm run start:prod |
+### Run
 
-### API 문서
-- Swagger UI: http://localhost:4000/docs
-- OpenAPI JSON: http://localhost:4000/docs-json
-- 인증: Swagger UI의 Authorize 버튼을 사용하여 Bearer JWT를 입력하십시오.
+```
+// dev
+npm run start:dev 
 
----
+// production
+npm run start:prod
+```
 
-## 스크립트 참조
 
-| 스크립트 | 설명 |
-| :--- | :--- |
-| npm run lint | ESLint 실행 및 자동 수정 |
-| npm run format | Prettier를 사용한 코드 포맷팅 |
-| npm test | Jest 유닛 테스트 실행 |
-| npm run test:e2e | Jest E2E 테스트 실행 |
-| npm run prisma:pull | 원격 DB에서 로컬 스키마 동기화 |
-| npm run prisma:studio | Prisma Studio GUI 열기 |
+> ⚠️ 실행 전에 `.env` 파일 필요
+
+```env
+DATABASE_URL="postgresql://<user_name>:<password>@<ip>:<port>/postgres?schema=<schema_name>"
+
+# Application
+PORT=4000
+NODE_ENV=development # or production 
+
+# Auth - External
+GOOGLE_OAUTH_CLIENT_ID="" 
+WEB3AUTH_CLIENT_ID="" 
+WALLET_SEED="" # 
+
+# Auth — Internal
+JWT_SECRET=""
+JWT_EXPIRES_IN=1h
+
+# Object Storage
+S3_ENDPOINT=""
+S3_ACCESS_KEY_ID=""
+S3_SECRET_ACCESS_KEY=""
+S3_BUCKET=""
+```
+
+
+> ⚠️ 스키마 동기화 필요시
+
+```bash
+// 스키마를 변경하고 아직 데이터베이스를 업데이트 하지 않았다면 
+npx prisma db push
+
+// 마이그레이션 필요시 
+npx prisma migrate dev --name init 
+
+// 데이터베이스 드롭 후 새로 마이그레이션 필요시
+rm -rf ./prisma/migrations
+npx prisma migrate dev --name init
+```
+
