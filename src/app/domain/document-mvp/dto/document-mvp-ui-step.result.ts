@@ -132,7 +132,11 @@ const mergeSubStages = (
 const pickPdfUrl = (
   subs: Array<DocumentMvpStageDetail | undefined>,
 ): string | null => {
-  for (const s of subs) {
+  // 뒤(=가장 늦은 sub-stage)부터 훑어 latest s3_object_key 를 우선 노출.
+  // 예: step 2 = [TRANSLATOR_DOC_RECEIVED, TRANSLATOR_DOC_NOTARIZED] —
+  //   notarized 가 들어오기 전엔 myapo URL, 들어온 후엔 번역공증 URL 이 우선.
+  for (let i = subs.length - 1; i >= 0; i--) {
+    const s = subs[i];
     if (s?.s3ObjectKey) return s.s3ObjectKey;
   }
   return null;
