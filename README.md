@@ -31,8 +31,8 @@ MyApo는 이 네 단계를 하나의 디지털 플로우로 묶습니다.
 
 ### Accounts
 
-- Google ID
-- Kakao, Naver, Line **(지원 예정)**
+- Google ID 혹은 Email 직접 입력  
+- X(Twitter), Kakao, Line **(지원 예정)**
 
 ### Dev Environments
 
