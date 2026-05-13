@@ -1,27 +1,6 @@
 import { DocumentMvpStage } from "../enum/document-mvp-stage.enum";
 
 /**
- * MVP step 별 단계명 — S3 파일명 suffix 에 사용 (`{step}-{문서명}_{단계명}.pdf`).
- */
-const MVP_PDF_STAGE_PARTS: Record<1 | 2 | 3, string> = {
-  1: "국내기관발급",
-  2: "번역공증",
-  3: "아포스티유",
-};
-
-/**
- * raw 5단계 → FE 4단계 step 매핑. step 4(발급 완료) 는 별도 stage 없이
- * APOSTILLE_DOC_ISSUED 완료 + status=VALID 로 표현하므로 raw stage 매핑은 1~3 만 존재.
- */
-const RAW_STAGE_TO_UI_STEP: Record<DocumentMvpStage, 1 | 2 | 3> = {
-  [DocumentMvpStage.USER_DOC_REQUESTED]: 1,
-  [DocumentMvpStage.AUTHORITY_DOC_ISSUED]: 1,
-  [DocumentMvpStage.TRANSLATOR_DOC_RECEIVED]: 2,
-  [DocumentMvpStage.TRANSLATOR_DOC_NOTARIZED]: 2,
-  [DocumentMvpStage.APOSTILLE_DOC_ISSUED]: 3,
-};
-
-/**
  * documentTypeCode → S3 파일명에 들어가는 한글 문서명(띄어쓰기 없음).
  * 매핑 안 된 type 은 PDF 미제공.
  */
@@ -32,32 +11,39 @@ const MVP_PDF_DOC_NAMES: Record<string, string> = {
 };
 
 /**
- * detail response 의 `uiSteps[].pdfUrl` — R2 public dev URL 직접 노출.
+ * raw 5단계 → S3 파일명 빌더.
  *
- * R2 객체 키 패턴 : `mvp/{step}-{문서명}_{단계명}.pdf`
- * 환경변수      : `S3_PUBLIC_BASE_URL=https://pub-<hash>.r2.dev`
- *
- * step 4(발급 완료), 매핑 안 된 documentType, env 미설정 시 → null.
+ *   USER_DOC_REQUESTED       → `1-{문서명}_국내기관발급.pdf` (FE step 1)
+ *   AUTHORITY_DOC_ISSUED     → `1-{문서명}_국내기관발급.pdf` (FE step 1)
+ *   TRANSLATOR_DOC_RECEIVED  → `1-{문서명}_myapo.pdf`        (myapo 가 번역소에 보낸 원본)
+ *   TRANSLATOR_DOC_NOTARIZED → `2-{문서명}_번역공증.pdf`     (FE step 2)
+ *   APOSTILLE_DOC_ISSUED     → `3-{문서명}_아포스티유.pdf`   (FE step 3 / step 4 동일)
  */
-export const toMvpStepPdfUrl = (
-  documentTypeCode: string,
-  step: number,
-): string | null => {
-  if (step !== 1 && step !== 2 && step !== 3) return null;
-  const docName = MVP_PDF_DOC_NAMES[documentTypeCode];
-  if (!docName) return null;
-  const base = (process.env.S3_PUBLIC_BASE_URL ?? "").replace(/\/+$/, "");
-  if (base === "") return null;
-  return `${base}/mvp/${step}-${docName}_${MVP_PDF_STAGE_PARTS[step]}.pdf`;
+const RAW_STAGE_FILENAME_BUILDER: Record<
+  DocumentMvpStage,
+  (docName: string) => string
+> = {
+  [DocumentMvpStage.USER_DOC_REQUESTED]: (n) => `1-${n}_국내기관발급.pdf`,
+  [DocumentMvpStage.AUTHORITY_DOC_ISSUED]: (n) => `1-${n}_국내기관발급.pdf`,
+  [DocumentMvpStage.TRANSLATOR_DOC_RECEIVED]: (n) => `1-${n}_myapo.pdf`,
+  [DocumentMvpStage.TRANSLATOR_DOC_NOTARIZED]: (n) => `2-${n}_번역공증.pdf`,
+  [DocumentMvpStage.APOSTILLE_DOC_ISSUED]: (n) => `3-${n}_아포스티유.pdf`,
 };
 
 /**
  * raw 5단계 stage 의 PDF URL. document_stages.s3_object_key 에 저장 + uiSteps 노출용.
- * 매핑 안 된 documentType 이거나 env 미설정 시 null.
+ *
+ * 환경변수 : `S3_PUBLIC_BASE_URL=https://pub-<hash>.r2.dev`
+ * 매핑 안 된 documentType / env 미설정 시 → null.
  */
 export const toMvpRawStagePdfUrl = (
   documentTypeCode: string,
   stage: DocumentMvpStage,
 ): string | null => {
-  return toMvpStepPdfUrl(documentTypeCode, RAW_STAGE_TO_UI_STEP[stage]);
+  const docName = MVP_PDF_DOC_NAMES[documentTypeCode];
+  if (!docName) return null;
+  const base = (process.env.S3_PUBLIC_BASE_URL ?? "").replace(/\/+$/, "");
+  if (base === "") return null;
+  const fileName = RAW_STAGE_FILENAME_BUILDER[stage](docName);
+  return `${base}/mvp/${fileName}`;
 };
