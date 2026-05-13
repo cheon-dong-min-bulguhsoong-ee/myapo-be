@@ -63,7 +63,7 @@ MyApo는 이 네 단계를 하나의 디지털 플로우로 묶습니다.
 | Auth          | Web3Auth/JWT    | -            |
 | Docs          | Swagger/OpenAPI | 3.0          |
 
-## XRPL Natvie Tech Stack
+## XRPL Native Tech Stack
 
 | Standards | Name                 | Status |
 | --------- | -------------------- | ------ |
