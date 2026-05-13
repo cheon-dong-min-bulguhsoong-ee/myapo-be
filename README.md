@@ -59,7 +59,11 @@ MyApo는 이 네 단계를 하나의 디지털 플로우로 묶습니다.
 | AI             | Claude Code/Gemini/Codex | -       |
 
 
+<<<<<<< Updated upstream
 ## XRPL Natvie Tech Stack
+=======
+## XRPL Native Tech Stack
+>>>>>>> Stashed changes
 
 | Standards | Name                 | Transaction              | Status |
 | --------- | -------------------- | ------------------------ | ------ |
