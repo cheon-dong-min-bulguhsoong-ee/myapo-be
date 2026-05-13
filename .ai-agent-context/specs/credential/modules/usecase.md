@@ -11,7 +11,7 @@
 ### Service Flow
 1. **Auth Context**: Receive `userId` from `JwtAuthGuard`-verified Internal JWT.
 3. **Validation**: Confirm user, wallet, document type, and issuer eligibility through approved boundaries.
-4. **Create Request**: Create `CredentialIssueRequest` with 4-stage pipeline ending at `APOSTILLE_ISSUED` or appropriate current stage.
+4. **Create Request**: Create `CredentialIssueRequest` with 4-stage pipeline ending at `APOSTILLE_DOC_ISSUED` or appropriate current stage.
 5. **Persistence**: Save request and initial stage snapshots transactionally.
 6. **Output**: Return request id, status, current stage, and pipeline.
 
@@ -27,7 +27,7 @@
 ### Service Flow
 1. **Load Request**: Find request and current pipeline stage.
 2. **Validate Transition**: Ensure next stage follows allowed order.
-3. **Complete Credential**: When stage reaches `APOSTILLE_ISSUED` and credential creation succeeds, create `Credential`.
+3. **Complete Credential**: When stage reaches `APOSTILLE_DOC_ISSUED` and credential creation succeeds, create `Credential`.
 4. **Persist**: Save request, stage snapshots, credential result, and failure reason if failed.
 
 ### Input / Output

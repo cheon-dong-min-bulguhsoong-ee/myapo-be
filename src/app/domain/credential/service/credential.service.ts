@@ -259,7 +259,7 @@ export class CredentialService {
       this.toCredentialSummaryResult(credential),
       this.buildPipeline(
         (credential.currentStage as IssuePipelineStage) ??
-          IssuePipelineStage.APOSTILLE_ISSUED,
+          IssuePipelineStage.APOSTILLE_DOC_ISSUED,
         CredentialIssueRequestStatus.ISSUED,
       ),
       submissions.map((submission) => this.toSubmissionItemResult(submission)),

@@ -37,7 +37,7 @@ describe("DisputeService", () => {
     it("새로운 분쟁을 성공적으로 생성한다", async () => {
       const input = {
         type: DisputeType.TYPO,
-        targetStage: IssuePipelineStage.TRANSLATED_NOTARIZED,
+        targetStage: IssuePipelineStage.TRANSLATOR_DOC_NOTARIZED,
         requestId: "REQ-123",
         requesterId: BigInt(1),
       };
@@ -74,7 +74,7 @@ describe("DisputeService", () => {
         disputeId,
         DisputeStatus.RECEIVED,
         DisputeType.TYPO,
-        IssuePipelineStage.TRANSLATED_NOTARIZED,
+        IssuePipelineStage.TRANSLATOR_DOC_NOTARIZED,
         "REQ-123",
         BigInt(1),
         null,
@@ -105,7 +105,7 @@ describe("DisputeService", () => {
         disputeId,
         DisputeStatus.ASSIGNED,
         DisputeType.TYPO,
-        IssuePipelineStage.TRANSLATED_NOTARIZED,
+        IssuePipelineStage.TRANSLATOR_DOC_NOTARIZED,
         "REQ-123",
         BigInt(1),
         BigInt(11),
@@ -144,7 +144,7 @@ describe("DisputeService", () => {
           "DSP-2026-0001",
           DisputeStatus.RECEIVED,
           DisputeType.TYPO,
-          IssuePipelineStage.TRANSLATED_NOTARIZED,
+          IssuePipelineStage.TRANSLATOR_DOC_NOTARIZED,
           "REQ-123",
           requesterId,
           null,
