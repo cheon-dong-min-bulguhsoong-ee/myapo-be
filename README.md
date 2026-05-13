@@ -40,7 +40,7 @@ MyApo는 이 네 단계를 하나의 디지털 플로우로 묶습니다.
 
 ### Scenario 
 
-- 🔥 Demo Video: [Click here!]()
+- 🔥 Demo Video: [Click here!](https://www.youtube.com/watch?v=o54uknVbJJI)
 - 👀 Demo Slides: [Click here!](https://docs.google.com/presentation/d/1b1pUuLNZj7ylIwwGOsYP0mhWofAe-wLd6IJqA6m9KKA/edit?usp=sharing)
 
 
