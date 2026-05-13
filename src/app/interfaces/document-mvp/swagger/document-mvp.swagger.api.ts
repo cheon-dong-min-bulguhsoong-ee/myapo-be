@@ -16,10 +16,8 @@ export const CreateDocumentMvpSwaggerApi = (): MethodDecorator =>
       description:
         "사용자가 카탈로그에서 한 종류를 선택해 발급을 신청한다.\n\n" +
         "Mock 흐름:\n" +
-        "- stage 1 (USER_DOC_REQUESTED) DONE 즉시 마감\n" +
-        "- stage 2 (AUTHORITY_DOC_ISSUED) DONE 즉시 마감 (기관 발급 API 호출 mock)\n" +
-        "- stage 3 (TRANSLATOR_DOC_RECEIVED) PENDING — current_stage 로 시작\n\n" +
-        "FE 입장에서 신청 직후 곧장 '번역·공증' 단계로 진입한 것처럼 보인다.\n\n" +
+        "- stage 1 (AUTHORITY_DOC_ISSUED) PENDING — current_stage 로 시작\n\n" +
+        "이후 advance 호출로 한 단계씩 전이된다.\n\n" +
         "*인증*: `Authorization: Bearer <accessToken>` 필수.",
     }),
     ApiBearerAuth("InternalJwtBearer"),
@@ -32,8 +30,8 @@ export const AdvanceDocumentMvpSwaggerApi = (): MethodDecorator =>
       summary: "다음 단계 전이 (MVP)",
       description:
         "현재 current_stage 의 PENDING 이벤트를 DONE 으로 마감하고 다음 stage 로 전이.\n" +
-        "stage 5 (APOSTILLE_DOC_ISSUED) 도달 시 즉시 DONE + status=VALID + issuedAt 설정.\n\n" +
-        "*제약*: (1) 본인 소유 문서만 가능. (2) 이미 종착(APOSTILLE_DOC_ISSUED) 인 문서는 거부.\n\n" +
+        "stage 4 (APOSTILLE_DOC_ISSUED) 도달 후 advance 호출 시 DONE + status=VALID + issuedAt 설정.\n\n" +
+        "*제약*: (1) 본인 소유 문서만 가능. (2) status=VALID 인 문서는 거부.\n\n" +
         "*인증*: `Authorization: Bearer <accessToken>` 필수.",
     }),
     ApiBearerAuth("InternalJwtBearer"),

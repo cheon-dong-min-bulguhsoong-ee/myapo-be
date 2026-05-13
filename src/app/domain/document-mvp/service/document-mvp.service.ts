@@ -22,14 +22,12 @@ import {
  *
  * Mock 흐름 요약:
  *   POST /document-mvp 1회 →
- *     stage 1 (USER_DOC_REQUESTED) DONE,
- *     stage 2 (AUTHORITY_DOC_ISSUED) DONE,
- *     stage 3 (TRANSLATOR_DOC_RECEIVED) PENDING — current_stage 로 시작.
+ *     stage 1 (AUTHORITY_DOC_ISSUED) PENDING — current_stage 로 시작.
  *
  *   POST /document-mvp/:code/advance 호출마다 한 단계씩 전진:
- *     stage 3 → 4 → 5.
+ *     AUTHORITY_DOC_ISSUED → TRANSLATOR_DOC_RECEIVED → TRANSLATOR_DOC_NOTARIZED → APOSTILLE_DOC_ISSUED.
  *
- *   stage 5 (APOSTILLE_DOC_ISSUED) 도달 시 status=VALID, issuedAt 채움.
+ *   마지막 advance 호출로 APOSTILLE_DOC_ISSUED DONE + status=VALID, issuedAt 채움.
  */
 @Injectable()
 export class DocumentMvpService {

@@ -220,8 +220,8 @@ COMMENT ON COLUMN tosalpee.documents.id                  IS '문서 PK (BIGSERIA
 COMMENT ON COLUMN tosalpee.documents.document_code       IS '외부 노출용 식별자 (UUID). 클라이언트는 이 코드로 상세조회·SSE 구독.';
 COMMENT ON COLUMN tosalpee.documents.user_id             IS '신청자 FK — users(id).';
 COMMENT ON COLUMN tosalpee.documents.document_type_code  IS '문서 카탈로그 코드 — document_types(code).';
-COMMENT ON COLUMN tosalpee.documents.status              IS '종합 상태 (PROGRESS | AWAITING_APPROVAL | VALID | EXPIRED | REVOKED | FAILED). WALLET_STORED 도달 시 VALID.';
-COMMENT ON COLUMN tosalpee.documents.current_stage       IS '5-stage 파이프라인 현재 위치 (AUTHORITY_ISSUED | DOCUMENT_ARRIVED | TRANSLATED_NOTARIZED | APOSTILLE_ISSUED | WALLET_STORED).';
+COMMENT ON COLUMN tosalpee.documents.status              IS '종합 상태 (IN_PIPELINE | AWAITING_USER_APPROVAL | VALID | FAILED). APOSTILLE_DOC_ISSUED 의 DONE 도달 시 VALID.';
+COMMENT ON COLUMN tosalpee.documents.current_stage       IS '5-stage 파이프라인 현재 위치 (USER_DOC_REQUESTED | AUTHORITY_DOC_ISSUED | TRANSLATOR_DOC_RECEIVED | TRANSLATOR_DOC_NOTARIZED | APOSTILLE_DOC_ISSUED).';
 COMMENT ON COLUMN tosalpee.documents.failure_reason      IS '실패 시 사유 메시지. status=FAILED 일 때만 의미.';
 COMMENT ON COLUMN tosalpee.documents.xrpl_create_tx_hash IS '문서 생성 시 XRPL 트랜잭션 해시 (issuer 의 CredentialCreate 등). hex 64자.';
 COMMENT ON COLUMN tosalpee.documents.xrpl_ledger_index   IS 'XRPL ledger index — 트랜잭션이 포함된 ledger 번호.';
@@ -299,8 +299,8 @@ CREATE INDEX idx_document_stages_stage_status ON tosalpee.document_stages (stage
 COMMENT ON TABLE  tosalpee.document_stages                IS '5-stage 파이프라인 이벤트 로그. 한 stage 가 시작/완료/실패할 때마다 1행 누적.';
 COMMENT ON COLUMN tosalpee.document_stages.id             IS '이벤트 PK.';
 COMMENT ON COLUMN tosalpee.document_stages.document_id    IS '대상 문서 FK — documents(id).';
-COMMENT ON COLUMN tosalpee.document_stages.stage          IS '단계 (AUTHORITY_ISSUED | DOCUMENT_ARRIVED | TRANSLATED_NOTARIZED | APOSTILLE_ISSUED | WALLET_STORED).';
-COMMENT ON COLUMN tosalpee.document_stages.status         IS '이벤트 상태 (PENDING | IN_PROGRESS | DONE | FAILED).';
+COMMENT ON COLUMN tosalpee.document_stages.stage          IS '단계 (USER_DOC_REQUESTED | AUTHORITY_DOC_ISSUED | TRANSLATOR_DOC_RECEIVED | TRANSLATOR_DOC_NOTARIZED | APOSTILLE_DOC_ISSUED).';
+COMMENT ON COLUMN tosalpee.document_stages.status         IS '이벤트 상태 (PENDING | DONE | FAILED).';
 COMMENT ON COLUMN tosalpee.document_stages.tx_hash        IS '해당 stage 처리 중 발생한 XRPL TX 해시(있는 경우). hex 64자.';
 COMMENT ON COLUMN tosalpee.document_stages.s3_object_key  IS '해당 stage 산출물의 S3 객체 키 (번역본 / 아포스티유 PDF 등).';
 COMMENT ON COLUMN tosalpee.document_stages.started_at     IS 'stage 시작 시각.';

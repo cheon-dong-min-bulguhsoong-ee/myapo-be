@@ -26,7 +26,7 @@ export class CreateDocumentMvpRes {
   @ApiProperty({
     enum: DocumentMvpStatus,
     description:
-      "초기 상태. Mock 흐름에서 stage 1 (USER_DOC_REQUESTED) PENDING 상태로 시작하며 AWAITING_USER_APPROVAL.",
+      "초기 상태. Mock 흐름에서 stage 1 (AUTHORITY_DOC_ISSUED) PENDING 상태로 시작하며 AWAITING_USER_APPROVAL.",
     example: DocumentMvpStatus.AWAITING_USER_APPROVAL,
   })
   readonly status!: DocumentMvpStatus;
@@ -37,14 +37,14 @@ export class CreateDocumentMvpRes {
   @ApiProperty({
     enum: DocumentMvpStage,
     description:
-      "신청 직후 current_stage. Mock 흐름에서 stage 1 (USER_DOC_REQUESTED) 부터 시작.",
-    example: DocumentMvpStage.USER_DOC_REQUESTED,
+      "신청 직후 current_stage. Mock 흐름에서 stage 1 (AUTHORITY_DOC_ISSUED) 부터 시작.",
+    example: DocumentMvpStage.AUTHORITY_DOC_ISSUED,
   })
   readonly currentStage!: DocumentMvpStage;
 
   @ApiProperty({
     description: "currentStage 한글 라벨.",
-    example: "발급 신청",
+    example: "기관 발급",
   })
   readonly currentStageLabel!: string;
 
@@ -54,7 +54,7 @@ export class CreateDocumentMvpRes {
   })
   readonly currentStep!: number;
 
-  @ApiProperty({ description: "현재 step 한글 라벨.", example: "발급 신청" })
+  @ApiProperty({ description: "현재 step 한글 라벨.", example: "기관 발급" })
   readonly currentStepLabel!: string;
 
   @ApiProperty({ description: "전체 step 수 (= 4 고정).", example: 4 })
