@@ -355,7 +355,7 @@ COMMENT ON COLUMN tosalpee.credential_issue_requests.user_id            IS '발�
 COMMENT ON COLUMN tosalpee.credential_issue_requests.document_type_code IS '요청한 문서/credential 종류 코드 — document_types(code).';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.document_code       IS '원본 Document FK — documents(document_code). nullable 이며 문서 연동이 있는 발급 요청만 채운다.';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.status             IS '발급 요청 상태. 예: ISSUED | FAILED.';
-COMMENT ON COLUMN tosalpee.credential_issue_requests.current_stage      IS '5-stage 발급 파이프라인 현재 단계. 예: USER_DOC_REQUESTED | AUTHORITY_DOC_ISSUED | TRANSLATOR_DOC_RECEIVED | TRANSLATOR_DOC_NOTARIZED | APOSTILLE_DOC_ISSUED.';
+COMMENT ON COLUMN tosalpee.credential_issue_requests.current_stage      IS '4-stage 발급 파이프라인 현재 단계. 예: AUTHORITY_ISSUED | DOCUMENT_ARRIVED | TRANSLATED_NOTARIZED | APOSTILLE_ISSUED.';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.is_suspended       IS '발급 절차 일시 정지 여부. true면 다음 단계로 진행하지 않는다.';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.requested_at       IS '사용자가 발급 요청을 생성한 시각.';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.issued_at          IS '발급 완료 시각. 발급 전 또는 실패 시 NULL일 수 있다.';
@@ -583,7 +583,7 @@ COMMENT ON TABLE  tosalpee.disputes               IS '분쟁(Dispute) 마스터 
 COMMENT ON COLUMN tosalpee.disputes.id            IS '분쟁 ID (DSP-YYYY-NNNN).';
 COMMENT ON COLUMN tosalpee.disputes.status        IS '분쟁 상태 (RECEIVED | ASSIGNED | IN_REVIEW | INFO_REQUESTED | RESOLVED | REJECTED).';
 COMMENT ON COLUMN tosalpee.disputes.type          IS '분쟁 유형 (TYPO | IDENTITY_MISMATCH | DOCUMENT_INVALID | OTHER).';
-COMMENT ON COLUMN tosalpee.disputes.target_stage  IS '분쟁이 제기된 발급 단계 snapshot. 예: AUTHORITY_DOC_ISSUED.';
+COMMENT ON COLUMN tosalpee.disputes.target_stage  IS '분쟁이 제기된 발급 단계 snapshot. 예: AUTHORITY_ISSUED.';
 COMMENT ON COLUMN tosalpee.disputes.request_id    IS '원문 발급 요청 코드 (issue_request_code).';
 COMMENT ON COLUMN tosalpee.disputes.requester_id  IS '분쟁 제기 사용자 ID (FK).';
 COMMENT ON COLUMN tosalpee.disputes.operator_id   IS '담당 운영자 ID (FK).';

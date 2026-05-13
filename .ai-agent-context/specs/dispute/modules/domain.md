@@ -9,7 +9,7 @@
 | `id` | Unique identifier (DSP-YYYY-NNNN) | System Generated |
 | `status` | Current lifecycle state | Finite State Machine (Enum) |
 | `type` | Nature of grievance (e.g., TYPO) | Determines initial SLA |
-| `targetStage` | The specific stage being disputed | Enum (e.g., `AUTHORITY_DOC_ISSUED`) |
+| `targetStage` | The specific stage being disputed | Enum (e.g., `AUTHORITY_ISSUED`) |
 | `requestId` | Link to the original issuance | Immutable once created |
 | `requesterId` | Member ID who filed the dispute | Immutable |
 | `operatorId` | Assigned staff member | Nullable (until assigned) |

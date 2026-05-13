@@ -122,7 +122,7 @@ components:
       required: [requestId, targetStage, type, headline, reason]
       properties:
         requestId: { type: string }
-        targetStage: { type: string, description: "The pipeline stage being disputed (e.g., AUTHORITY_DOC_ISSUED, TRANSLATOR_DOC_NOTARIZED)" }
+        targetStage: { type: string, description: "The pipeline stage being disputed (e.g., AUTHORITY_ISSUED, TRANSLATED_NOTARIZED)" }
         type: { type: string, enum: [TYPO, MISSING_CONTENT, IMAGE_QUALITY, REISSUE_REQUIRED, OTHERS] }
         sourceCode: { type: string }
         headline: { type: string }
