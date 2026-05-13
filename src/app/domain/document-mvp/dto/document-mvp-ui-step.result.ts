@@ -5,7 +5,6 @@ import {
 import { DocumentMvpStage } from "../enum/document-mvp-stage.enum";
 import { DocumentMvpStatus } from "../enum/document-mvp-status.enum";
 import { DocumentMvpStageDetail } from "./document-mvp-detail.result";
-import { toMvpStepPdfUrl } from "./mvp-pdf-key";
 
 /**
  * FE history/app-1 화면이 보여주는 4단계 step. BE 의 5 raw stage 를 묶어서 만든다.
@@ -35,12 +34,14 @@ export class DocumentMvpUiStepResult {
 
 /**
  * 5개 raw stage + 전체 status 를 받아 FE 4단계 step 으로 변환.
+ *
+ * 각 step 의 pdfUrl 은 해당 step 에 묶인 raw stage 들의 `s3_object_key` 컬럼값을 그대로 사용.
+ * step 4(발급 완료) 의 pdfUrl 은 step 3 (= APOSTILLE_DOC_ISSUED) 의 s3_object_key 와 동일.
  */
 export const toUiSteps = (
   stages: DocumentMvpStageDetail[],
   status: DocumentMvpStatus,
   issuedAt: Date | null,
-  documentTypeCode: string,
 ): DocumentMvpUiStepResult[] => {
   const map = new Map(stages.map((s) => [s.stage, s]));
   const user = map.get(DocumentMvpStage.USER_DOC_REQUESTED);
@@ -49,25 +50,11 @@ export const toUiSteps = (
   const transNotarized = map.get(DocumentMvpStage.TRANSLATOR_DOC_NOTARIZED);
   const apostille = map.get(DocumentMvpStage.APOSTILLE_DOC_ISSUED);
 
-  const step1 = mergeSubStages(
-    1,
-    "발급 신청",
-    [user, authority],
-    toMvpStepPdfUrl(documentTypeCode, 1),
-  );
-  const step2 = mergeSubStages(
-    2,
-    "번역·공증",
-    [transReceived, transNotarized],
-    toMvpStepPdfUrl(documentTypeCode, 2),
-  );
-  const step3 = mergeSubStages(
-    3,
-    "아포스티유",
-    [apostille],
-    toMvpStepPdfUrl(documentTypeCode, 3),
-  );
-  const step4 = buildFinalStep(status, issuedAt);
+  const step1 = mergeSubStages(1, "발급 신청", [user, authority]);
+  const step2 = mergeSubStages(2, "번역·공증", [transReceived, transNotarized]);
+  const step3 = mergeSubStages(3, "아포스티유", [apostille]);
+  // step 4(발급 완료) PDF 는 step 3(아포스티유) 의 PDF 와 동일 — 최종 산출물이 아포스티유 PDF.
+  const step4 = buildFinalStep(status, issuedAt, apostille?.s3ObjectKey ?? null);
 
   return [step1, step2, step3, step4];
 };
@@ -76,13 +63,16 @@ const mergeSubStages = (
   step: number,
   label: string,
   subs: Array<DocumentMvpStageDetail | undefined>,
-  pdfUrl: string | null,
 ): DocumentMvpUiStepResult => {
   // repo 가 5개 stage 슬롯을 다 채워서 보내므로 undefined 가 아니라
   // status=null 객체로 "미시작" 이 표현된다 — status=null 도 미시작으로 간주.
   const started = subs.filter(
     (s): s is DocumentMvpStageDetail => s !== undefined && s.status !== null,
   );
+
+  // 같은 step 에 묶인 sub-stage 들은 동일 PDF (= 같은 s3_object_key) — 첫 non-null 값 사용.
+  // 시작 전 sub-stage 도 s3_object_key 가 INSERT 시 채워졌다면 미리 노출.
+  const pdfUrl = pickPdfUrl(subs);
 
   if (started.length === 0) {
     return new DocumentMvpUiStepResult(
@@ -140,9 +130,19 @@ const mergeSubStages = (
   );
 };
 
+const pickPdfUrl = (
+  subs: Array<DocumentMvpStageDetail | undefined>,
+): string | null => {
+  for (const s of subs) {
+    if (s?.s3ObjectKey) return s.s3ObjectKey;
+  }
+  return null;
+};
+
 const buildFinalStep = (
   status: DocumentMvpStatus,
   issuedAt: Date | null,
+  apostillePdfUrl: string | null,
 ): DocumentMvpUiStepResult => {
   const label = "발급 완료";
   if (status === DocumentMvpStatus.VALID) {
@@ -153,7 +153,7 @@ const buildFinalStep = (
       DOCUMENT_MVP_STAGE_STATUS_LABELS[DocumentMvpStageStatus.DONE],
       issuedAt,
       issuedAt,
-      null,
+      apostillePdfUrl,
     );
   }
   if (status === DocumentMvpStatus.FAILED) {

@@ -24,6 +24,7 @@ export class DocumentMvpStageDetail {
     public readonly startedAt: Date | null,
     public readonly completedAt: Date | null,
     public readonly failureReason: string | null,
+    public readonly s3ObjectKey: string | null,
   ) {}
 
   get stageLabel(): string {

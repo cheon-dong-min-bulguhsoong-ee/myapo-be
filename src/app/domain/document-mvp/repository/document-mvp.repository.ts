@@ -26,6 +26,7 @@ export interface CreateMvpStageEventInput {
   status: DocumentMvpStageStatus;
   startedAt: Date | null;
   completedAt: Date | null;
+  s3ObjectKey?: string | null;
 }
 
 export interface FindMvpListInput {

@@ -6,6 +6,7 @@ import { AdvanceDocumentMvpResult } from "../dto/advance-document-mvp.result";
 import { CreateDocumentMvpResult } from "../dto/create-document-mvp.result";
 import { DocumentMvpDetailResult } from "../dto/document-mvp-detail.result";
 import { DocumentMvpListResult } from "../dto/document-mvp-list-item.result";
+import { toMvpRawStagePdfUrl } from "../dto/mvp-pdf-key";
 import { DocumentMvpStageStatus } from "../enum/document-mvp-stage-status.enum";
 import { DocumentMvpStage } from "../enum/document-mvp-stage.enum";
 import { DocumentMvpStatus } from "../enum/document-mvp-status.enum";
@@ -50,6 +51,10 @@ export class DocumentMvpService {
         status: DocumentMvpStageStatus.PENDING,
         startedAt: now,
         completedAt: null,
+        s3ObjectKey: toMvpRawStagePdfUrl(
+          documentTypeCode,
+          DocumentMvpStage.USER_DOC_REQUESTED,
+        ),
       },
     ];
 
@@ -126,6 +131,10 @@ export class DocumentMvpService {
         status: DocumentMvpStageStatus.DONE,
         startedAt: now,
         completedAt: now,
+        s3ObjectKey: toMvpRawStagePdfUrl(
+          document.documentTypeCode,
+          DocumentMvpStage.AUTHORITY_DOC_ISSUED,
+        ),
       });
       // step 2 진입.
       await this.repository.createStageEvent({
@@ -134,6 +143,10 @@ export class DocumentMvpService {
         status: DocumentMvpStageStatus.PENDING,
         startedAt: now,
         completedAt: null,
+        s3ObjectKey: toMvpRawStagePdfUrl(
+          document.documentTypeCode,
+          DocumentMvpStage.TRANSLATOR_DOC_RECEIVED,
+        ),
       });
       const updated = await this.repository.updateStage(document.id, {
         currentStage: DocumentMvpStage.TRANSLATOR_DOC_RECEIVED,
@@ -162,6 +175,10 @@ export class DocumentMvpService {
         status: DocumentMvpStageStatus.DONE,
         startedAt: now,
         completedAt: now,
+        s3ObjectKey: toMvpRawStagePdfUrl(
+          document.documentTypeCode,
+          DocumentMvpStage.TRANSLATOR_DOC_NOTARIZED,
+        ),
       });
       // step 3 진입.
       await this.repository.createStageEvent({
@@ -170,6 +187,10 @@ export class DocumentMvpService {
         status: DocumentMvpStageStatus.PENDING,
         startedAt: now,
         completedAt: null,
+        s3ObjectKey: toMvpRawStagePdfUrl(
+          document.documentTypeCode,
+          DocumentMvpStage.APOSTILLE_DOC_ISSUED,
+        ),
       });
       const updated = await this.repository.updateStage(document.id, {
         currentStage: DocumentMvpStage.APOSTILLE_DOC_ISSUED,
