@@ -25,7 +25,7 @@ export class CreateCredentialIssueRequestReq {
   @ApiProperty({
     enum: IssuePipelineStage,
     description: "Credential issue pipeline 현재 stage",
-    example: IssuePipelineStage.APOSTILLE_ISSUED,
+    example: IssuePipelineStage.APOSTILLE_DOC_ISSUED,
   })
   @IsEnum(IssuePipelineStage)
   readonly currentStage!: IssuePipelineStage;

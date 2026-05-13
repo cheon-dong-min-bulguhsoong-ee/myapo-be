@@ -521,7 +521,7 @@ components:
             $ref: '#/components/schemas/IssuePipelineStageItem'
         currentStage:
           type: string
-          enum: [AUTHORITY_ISSUED, DOCUMENT_ARRIVED, TRANSLATED_NOTARIZED, APOSTILLE_ISSUED]
+          enum: [AUTHORITY_DOC_ISSUED, TRANSLATOR_DOC_RECEIVED, TRANSLATOR_DOC_NOTARIZED, APOSTILLE_DOC_ISSUED]
     CredentialIssueRequestRes:
       allOf:
         - $ref: '#/components/schemas/CreateCredentialIssueRequestRes'
@@ -537,7 +537,7 @@ components:
       properties:
         stage:
           type: string
-          enum: [AUTHORITY_ISSUED, DOCUMENT_ARRIVED, TRANSLATED_NOTARIZED, APOSTILLE_ISSUED]
+          enum: [AUTHORITY_DOC_ISSUED, TRANSLATOR_DOC_RECEIVED, TRANSLATOR_DOC_NOTARIZED, APOSTILLE_DOC_ISSUED]
         label:
           type: string
         status:
@@ -569,7 +569,7 @@ components:
           type: string
         currentStage:
           type: string
-          enum: [AUTHORITY_ISSUED, DOCUMENT_ARRIVED, TRANSLATED_NOTARIZED, APOSTILLE_ISSUED]
+          enum: [AUTHORITY_DOC_ISSUED, TRANSLATOR_DOC_RECEIVED, TRANSLATOR_DOC_NOTARIZED, APOSTILLE_DOC_ISSUED]
         xrplNetwork:
           type: string
           nullable: true
