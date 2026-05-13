@@ -47,7 +47,7 @@
 | `documentTypeId` | Requested document type. | Required. |
 | `issuerId` | Issuing authority. | Required after validation. |
 | `status` | Request lifecycle status. | `ISSUED`, `FAILED`. |
-| `currentStage` | Current 5-stage pipeline stage. | `USER_DOC_REQUESTED`, `AUTHORITY_DOC_ISSUED`, `TRANSLATOR_DOC_RECEIVED`, `TRANSLATOR_DOC_NOTARIZED`, `APOSTILLE_DOC_ISSUED`. |
+| `currentStage` | Current 6-stage pipeline stage. | `USER_DOC_REQUESTED`, `AUTHORITY_DOC_ISSUED`, `TRANSLATOR_DOC_RECEIVED`, `TRANSLATOR_DOC_NOTARIZED`, `APOSTILLE_DOC_ISSUED`, `INSTITUTION_DOC_SUBMIT`. |
 | `failureReason` | Machine-readable failure reason. | Required when failed. |
 | `createdAt` | Request creation timestamp. | Audit. |
 | `completedAt` | Completion timestamp. | Nullable. |

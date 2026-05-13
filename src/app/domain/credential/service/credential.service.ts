@@ -499,7 +499,7 @@ export class CredentialService {
     subjectAddress: string,
     credentialTypeSource: string,
     expiresAt: Date,
-    uri: string,
+    uri: string | null,
   ): Promise<XrplCredentialTransactionEvidenceResult> {
     const xrplCredentialAdapter = this.getXrplCredentialAdapterOrThrow();
     return xrplCredentialAdapter.submitCredentialCreate({
@@ -514,7 +514,10 @@ export class CredentialService {
   private async resolveXrplUri(
     documentCode: string,
     currentStage: IssuePipelineStage,
-  ): Promise<string> {
+  ): Promise<string | null> {
+    if (currentStage === IssuePipelineStage.INSTITUTION_DOC_SUBMIT) {
+      return null;
+    }
     const s3ObjectKey =
       await this.credentialDocumentStageLookupRepository.findS3ObjectKey(
         documentCode,

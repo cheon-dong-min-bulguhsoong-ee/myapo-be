@@ -313,7 +313,7 @@ COMMENT ON COLUMN tosalpee.document_stages.is_delete      IS 'Soft-delete 플래
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 8) credential_issue_requests — Credential bounded context issue request
---    MVP: 5-stage pipeline + Internal JWT.
+--    MVP: 6-stage pipeline + Internal JWT.
 -- ═══════════════════════════════════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS tosalpee.credential_issue_requests (
                                                                   id                  BIGSERIAL PRIMARY KEY,
@@ -348,14 +348,14 @@ CREATE INDEX IF NOT EXISTS idx_credential_issue_requests_document
 CREATE INDEX IF NOT EXISTS idx_credential_issue_requests_status_stage
     ON tosalpee.credential_issue_requests (status, current_stage);
 
-COMMENT ON TABLE tosalpee.credential_issue_requests IS 'Credential 발급 요청. 최신 MVP 5-stage pipeline 상태를 저장한다.';
+COMMENT ON TABLE tosalpee.credential_issue_requests IS 'Credential 발급 요청. 최신 MVP 6-stage pipeline 상태를 저장한다.';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.id                 IS '내부 PK. 외부 API 응답에는 노출하지 않는다.';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.issue_request_code IS '외부 노출용 발급 요청 UUID. API path/response에서 issueRequestId로 사용한다.';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.user_id            IS '발급 요청 사용자 FK — users(id). Internal JWT에서 식별된 사용자와 매칭된다.';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.document_type_code IS '요청한 문서/credential 종류 코드 — document_types(code).';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.document_code       IS '원본 Document FK — documents(document_code). nullable 이며 문서 연동이 있는 발급 요청만 채운다.';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.status             IS '발급 요청 상태. 예: ISSUED | FAILED.';
-COMMENT ON COLUMN tosalpee.credential_issue_requests.current_stage      IS '5-stage 발급 파이프라인 현재 단계. 예: USER_DOC_REQUESTED | AUTHORITY_DOC_ISSUED | TRANSLATOR_DOC_RECEIVED | TRANSLATOR_DOC_NOTARIZED | APOSTILLE_DOC_ISSUED.';
+COMMENT ON COLUMN tosalpee.credential_issue_requests.current_stage      IS '6-stage 발급 파이프라인 현재 단계. 예: USER_DOC_REQUESTED | AUTHORITY_DOC_ISSUED | TRANSLATOR_DOC_RECEIVED | TRANSLATOR_DOC_NOTARIZED | APOSTILLE_DOC_ISSUED | INSTITUTION_DOC_SUBMIT.';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.is_suspended       IS '발급 절차 일시 정지 여부. true면 다음 단계로 진행하지 않는다.';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.requested_at       IS '사용자가 발급 요청을 생성한 시각.';
 COMMENT ON COLUMN tosalpee.credential_issue_requests.issued_at          IS '발급 완료 시각. 발급 전 또는 실패 시 NULL일 수 있다.';
