@@ -47,13 +47,13 @@ export class DocumentMvpService {
     const seededStages: CreateMvpStageEventInput[] = [
       {
         documentId: BigInt(0),
-        stage: DocumentMvpStage.USER_DOC_REQUESTED,
+        stage: DocumentMvpStage.AUTHORITY_DOC_ISSUED,
         status: DocumentMvpStageStatus.PENDING,
         startedAt: now,
         completedAt: null,
         s3ObjectKey: toMvpRawStagePdfUrl(
           documentTypeCode,
-          DocumentMvpStage.USER_DOC_REQUESTED,
+          DocumentMvpStage.AUTHORITY_DOC_ISSUED,
         ),
       },
     ];
@@ -64,7 +64,7 @@ export class DocumentMvpService {
         userId,
         documentTypeCode,
         status: DocumentMvpStatus.AWAITING_USER_APPROVAL,
-        currentStage: DocumentMvpStage.USER_DOC_REQUESTED,
+        currentStage: DocumentMvpStage.AUTHORITY_DOC_ISSUED,
         requestedAt: now,
       },
       seededStages,
@@ -82,19 +82,24 @@ export class DocumentMvpService {
   /**
    * 다음 FE step 으로 전이 — advance 1회 = step 한 칸 이동.
    *
-   * 신청 시점 (step 2 PENDING) → advance 1회 (step 3) → advance 2회 (step 4 종착).
+   * 신청 직후 (AUTHORITY_DOC_ISSUED PENDING) → advance 1회 (step 2) → advance 2회 (step 3) → advance 3회 (step 4 종착).
    *
-   * 시나리오 1: current_stage = TRANSLATOR_DOC_RECEIVED (step 2 진행 중)
+   * 시나리오 1: current_stage = AUTHORITY_DOC_ISSUED (step 1 진행 중)
+   *   - AUTHORITY_DOC_ISSUED PENDING → DONE 마감
+   *   - TRANSLATOR_DOC_RECEIVED PENDING 신규 INSERT (step 2 시작)
+   *   - documents.current_stage = TRANSLATOR_DOC_RECEIVED
+   *
+   * 시나리오 2: current_stage = TRANSLATOR_DOC_RECEIVED (step 2 진행 중)
    *   - TRANSLATOR_DOC_RECEIVED PENDING → DONE 마감
    *   - TRANSLATOR_DOC_NOTARIZED DONE 신규 INSERT (step 2 안에 묶인 sub-stage, 동시에 자동 완료)
    *   - APOSTILLE_DOC_ISSUED PENDING 신규 INSERT (step 3 시작)
    *   - documents.current_stage = APOSTILLE_DOC_ISSUED
    *
-   * 시나리오 2: current_stage = APOSTILLE_DOC_ISSUED (step 3 진행 중)
+   * 시나리오 3: current_stage = APOSTILLE_DOC_ISSUED (step 3 진행 중)
    *   - APOSTILLE_DOC_ISSUED PENDING → DONE 마감
    *   - documents.status = VALID, issuedAt = now (current_stage 그대로)
    *
-   * 그 외 stage (USER/AUTHORITY/TRANS_NOTARIZED) 가 current_stage 인 경우는 비정상 — 거부.
+   * 그 외 stage (TRANSLATOR_DOC_NOTARIZED) 가 current_stage 인 경우는 비정상 — 거부.
    */
   async advance(
     userId: bigint,
@@ -117,25 +122,13 @@ export class DocumentMvpService {
 
     const now = new Date();
 
-    if (document.currentStage === DocumentMvpStage.USER_DOC_REQUESTED) {
-      // step 1 → step 2 (발급 신청 → 번역·공증)
+    if (document.currentStage === DocumentMvpStage.AUTHORITY_DOC_ISSUED) {
+      // step 1 → step 2 (기관 발급 → 번역·공증)
       await this.repository.completePendingStage(
         document.id,
-        DocumentMvpStage.USER_DOC_REQUESTED,
+        DocumentMvpStage.AUTHORITY_DOC_ISSUED,
         now,
       );
-      // step 1 안에 묶인 sub-stage: 기관 발급도 자동 완료 처리.
-      await this.repository.createStageEvent({
-        documentId: document.id,
-        stage: DocumentMvpStage.AUTHORITY_DOC_ISSUED,
-        status: DocumentMvpStageStatus.DONE,
-        startedAt: now,
-        completedAt: now,
-        s3ObjectKey: toMvpRawStagePdfUrl(
-          document.documentTypeCode,
-          DocumentMvpStage.AUTHORITY_DOC_ISSUED,
-        ),
-      });
       // step 2 진입.
       await this.repository.createStageEvent({
         documentId: document.id,

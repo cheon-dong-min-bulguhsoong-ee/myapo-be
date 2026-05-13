@@ -7,9 +7,9 @@ import { DocumentMvpStatus } from "../enum/document-mvp-status.enum";
 import { DocumentMvpStageDetail } from "./document-mvp-detail.result";
 
 /**
- * FE history/app-1 화면이 보여주는 4단계 step. BE 의 5 raw stage 를 묶어서 만든다.
+ * FE history/app-1 화면이 보여주는 4단계 step. BE 의 4 raw stage 를 묶어서 만든다.
  *
- *   step 1 "발급 신청"   ← USER_DOC_REQUESTED + AUTHORITY_DOC_ISSUED
+ *   step 1 "기관 발급"   ← AUTHORITY_DOC_ISSUED
  *   step 2 "번역·공증"   ← TRANSLATOR_DOC_RECEIVED + TRANSLATOR_DOC_NOTARIZED
  *   step 3 "아포스티유"  ← APOSTILLE_DOC_ISSUED
  *   step 4 "발급 완료"   ← status=VALID 도달
@@ -33,7 +33,7 @@ export class DocumentMvpUiStepResult {
 }
 
 /**
- * 5개 raw stage + 전체 status 를 받아 FE 4단계 step 으로 변환.
+ * 4개 raw stage + 전체 status 를 받아 FE 4단계 step 으로 변환.
  *
  * 각 step 의 pdfUrl 은 해당 step 에 묶인 raw stage 들의 `s3_object_key` 컬럼값을 그대로 사용.
  * step 4(발급 완료) 의 pdfUrl 은 step 3 (= APOSTILLE_DOC_ISSUED) 의 s3_object_key 와 동일.
@@ -44,13 +44,12 @@ export const toUiSteps = (
   issuedAt: Date | null,
 ): DocumentMvpUiStepResult[] => {
   const map = new Map(stages.map((s) => [s.stage, s]));
-  const user = map.get(DocumentMvpStage.USER_DOC_REQUESTED);
   const authority = map.get(DocumentMvpStage.AUTHORITY_DOC_ISSUED);
   const transReceived = map.get(DocumentMvpStage.TRANSLATOR_DOC_RECEIVED);
   const transNotarized = map.get(DocumentMvpStage.TRANSLATOR_DOC_NOTARIZED);
   const apostille = map.get(DocumentMvpStage.APOSTILLE_DOC_ISSUED);
 
-  const step1 = mergeSubStages(1, "발급 신청", [user, authority]);
+  const step1 = mergeSubStages(1, "기관 발급", [authority]);
   const step2 = mergeSubStages(2, "번역·공증", [transReceived, transNotarized]);
   const step3 = mergeSubStages(3, "아포스티유", [apostille]);
   // step 4(발급 완료) PDF 는 step 3(아포스티유) 의 PDF 와 동일 — 최종 산출물이 아포스티유 PDF.
@@ -187,14 +186,16 @@ export const toCurrentUiStep = (
     return { step: 4, label: "발급 완료", totalSteps };
   }
   switch (currentStage) {
-    case DocumentMvpStage.USER_DOC_REQUESTED:
     case DocumentMvpStage.AUTHORITY_DOC_ISSUED:
-      return { step: 1, label: "발급 신청", totalSteps };
+      return { step: 1, label: "기관 발급", totalSteps };
     case DocumentMvpStage.TRANSLATOR_DOC_RECEIVED:
     case DocumentMvpStage.TRANSLATOR_DOC_NOTARIZED:
       return { step: 2, label: "번역·공증", totalSteps };
     case DocumentMvpStage.APOSTILLE_DOC_ISSUED:
       return { step: 3, label: "아포스티유", totalSteps };
+    default:
+      // documents 테이블은 레거시 파이프라인과 공유 — 옛 stage 값(예: RECEIVED, USER_DOC_REQUESTED) row 는 step 1 로 폴백.
+      return { step: 1, label: "기관 발급", totalSteps };
   }
 };
 
