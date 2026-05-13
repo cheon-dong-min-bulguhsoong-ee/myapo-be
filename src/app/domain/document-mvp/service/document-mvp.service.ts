@@ -203,6 +203,19 @@ export class DocumentMvpService {
         DocumentMvpStage.APOSTILLE_DOC_ISSUED,
         now,
       );
+      // 파이프라인 종료 후속 이벤트 — 기관 제출 산출물(`5-{문서명}_기관제출.pdf`) 을 stage 로 기록.
+      // ORDERED_MVP_STAGES 미포함이라 detail 응답의 stages[]/uiSteps[] 에는 노출되지 않음.
+      await this.repository.createStageEvent({
+        documentId: document.id,
+        stage: DocumentMvpStage.INSTITUTION_DOC_SUBMIT,
+        status: DocumentMvpStageStatus.DONE,
+        startedAt: now,
+        completedAt: now,
+        s3ObjectKey: toMvpRawStagePdfUrl(
+          document.documentTypeCode,
+          DocumentMvpStage.INSTITUTION_DOC_SUBMIT,
+        ),
+      });
       const updated = await this.repository.updateStage(document.id, {
         currentStage: DocumentMvpStage.APOSTILLE_DOC_ISSUED,
         status: DocumentMvpStatus.VALID,

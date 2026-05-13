@@ -16,6 +16,9 @@ export enum DocumentMvpStage {
   TRANSLATOR_DOC_RECEIVED = "TRANSLATOR_DOC_RECEIVED",
   TRANSLATOR_DOC_NOTARIZED = "TRANSLATOR_DOC_NOTARIZED",
   APOSTILLE_DOC_ISSUED = "APOSTILLE_DOC_ISSUED",
+  // 파이프라인 종료(status=VALID) 직후 자동으로 기록되는 후속 이벤트.
+  // ORDERED_MVP_STAGES 에는 포함되지 않아 detail 응답의 stages[]/uiSteps[] 에는 노출되지 않음.
+  INSTITUTION_DOC_SUBMIT = "INSTITUTION_DOC_SUBMIT",
 }
 
 /**
@@ -26,10 +29,12 @@ export const DOCUMENT_MVP_STAGE_LABELS: Record<DocumentMvpStage, string> = {
   [DocumentMvpStage.TRANSLATOR_DOC_RECEIVED]: "번역·공증 접수",
   [DocumentMvpStage.TRANSLATOR_DOC_NOTARIZED]: "번역·공증 완료",
   [DocumentMvpStage.APOSTILLE_DOC_ISSUED]: "아포스티유 발급",
+  [DocumentMvpStage.INSTITUTION_DOC_SUBMIT]: "기관 발급",
 };
 
 /**
  * 4단계 정렬 순서 — 응답에 항상 4건의 stage 항목을 정렬된 형태로 채워주기 위함.
+ * INSTITUTION_DOC_SUBMIT 는 의도적으로 제외(파이프라인 후속 이벤트로만 사용).
  */
 export const ORDERED_MVP_STAGES: DocumentMvpStage[] = [
   DocumentMvpStage.AUTHORITY_DOC_ISSUED,
@@ -52,6 +57,7 @@ export const nextMvpStage = (
     case DocumentMvpStage.TRANSLATOR_DOC_NOTARIZED:
       return DocumentMvpStage.APOSTILLE_DOC_ISSUED;
     case DocumentMvpStage.APOSTILLE_DOC_ISSUED:
+    case DocumentMvpStage.INSTITUTION_DOC_SUBMIT:
       return null;
   }
 };

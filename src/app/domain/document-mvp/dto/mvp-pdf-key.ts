@@ -11,12 +11,13 @@ const MVP_PDF_DOC_NAMES: Record<string, string> = {
 };
 
 /**
- * raw 4단계 → S3 파일명 빌더.
+ * raw stage → S3 파일명 빌더.
  *
  *   AUTHORITY_DOC_ISSUED     → `1-{문서명}_국내기관발급.pdf` (FE step 1)
  *   TRANSLATOR_DOC_RECEIVED  → `1-{문서명}_myapo.pdf`        (myapo 가 번역소에 보낸 원본)
  *   TRANSLATOR_DOC_NOTARIZED → `2-{문서명}_번역공증.pdf`     (FE step 2)
  *   APOSTILLE_DOC_ISSUED     → `3-{문서명}_아포스티유.pdf`   (FE step 3 / step 4 동일)
+ *   INSTITUTION_DOC_SUBMIT   → `5-{문서명}_기관제출.pdf`     (파이프라인 종료 후 기관 제출 산출물)
  */
 const RAW_STAGE_FILENAME_BUILDER: Record<
   DocumentMvpStage,
@@ -26,6 +27,7 @@ const RAW_STAGE_FILENAME_BUILDER: Record<
   [DocumentMvpStage.TRANSLATOR_DOC_RECEIVED]: (n) => `1-${n}_myapo.pdf`,
   [DocumentMvpStage.TRANSLATOR_DOC_NOTARIZED]: (n) => `2-${n}_번역공증.pdf`,
   [DocumentMvpStage.APOSTILLE_DOC_ISSUED]: (n) => `3-${n}_아포스티유.pdf`,
+  [DocumentMvpStage.INSTITUTION_DOC_SUBMIT]: (n) => `5-${n}_기관제출.pdf`,
 };
 
 /**
