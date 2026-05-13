@@ -31,7 +31,7 @@ MyApo는 이 네 단계를 하나의 디지털 플로우로 묶습니다.
 
 ### Accounts
 
-- Google ID 혹은 Email 직접 입력  
+- Google ID 혹은 Email 직접 입력
 - X(Twitter), Kakao, Line **(지원 예정)**
 
 ### Dev Environments
@@ -60,6 +60,7 @@ MyApo는 이 네 단계를 하나의 디지털 플로우로 묶습니다.
 | ORM           | Prisma          | 5.22.0       |
 | Runtime       | Node.js         | 24.4.1       |
 | Testing       | Jest/Supertest  | 29.7.0/7.0.0 |
+| Auth          | Web3Auth/JWT    | -            |
 | Docs          | Swagger/OpenAPI | 3.0          |
 
 ## XRPL Natvie Tech Stack
