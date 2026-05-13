@@ -145,7 +145,12 @@ export class DocumentMvpRepositoryImpl extends DocumentMvpRepository {
     );
 
     const status = row.status as DocumentMvpStatus;
-    const uiSteps = toUiSteps(stageDetails, status, row.issuedAt);
+    const uiSteps = toUiSteps(
+      stageDetails,
+      status,
+      row.issuedAt,
+      row.documentTypeCode,
+    );
 
     return new DocumentMvpDetailResult(
       row.documentCode,

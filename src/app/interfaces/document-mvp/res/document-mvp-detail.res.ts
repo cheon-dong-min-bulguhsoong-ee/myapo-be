@@ -84,6 +84,15 @@ export class DocumentMvpUiStepRes {
   @ApiProperty({ nullable: true })
   readonly completedAt!: string | null;
 
+  @ApiProperty({
+    nullable: true,
+    description:
+      "해당 step 의 PDF URL. step 1~3 만 제공되고, step 4(발급 완료) 또는 PDF 미보유 문서타입은 null.",
+    example:
+      "https://pub-xxxxxx.r2.dev/mvp/3-주민등록등본_아포스티유.pdf",
+  })
+  readonly pdfUrl!: string | null;
+
   static from(s: DocumentMvpUiStepResult): DocumentMvpUiStepRes {
     return {
       step: s.step,
@@ -92,6 +101,7 @@ export class DocumentMvpUiStepRes {
       statusLabel: s.statusLabel,
       startedAt: s.startedAt?.toISOString() ?? null,
       completedAt: s.completedAt?.toISOString() ?? null,
+      pdfUrl: s.pdfUrl,
     };
   }
 }

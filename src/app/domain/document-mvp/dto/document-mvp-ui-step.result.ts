@@ -5,6 +5,7 @@ import {
 import { DocumentMvpStage } from "../enum/document-mvp-stage.enum";
 import { DocumentMvpStatus } from "../enum/document-mvp-status.enum";
 import { DocumentMvpStageDetail } from "./document-mvp-detail.result";
+import { toMvpStepPdfUrl } from "./mvp-pdf-key";
 
 /**
  * FE history/app-1 화면이 보여주는 4단계 step. BE 의 5 raw stage 를 묶어서 만든다.
@@ -28,6 +29,7 @@ export class DocumentMvpUiStepResult {
     public readonly statusLabel: string | null,
     public readonly startedAt: Date | null,
     public readonly completedAt: Date | null,
+    public readonly pdfUrl: string | null,
   ) {}
 }
 
@@ -38,6 +40,7 @@ export const toUiSteps = (
   stages: DocumentMvpStageDetail[],
   status: DocumentMvpStatus,
   issuedAt: Date | null,
+  documentTypeCode: string,
 ): DocumentMvpUiStepResult[] => {
   const map = new Map(stages.map((s) => [s.stage, s]));
   const user = map.get(DocumentMvpStage.USER_DOC_REQUESTED);
@@ -46,9 +49,24 @@ export const toUiSteps = (
   const transNotarized = map.get(DocumentMvpStage.TRANSLATOR_DOC_NOTARIZED);
   const apostille = map.get(DocumentMvpStage.APOSTILLE_DOC_ISSUED);
 
-  const step1 = mergeSubStages(1, "발급 신청", [user, authority]);
-  const step2 = mergeSubStages(2, "번역·공증", [transReceived, transNotarized]);
-  const step3 = mergeSubStages(3, "아포스티유", [apostille]);
+  const step1 = mergeSubStages(
+    1,
+    "발급 신청",
+    [user, authority],
+    toMvpStepPdfUrl(documentTypeCode, 1),
+  );
+  const step2 = mergeSubStages(
+    2,
+    "번역·공증",
+    [transReceived, transNotarized],
+    toMvpStepPdfUrl(documentTypeCode, 2),
+  );
+  const step3 = mergeSubStages(
+    3,
+    "아포스티유",
+    [apostille],
+    toMvpStepPdfUrl(documentTypeCode, 3),
+  );
   const step4 = buildFinalStep(status, issuedAt);
 
   return [step1, step2, step3, step4];
@@ -58,6 +76,7 @@ const mergeSubStages = (
   step: number,
   label: string,
   subs: Array<DocumentMvpStageDetail | undefined>,
+  pdfUrl: string | null,
 ): DocumentMvpUiStepResult => {
   // repo 가 5개 stage 슬롯을 다 채워서 보내므로 undefined 가 아니라
   // status=null 객체로 "미시작" 이 표현된다 — status=null 도 미시작으로 간주.
@@ -66,7 +85,15 @@ const mergeSubStages = (
   );
 
   if (started.length === 0) {
-    return new DocumentMvpUiStepResult(step, label, null, null, null, null);
+    return new DocumentMvpUiStepResult(
+      step,
+      label,
+      null,
+      null,
+      null,
+      null,
+      pdfUrl,
+    );
   }
 
   if (started.some((s) => s.status === DocumentMvpStageStatus.FAILED)) {
@@ -80,6 +107,7 @@ const mergeSubStages = (
       DOCUMENT_MVP_STAGE_STATUS_LABELS[DocumentMvpStageStatus.FAILED],
       earliestStartedAt(started),
       failed.completedAt,
+      pdfUrl,
     );
   }
 
@@ -96,6 +124,7 @@ const mergeSubStages = (
       DOCUMENT_MVP_STAGE_STATUS_LABELS[DocumentMvpStageStatus.DONE],
       earliestStartedAt(started),
       latestCompletedAt(started),
+      pdfUrl,
     );
   }
 
@@ -107,6 +136,7 @@ const mergeSubStages = (
     DOCUMENT_MVP_STAGE_STATUS_LABELS[DocumentMvpStageStatus.PENDING],
     earliestStartedAt(started),
     null,
+    pdfUrl,
   );
 };
 
@@ -123,6 +153,7 @@ const buildFinalStep = (
       DOCUMENT_MVP_STAGE_STATUS_LABELS[DocumentMvpStageStatus.DONE],
       issuedAt,
       issuedAt,
+      null,
     );
   }
   if (status === DocumentMvpStatus.FAILED) {
@@ -133,9 +164,10 @@ const buildFinalStep = (
       DOCUMENT_MVP_STAGE_STATUS_LABELS[DocumentMvpStageStatus.FAILED],
       null,
       null,
+      null,
     );
   }
-  return new DocumentMvpUiStepResult(4, label, null, null, null, null);
+  return new DocumentMvpUiStepResult(4, label, null, null, null, null, null);
 };
 
 /**
