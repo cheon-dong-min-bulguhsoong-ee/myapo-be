@@ -25,11 +25,11 @@ MyApo는 이 네 단계를 하나의 디지털 플로우로 묶습니다.
 
 ---
 
-## Demo
+## Demo 
 
 ### You need
 
-- Google ID 혹은 Email 직접 입력
+- Google ID 혹은 Email 직접 입력  
 - X(Twitter), Kakao, Line **(지원 예정)**
 
 ### App & API
@@ -38,7 +38,7 @@ MyApo는 이 네 단계를 하나의 디지털 플로우로 묶습니다.
 - Wireframe: https://design.myapo.xyz
 - Check API in Swagger: https://api.myapo.xyz/docs
 
-### Scenario
+### Scenario 
 
 - 🔥 Demo Video: [Click here!]()
 - 👀 Demo Slides: [Click here!](https://docs.google.com/presentation/d/1b1pUuLNZj7ylIwwGOsYP0mhWofAe-wLd6IJqA6m9KKA/edit?usp=sharing)
@@ -59,11 +59,7 @@ MyApo는 이 네 단계를 하나의 디지털 플로우로 묶습니다.
 | AI             | Claude Code/Gemini/Codex | -       |
 
 
-<<<<<<< Updated upstream
-## XRPL Natvie Tech Stack
-=======
 ## XRPL Native Tech Stack
->>>>>>> Stashed changes
 
 | Standards | Name                 | Transaction              | Status |
 | --------- | -------------------- | ------------------------ | ------ |
