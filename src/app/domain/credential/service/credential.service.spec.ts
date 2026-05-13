@@ -640,7 +640,7 @@ describe("CredentialService", () => {
 
     expect(result.status).toBe(CredentialIssueRequestStatus.ISSUED);
     expect(result.currentStage).toBe(IssuePipelineStage.APOSTILLE_DOC_ISSUED);
-    expect(result.pipeline).toHaveLength(5);
+    expect(result.pipeline).toHaveLength(6);
     expect(repo.credentials).toHaveLength(1);
     expect(repo.credentials[0].status).toBe(CredentialStatus.CREATED);
     expect(repo.xrplTransactions).toHaveLength(1);
