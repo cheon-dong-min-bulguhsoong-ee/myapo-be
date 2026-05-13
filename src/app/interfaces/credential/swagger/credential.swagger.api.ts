@@ -74,7 +74,7 @@ export const ListCredentialsByIssuePipelineStageSwaggerApi = (): MethodDecorator
         name: "currentStage",
         required: true,
         description:
-          "credential_issue_requests.current_stage 값 (MYDATA_RECEIVED | DOCUMENT_MOVED | TRANSLATION_RECEIVED | APOSTILLE_RECEIVED)",
+          "credential_issue_requests.current_stage 값 (USER_DOC_REQUESTED | AUTHORITY_DOC_ISSUED | TRANSLATOR_DOC_RECEIVED | TRANSLATOR_DOC_NOTARIZED | APOSTILLE_DOC_ISSUED)",
       }),
       ApiCommonRes(ListCredentialsByIssuePipelineStageRes),
     ),
