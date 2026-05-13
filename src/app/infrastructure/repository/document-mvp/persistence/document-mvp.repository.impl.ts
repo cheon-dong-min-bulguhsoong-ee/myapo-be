@@ -50,6 +50,7 @@ export class DocumentMvpRepositoryImpl extends DocumentMvpRepository {
           status: s.status,
           startedAt: s.startedAt,
           completedAt: s.completedAt,
+          s3ObjectKey: s.s3ObjectKey ?? null,
         })),
       });
       return [doc];
@@ -107,6 +108,7 @@ export class DocumentMvpRepositoryImpl extends DocumentMvpRepository {
         status: input.status,
         startedAt: input.startedAt,
         completedAt: input.completedAt,
+        s3ObjectKey: input.s3ObjectKey ?? null,
       },
     });
   }
@@ -140,17 +142,13 @@ export class DocumentMvpRepositoryImpl extends DocumentMvpRepository {
           ev?.startedAt ?? null,
           ev?.completedAt ?? null,
           ev?.failureReason ?? null,
+          ev?.s3ObjectKey ?? null,
         );
       },
     );
 
     const status = row.status as DocumentMvpStatus;
-    const uiSteps = toUiSteps(
-      stageDetails,
-      status,
-      row.issuedAt,
-      row.documentTypeCode,
-    );
+    const uiSteps = toUiSteps(stageDetails, status, row.issuedAt);
 
     return new DocumentMvpDetailResult(
       row.documentCode,
