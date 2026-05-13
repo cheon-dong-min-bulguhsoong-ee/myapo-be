@@ -1,7 +1,7 @@
 # Credential API Specification
 
 ## 0. Draft Status
-- **Status**: Approved for MVP 1st implementation. Scope: 5-stage pipeline, Internal JWT, user-facing APIs, and XRP Testnet XLS-70 adapter evidence for hackathon transaction-log review. Excluded: operator APIs, production/mainnet XRPL finality, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
+- **Status**: Approved for MVP 1st implementation. Scope: 4-stage pipeline, Internal JWT, user-facing APIs, and XRP Testnet XLS-70 adapter evidence for hackathon transaction-log review. Excluded: operator APIs, production/mainnet XRPL finality, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
 - **Base Path**: `/api/v1/credentials`
 - **Response Envelope**: Every response must use `CommonRes<T>`.
 - **Error Model**: All business errors must use `DomainError` and `ErrorCode`.
@@ -9,7 +9,7 @@
 
 ## 1. Overview
 Credential APIs support the latest frontend-design model:
-- Credential issue requests appear in the 5-stage issue pipeline.
+- Credential issue requests appear in the 4-stage issue pipeline.
 - Credential submission is a heavy auth-gated action and creates one row per institution submission.
 - Submission rows retain submission metadata only; auth verification data belongs to the Auth/Document domains.
 - Document-driven credential issuance may carry an optional `documentCode` (`documents.document_code`) or `currentStage`; when present, the created credential snapshots the issue request's `current_stage` into its `currentStage` field so the UI can list credentials by stage without duplicating document linkage.
@@ -28,7 +28,7 @@ Credential APIs support the latest frontend-design model:
 - **Method**: `POST`
 - **Path**: `/api/v1/credentials/issue-requests`
 - **Source Level**: Reference + ADR Evidence
-- **Description**: Starts a credential issue request as heavy action trigger `issue_request` and returns 5-stage pipeline state.
+- **Description**: Starts a credential issue request as heavy action trigger `issue_request` and returns 4-stage pipeline state.
 
 ```yaml
 paths:
@@ -63,7 +63,7 @@ paths:
 - **Method**: `GET`
 - **Path**: `/api/v1/credentials/issue-requests/{issueRequestId}`
 - **Source Level**: Reference Evidence
-- **Description**: Returns issue request status, 5-stage pipeline, credential result if created, and submission count if any.
+- **Description**: Returns issue request status, 4-stage pipeline, credential result if created, and submission count if any.
 
 ```yaml
 paths:
@@ -521,7 +521,7 @@ components:
             $ref: '#/components/schemas/IssuePipelineStageItem'
         currentStage:
           type: string
-          enum: [AUTHORITY_DOC_ISSUED, TRANSLATOR_DOC_RECEIVED, TRANSLATOR_DOC_NOTARIZED, APOSTILLE_DOC_ISSUED]
+          enum: [AUTHORITY_ISSUED, DOCUMENT_ARRIVED, TRANSLATED_NOTARIZED, APOSTILLE_ISSUED]
     CredentialIssueRequestRes:
       allOf:
         - $ref: '#/components/schemas/CreateCredentialIssueRequestRes'
@@ -537,7 +537,7 @@ components:
       properties:
         stage:
           type: string
-          enum: [AUTHORITY_DOC_ISSUED, TRANSLATOR_DOC_RECEIVED, TRANSLATOR_DOC_NOTARIZED, APOSTILLE_DOC_ISSUED]
+          enum: [AUTHORITY_ISSUED, DOCUMENT_ARRIVED, TRANSLATED_NOTARIZED, APOSTILLE_ISSUED]
         label:
           type: string
         status:
@@ -569,7 +569,7 @@ components:
           type: string
         currentStage:
           type: string
-          enum: [AUTHORITY_DOC_ISSUED, TRANSLATOR_DOC_RECEIVED, TRANSLATOR_DOC_NOTARIZED, APOSTILLE_DOC_ISSUED]
+          enum: [AUTHORITY_ISSUED, DOCUMENT_ARRIVED, TRANSLATED_NOTARIZED, APOSTILLE_ISSUED]
         xrplNetwork:
           type: string
           nullable: true

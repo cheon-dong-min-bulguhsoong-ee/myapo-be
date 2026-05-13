@@ -1,7 +1,7 @@
 # Credential Domain Models
 
 ## 0. Draft Status
-- **Status**: Approved for MVP 1st implementation. Scope: 5-stage pipeline, Internal JWT, user-facing APIs, and XRP Testnet XLS-70 adapter evidence for hackathon transaction-log review. Excluded: operator APIs, production/mainnet XRPL finality, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
+- **Status**: Approved for MVP 1st implementation. Scope: 4-stage pipeline, Internal JWT, user-facing APIs, and XRP Testnet XLS-70 adapter evidence for hackathon transaction-log review. Excluded: operator APIs, production/mainnet XRPL finality, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
 - **Source Boundary**: Names below are proposed backend model names aligned to latest frontend-design and ADR-002.
 
 ## 1. Aggregate: Credential
@@ -36,7 +36,7 @@
 - XRP Testnet credentials must expose Testnet metadata and must not claim production/mainnet XRPL finality.
 
 ## 2. Aggregate: CredentialIssueRequest
-- **Core Purpose**: Tracks issue progress through the latest 5-stage operations pipeline.
+- **Core Purpose**: Tracks issue progress through the latest 4-stage operations pipeline.
 
 ### Data Elements
 | Property | Description | Role / Constraint |
@@ -47,7 +47,7 @@
 | `documentTypeId` | Requested document type. | Required. |
 | `issuerId` | Issuing authority. | Required after validation. |
 | `status` | Request lifecycle status. | `ISSUED`, `FAILED`. |
-| `currentStage` | Current 5-stage pipeline stage. | `AUTHORITY_DOC_ISSUED`, `TRANSLATOR_DOC_RECEIVED`, `TRANSLATOR_DOC_NOTARIZED`, `APOSTILLE_DOC_ISSUED`. |
+| `currentStage` | Current 4-stage pipeline stage. | `AUTHORITY_ISSUED`, `DOCUMENT_ARRIVED`, `TRANSLATED_NOTARIZED`, `APOSTILLE_ISSUED`. |
 | `failureReason` | Machine-readable failure reason. | Required when failed. |
 | `createdAt` | Request creation timestamp. | Audit. |
 | `completedAt` | Completion timestamp. | Nullable. |
