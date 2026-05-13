@@ -25,30 +25,54 @@ MyApo는 이 네 단계를 하나의 디지털 플로우로 묶습니다.
 
 ---
 
-> 🎯 여기서부터 `myapo-be`를 구현 및 실행하기 위해 필요한 정보를 제공합니다.
+## Demo
 
-## Requirements
-
-### Accounts
+### You need
 
 - Google ID 혹은 Email 직접 입력
 - X(Twitter), Kakao, Line **(지원 예정)**
 
-### Dev Environments
-
-| Type           | Name                     |
-| -------------- | ------------------------ |
-| Runtime        | Node.js                  |
-| Database       | PostgreSQL               |
-| Object Storage | S3                       |
-| Blockchain     | XRPL                     |
-| AI             | Claude Code/Gemini/Codex |
-
-
-## Demo & API
+### App & API
 
 - ⭐️ Our demo: https://app.myapo.xyz
+- Wireframe: https://design.myapo.xyz
 - Check API in Swagger: https://api.myapo.xyz/docs
+
+### Scenario
+
+- 🔥 Demo Video: [Click here!]()
+- 👀 Demo Slides: [Click here!](https://docs.google.com/presentation/d/1b1pUuLNZj7ylIwwGOsYP0mhWofAe-wLd6IJqA6m9KKA/edit?usp=sharing)
+
+
+---
+
+> 🎯 여기서부터 `myapo-be`를 구현 및 실행하기 위해 필요한 정보를 제공합니다.
+
+## Environments
+
+| Type           | Name                     | Version |
+| -------------- | ------------------------ | ------- |
+| Runtime        | Node.js                  | 24+     |
+| Database       | PostgreSQL               | -       |
+| Object Storage | S3                       | -       |
+| Blockchain     | XRPL                     | -       |
+| AI             | Claude Code/Gemini/Codex | -       |
+
+
+## XRPL Natvie Tech Stack
+
+| Standards | Name                 | Transaction              | Status |
+| --------- | -------------------- | ------------------------ | ------ |
+| XLS-70    | Credentials          | CredentialCreate         | 적용     |
+|           |                      | CredentialAccept         | 적용     |
+|           |                      | CredentialDelete         | 진행중    |
+| XLS-80    | Permissioned Domains | PermissionedDomainSet    | 예정     |
+|           |                      | PermissionedDomainDelete | 예정     |
+| XLS-85    | Token Escrow         | EscrowCreate             | 예정     |
+|           |                      | EscrowFinish             | 예정     |
+|           |                      | EscrowCancel             | 예정     |
+| -         | RLUSD                |                          | 검토중    |
+
 
 ## Tech Stack
 
@@ -62,15 +86,6 @@ MyApo는 이 네 단계를 하나의 디지털 플로우로 묶습니다.
 | Testing       | Jest/Supertest  | 29.7.0/7.0.0 |
 | Auth          | Web3Auth/JWT    | -            |
 | Docs          | Swagger/OpenAPI | 3.0          |
-
-## XRPL Natvie Tech Stack
-
-| Standards | Name                 | Status |
-| --------- | -------------------- | ------ |
-| XLS-70    | Credentials          | 적용     |
-| XLS-80    | Permissioned Domains | 구현예정   |
-| XLS-85    | Token Escrow         | 구현예정   |
-| -         | RLUSD                | 검토중    |
 
 ## How to start myapo-be
 
