@@ -168,6 +168,11 @@ export const ErrorCode = {
       502,
       "XRPL Testnet 트랜잭션 제출에 실패했습니다.",
     ),
+    DOCUMENT_STAGE_S3_KEY_MISSING: define(
+      "CREDENTIAL_DOCUMENT_STAGE_S3_KEY_MISSING",
+      409,
+      "발급 요청 stage에 매칭되는 document_stages.s3_object_key가 없습니다.",
+    ),
   },
   Document: {
     TYPE_NOT_FOUND: define(

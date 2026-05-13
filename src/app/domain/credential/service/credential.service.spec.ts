@@ -3,6 +3,7 @@ import { ErrorCode } from "../../common/error/error-code";
 import {
   BuildCredentialDeleteTransactionInput,
   SubmitCredentialAcceptInput,
+  SubmitCredentialCreateInput,
   SubmitCredentialDeleteInput,
   XrplCredentialAdapter,
 } from "../contract/xrpl-credential-adapter";
@@ -20,6 +21,7 @@ import { CredentialStatus } from "../enum/credential-status.enum";
 import { CredentialSubmissionStatus } from "../enum/credential-submission-status.enum";
 import { XrplCredentialDeleteSubmitterRole } from "../enum/xrpl-credential-delete-submitter-role.enum";
 import { IssuePipelineStage } from "../enum/issue-pipeline-stage.enum";
+import { CredentialDocumentStageLookupRepository } from "../repository/credential-document-stage-lookup.repository";
 import { CredentialDocumentTypeRepository } from "../repository/credential-document-type.repository";
 import {
   CreateCredentialInput,
@@ -44,9 +46,23 @@ class FakeDocumentTypeRepository extends CredentialDocumentTypeRepository {
   }
 }
 
+class FakeDocumentStageLookupRepository extends CredentialDocumentStageLookupRepository {
+  constructor(private readonly s3ObjectKey: string | null = "documents/test.pdf") {
+    super();
+  }
+
+  async findS3ObjectKey(
+    _documentCode: string,
+    _stage: IssuePipelineStage,
+  ): Promise<string | null> {
+    return this.s3ObjectKey;
+  }
+}
+
 class FakeXrplCredentialAdapter extends XrplCredentialAdapter {
   lastAcceptInput: SubmitCredentialAcceptInput | null = null;
   lastDeleteInput: SubmitCredentialDeleteInput | null = null;
+  lastCreateUri: string | null = null;
 
   getIssuerAddress(): string {
     return "rISSUER";
@@ -86,7 +102,10 @@ class FakeXrplCredentialAdapter extends XrplCredentialAdapter {
     };
   }
 
-  async submitCredentialCreate(): Promise<XrplCredentialTransactionEvidenceResult> {
+  async submitCredentialCreate(
+    input: SubmitCredentialCreateInput,
+  ): Promise<XrplCredentialTransactionEvidenceResult> {
+    this.lastCreateUri = input.uri;
     return new XrplCredentialTransactionEvidenceResult(
       XrplCredentialTransactionKind.CREATE,
       "wss://s.altnet.rippletest.net:51233",
@@ -607,6 +626,7 @@ describe("CredentialService", () => {
     const service = new CredentialService(
       repo,
       new FakeDocumentTypeRepository(documentType),
+      new FakeDocumentStageLookupRepository(),
       adapter,
     );
 
@@ -614,16 +634,60 @@ describe("CredentialService", () => {
       BigInt(1),
       documentType.code,
       "550e8400-e29b-41d4-a716-446655440000",
-      IssuePipelineStage.APOSTILLE_RECEIVED,
+      IssuePipelineStage.APOSTILLE_DOC_ISSUED,
       "rUserWallet",
     );
 
     expect(result.status).toBe(CredentialIssueRequestStatus.ISSUED);
-    expect(result.currentStage).toBe(IssuePipelineStage.APOSTILLE_RECEIVED);
-    expect(result.pipeline).toHaveLength(4);
+    expect(result.currentStage).toBe(IssuePipelineStage.APOSTILLE_DOC_ISSUED);
+    expect(result.pipeline).toHaveLength(5);
     expect(repo.credentials).toHaveLength(1);
     expect(repo.credentials[0].status).toBe(CredentialStatus.CREATED);
     expect(repo.xrplTransactions).toHaveLength(1);
+  });
+
+  it("passes document_stages.s3_object_key as XRPL CredentialCreate URI source (adapter hex-encodes)", async () => {
+    const repo = new FakeCredentialRepository();
+    const adapter = new FakeXrplCredentialAdapter();
+    const service = new CredentialService(
+      repo,
+      new FakeDocumentTypeRepository(documentType),
+      new FakeDocumentStageLookupRepository("documents/abc.pdf"),
+      adapter,
+    );
+
+    await service.createIssueRequest(
+      BigInt(1),
+      documentType.code,
+      "550e8400-e29b-41d4-a716-446655440000",
+      IssuePipelineStage.APOSTILLE_DOC_ISSUED,
+      "rUserWallet",
+    );
+
+    expect(adapter.lastCreateUri).toBe("documents/abc.pdf");
+  });
+
+  it("throws DOCUMENT_STAGE_S3_KEY_MISSING when matching stage has no s3_object_key", async () => {
+    const repo = new FakeCredentialRepository();
+    const service = new CredentialService(
+      repo,
+      new FakeDocumentTypeRepository(documentType),
+      new FakeDocumentStageLookupRepository(null),
+      new FakeXrplCredentialAdapter(),
+    );
+
+    await expect(
+      service.createIssueRequest(
+        BigInt(1),
+        documentType.code,
+        "550e8400-e29b-41d4-a716-446655440000",
+        IssuePipelineStage.APOSTILLE_DOC_ISSUED,
+        "rUserWallet",
+      ),
+    ).rejects.toMatchObject({
+      errorCode: ErrorCode.Credential.DOCUMENT_STAGE_S3_KEY_MISSING,
+    });
+    expect(repo.issueRequests).toHaveLength(0);
   });
 
   it("blocks submission without explicit consent", async () => {
@@ -632,13 +696,14 @@ describe("CredentialService", () => {
     const service = new CredentialService(
       repo,
       new FakeDocumentTypeRepository(documentType),
+      new FakeDocumentStageLookupRepository(),
       adapter,
     );
     await service.createIssueRequest(
       BigInt(1),
       documentType.code,
       "550e8400-e29b-41d4-a716-446655440000",
-      IssuePipelineStage.APOSTILLE_RECEIVED,
+      IssuePipelineStage.APOSTILLE_DOC_ISSUED,
       "rUserWallet",
     );
 
@@ -660,13 +725,14 @@ describe("CredentialService", () => {
     const service = new CredentialService(
       repo,
       new FakeDocumentTypeRepository(documentType),
+      new FakeDocumentStageLookupRepository(),
       adapter,
     );
     await service.createIssueRequest(
       BigInt(1),
       documentType.code,
       "550e8400-e29b-41d4-a716-446655440000",
-      IssuePipelineStage.APOSTILLE_RECEIVED,
+      IssuePipelineStage.APOSTILLE_DOC_ISSUED,
       "rUserWallet",
     );
     await service.acceptTestnetCredential(
@@ -693,6 +759,7 @@ describe("CredentialService", () => {
     const service = new CredentialService(
       repo,
       new FakeDocumentTypeRepository(documentType),
+      new FakeDocumentStageLookupRepository(),
       adapter,
     );
 
@@ -700,14 +767,14 @@ describe("CredentialService", () => {
       BigInt(1),
       documentType.code,
       "550e8400-e29b-41d4-a716-446655440000",
-      IssuePipelineStage.APOSTILLE_RECEIVED,
+      IssuePipelineStage.APOSTILLE_DOC_ISSUED,
       "rUserWallet",
     );
     await service.createIssueRequest(
       BigInt(1),
       documentType.code,
       "550e8400-e29b-41d4-a716-446655440000",
-      IssuePipelineStage.APOSTILLE_RECEIVED,
+      IssuePipelineStage.APOSTILLE_DOC_ISSUED,
       "rUserWallet",
     );
 
@@ -730,6 +797,7 @@ describe("CredentialService", () => {
     const service = new CredentialService(
       repo,
       new FakeDocumentTypeRepository(documentType),
+      new FakeDocumentStageLookupRepository(),
       adapter,
     );
 
@@ -737,14 +805,14 @@ describe("CredentialService", () => {
       BigInt(1),
       documentType.code,
       "550e8400-e29b-41d4-a716-446655440000",
-      IssuePipelineStage.APOSTILLE_RECEIVED,
+      IssuePipelineStage.APOSTILLE_DOC_ISSUED,
       "rUserWallet",
     );
     await service.createIssueRequest(
       BigInt(1),
       documentType.code,
       "550e8400-e29b-41d4-a716-446655440000",
-      IssuePipelineStage.APOSTILLE_RECEIVED,
+      IssuePipelineStage.APOSTILLE_DOC_ISSUED,
       "rUserWallet",
     );
     await service.acceptTestnetCredential(
@@ -755,7 +823,7 @@ describe("CredentialService", () => {
 
     const result = await service.listCredentialsByIssuePipelineStage(
       BigInt(1),
-      IssuePipelineStage.APOSTILLE_RECEIVED,
+      IssuePipelineStage.APOSTILLE_DOC_ISSUED,
     );
 
     expect(result.credentials).toHaveLength(2);
@@ -773,6 +841,7 @@ describe("CredentialService", () => {
     const service = new CredentialService(
       repo,
       new FakeDocumentTypeRepository(documentType),
+      new FakeDocumentStageLookupRepository(),
       new FakeXrplCredentialAdapter(),
     );
 
@@ -780,7 +849,7 @@ describe("CredentialService", () => {
       BigInt(1),
       documentType.code,
       "550e8400-e29b-41d4-a716-446655440000",
-      IssuePipelineStage.APOSTILLE_RECEIVED,
+      IssuePipelineStage.APOSTILLE_DOC_ISSUED,
       "rSUBJECT",
     );
 
@@ -795,6 +864,7 @@ describe("CredentialService", () => {
     const service = new CredentialService(
       repo,
       new FakeDocumentTypeRepository(documentType),
+      new FakeDocumentStageLookupRepository(),
       new FailingXrplCredentialAdapter(),
     );
 
@@ -803,7 +873,7 @@ describe("CredentialService", () => {
         BigInt(1),
         documentType.code,
         "550e8400-e29b-41d4-a716-446655440000",
-        IssuePipelineStage.APOSTILLE_RECEIVED,
+        IssuePipelineStage.APOSTILLE_DOC_ISSUED,
         "rSUBJECT",
       ),
     ).rejects.toMatchObject({
@@ -827,6 +897,7 @@ describe("CredentialService", () => {
     const service = new CredentialService(
       repo,
       new FakeDocumentTypeRepository(documentType),
+      new FakeDocumentStageLookupRepository(),
     );
 
     await expect(
@@ -834,7 +905,7 @@ describe("CredentialService", () => {
         BigInt(1),
         documentType.code,
         "550e8400-e29b-41d4-a716-446655440000",
-        IssuePipelineStage.APOSTILLE_RECEIVED,
+        IssuePipelineStage.APOSTILLE_DOC_ISSUED,
         "rSUBJECT",
       ),
     ).rejects.toMatchObject({
@@ -855,13 +926,14 @@ describe("CredentialService", () => {
     const service = new CredentialService(
       repo,
       new FakeDocumentTypeRepository(documentType),
+      new FakeDocumentStageLookupRepository(),
       adapter,
     );
     await service.createIssueRequest(
       BigInt(1),
       documentType.code,
       "550e8400-e29b-41d4-a716-446655440000",
-      IssuePipelineStage.APOSTILLE_RECEIVED,
+      IssuePipelineStage.APOSTILLE_DOC_ISSUED,
       "rSUBJECT",
     );
 
@@ -898,13 +970,14 @@ describe("CredentialService", () => {
     const service = new CredentialService(
       repo,
       new FakeDocumentTypeRepository(documentType),
+      new FakeDocumentStageLookupRepository(),
       adapter,
     );
     await service.createIssueRequest(
       BigInt(1),
       documentType.code,
       "550e8400-e29b-41d4-a716-446655440000",
-      IssuePipelineStage.APOSTILLE_RECEIVED,
+      IssuePipelineStage.APOSTILLE_DOC_ISSUED,
       "rSUBJECT",
     );
 
@@ -947,13 +1020,14 @@ describe("CredentialService", () => {
     const service = new CredentialService(
       repo,
       new FakeDocumentTypeRepository(documentType),
+      new FakeDocumentStageLookupRepository(),
       adapter,
     );
     await service.createIssueRequest(
       BigInt(1),
       documentType.code,
       "550e8400-e29b-41d4-a716-446655440000",
-      IssuePipelineStage.APOSTILLE_RECEIVED,
+      IssuePipelineStage.APOSTILLE_DOC_ISSUED,
       "rSUBJECT",
     );
 
@@ -981,13 +1055,14 @@ describe("CredentialService", () => {
     const service = new CredentialService(
       repo,
       new FakeDocumentTypeRepository(documentType),
+      new FakeDocumentStageLookupRepository(),
       adapter,
     );
     await service.createIssueRequest(
       BigInt(1),
       documentType.code,
       "550e8400-e29b-41d4-a716-446655440000",
-      IssuePipelineStage.APOSTILLE_RECEIVED,
+      IssuePipelineStage.APOSTILLE_DOC_ISSUED,
       "rUserWallet",
     );
 

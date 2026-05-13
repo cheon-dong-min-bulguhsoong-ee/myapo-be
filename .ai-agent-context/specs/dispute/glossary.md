@@ -9,7 +9,7 @@
 | **SLA** | `SLA` | The target time within which a dispute must be responded to or resolved. | "A typo dispute must be resolved within 12 hours." |
 | **Reissue** | `REISSUE` | The process of creating a **new issuance request** (Option B) to correct errors identified in a dispute. | "Creating REQ-002 as a correction for REQ-001 based on DSP-001." |
 | **Stage Dispute** | `STAGE_DISPUTE` | A dispute filed against a specific completed stage of an issuance request, rather than the final result. | "A user disputes the translation quality before the apostille stage begins." |
-| **Process Suspension** | `SUSPENSION` | The automatic pausing of an issuance request's progress when a dispute is opened. | "The issuance pipeline stops at 'DOCUMENT_MOVED' while the dispute is being reviewed." |
+| **Process Suspension** | `SUSPENSION` | The automatic pausing of an issuance request's progress when a dispute is opened. | "The issuance pipeline stops at 'TRANSLATOR_DOC_RECEIVED' while the dispute is being reviewed." |
 
 ## 2. Status & Lifecycle (How things change)
 | Friendly Name | System Status | When does it enter this state? | What is the final outcome? |

@@ -1,6 +1,7 @@
 import { Global, Module } from "@nestjs/common";
 import { TokenProvider } from "../domain/common/contract/token-provider";
 import { XrplCredentialAdapter } from "../domain/credential/contract/xrpl-credential-adapter";
+import { CredentialDocumentStageLookupRepository } from "../domain/credential/repository/credential-document-stage-lookup.repository";
 import { CredentialDocumentTypeRepository } from "../domain/credential/repository/credential-document-type.repository";
 import { CredentialRepository } from "../domain/credential/repository/credential.repository";
 import { DisputeRepository } from "../domain/dispute/repository/dispute.repository";
@@ -16,6 +17,7 @@ import { TokenProviderImpl } from "./auth/token/token-provider.impl";
 import { QpdfPdfEncryptorAdapter } from "./pdf/qpdf-pdf-encryptor.adapter";
 import { PrismaModule } from "./prisma/prisma.module";
 import { Xls70CredentialAdapterImpl } from "./xrpl/xls70-credential-adapter.impl";
+import { CredentialDocumentStageLookupRepositoryImpl } from "./repository/credential/persistence/credential-document-stage-lookup.repository.impl";
 import { CredentialDocumentTypeRepositoryImpl } from "./repository/credential/persistence/credential-document-type.repository.impl";
 import { CredentialRepositoryImpl } from "./repository/credential/persistence/credential.repository.impl";
 import { DisputeRepositoryImpl } from "./repository/dispute/persistence/dispute.repository.impl";
@@ -42,6 +44,10 @@ import { S3FileStorageAdapter } from "./storage/s3-file-storage.adapter";
       provide: CredentialDocumentTypeRepository,
       useClass: CredentialDocumentTypeRepositoryImpl,
     },
+    {
+      provide: CredentialDocumentStageLookupRepository,
+      useClass: CredentialDocumentStageLookupRepositoryImpl,
+    },
     { provide: DocumentStageRepository, useClass: DocumentStageRepositoryImpl },
     { provide: DocumentTypeRepository, useClass: DocumentTypeRepositoryImpl },
     {
@@ -61,6 +67,7 @@ import { S3FileStorageAdapter } from "./storage/s3-file-storage.adapter";
     CredentialRepository,
     XrplCredentialAdapter,
     CredentialDocumentTypeRepository,
+    CredentialDocumentStageLookupRepository,
     DocumentStageRepository,
     DocumentTypeRepository,
     DocumentApprovalRepository,

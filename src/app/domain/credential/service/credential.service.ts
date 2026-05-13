@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { createHash, randomUUID } from "crypto";
+import { randomUUID } from "crypto";
 import { DomainError } from "../../common/error/domain.error";
 import { ErrorCode } from "../../common/error/error-code";
 import {
@@ -29,6 +29,7 @@ import {
   IssuePipelineStage,
 } from "../enum/issue-pipeline-stage.enum";
 import { IssuePipelineStageStatus } from "../enum/issue-pipeline-stage-status.enum";
+import { CredentialDocumentStageLookupRepository } from "../repository/credential-document-stage-lookup.repository";
 import { CredentialDocumentTypeRepository } from "../repository/credential-document-type.repository";
 import { CredentialRepository } from "../repository/credential.repository";
 import { XrplCredentialAdapter } from "../contract/xrpl-credential-adapter";
@@ -43,6 +44,7 @@ export class CredentialService {
   constructor(
     private readonly credentialRepository: CredentialRepository,
     private readonly credentialDocumentTypeRepository: CredentialDocumentTypeRepository,
+    private readonly credentialDocumentStageLookupRepository: CredentialDocumentStageLookupRepository,
     private readonly xrplCredentialAdapter?: XrplCredentialAdapter,
   ) {}
 
@@ -63,6 +65,8 @@ export class CredentialService {
       });
     }
 
+    const xrplUri = await this.resolveXrplUri(documentCode, currentStage);
+
     const now = new Date();
     const request = await this.credentialRepository.createIssueRequest({
       issueRequestCode: randomUUID(),
@@ -78,9 +82,9 @@ export class CredentialService {
     try {
       const xrplEvidence = await this.publishTestnetCredentialEvidence(
         walletAddress,
-        documentType.code,
-        request.issueRequestCode,
+        currentStage,
         expiresAt,
+        xrplUri,
       );
       const credential = await this.credentialRepository.createCredential({
         credentialCode: randomUUID(),
@@ -255,7 +259,7 @@ export class CredentialService {
       this.toCredentialSummaryResult(credential),
       this.buildPipeline(
         (credential.currentStage as IssuePipelineStage) ??
-          IssuePipelineStage.APOSTILLE_RECEIVED,
+          IssuePipelineStage.APOSTILLE_DOC_ISSUED,
         CredentialIssueRequestStatus.ISSUED,
       ),
       submissions.map((submission) => this.toSubmissionItemResult(submission)),
@@ -493,25 +497,40 @@ export class CredentialService {
 
   private async publishTestnetCredentialEvidence(
     subjectAddress: string,
-    documentTypeCode: string,
-    issueRequestCode: string,
+    credentialTypeSource: string,
     expiresAt: Date,
+    uri: string,
   ): Promise<XrplCredentialTransactionEvidenceResult> {
     const xrplCredentialAdapter = this.getXrplCredentialAdapterOrThrow();
     return xrplCredentialAdapter.submitCredentialCreate({
       issuerAddress: xrplCredentialAdapter.getIssuerAddress(),
       subjectAddress,
-      credentialTypeHex: this.buildCredentialTypeHex(documentTypeCode),
+      credentialTypeHex: this.buildCredentialTypeHex(credentialTypeSource),
       expiration: xrplCredentialAdapter.toXrplExpiration(expiresAt),
-      uri: `myapo://credentials/${issueRequestCode}`,
+      uri,
     });
   }
 
-  private buildCredentialTypeHex(documentTypeCode: string): string {
-    return createHash("sha256")
-      .update(documentTypeCode)
-      .digest("hex")
-      .toUpperCase();
+  private async resolveXrplUri(
+    documentCode: string,
+    currentStage: IssuePipelineStage,
+  ): Promise<string> {
+    const s3ObjectKey =
+      await this.credentialDocumentStageLookupRepository.findS3ObjectKey(
+        documentCode,
+        currentStage,
+      );
+    if (s3ObjectKey === null) {
+      throw new DomainError(
+        ErrorCode.Credential.DOCUMENT_STAGE_S3_KEY_MISSING,
+        { documentCode, currentStage },
+      );
+    }
+    return s3ObjectKey;
+  }
+
+  private buildCredentialTypeHex(source: string): string {
+    return Buffer.from(source, "utf8").toString("hex").toUpperCase();
   }
 
   private toFailureReason(error: unknown): string {

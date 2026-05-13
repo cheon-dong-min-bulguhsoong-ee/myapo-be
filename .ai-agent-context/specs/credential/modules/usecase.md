@@ -1,7 +1,7 @@
 # Credential Use Cases
 
 ## 0. Draft Status
-- **Status**: Approved for MVP 1st implementation. Scope: 4-stage pipeline, Internal JWT, user-facing APIs, and XRP Testnet XLS-70 adapter evidence for hackathon transaction-log review. Excluded: operator APIs, production/mainnet XRPL finality, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
+- **Status**: Approved for MVP 1st implementation. Scope: 5-stage pipeline, Internal JWT, user-facing APIs, and XRP Testnet XLS-70 adapter evidence for hackathon transaction-log review. Excluded: operator APIs, production/mainnet XRPL finality, Dispute creation, Institution request creation, scheduler, and fixed 4-signature handover.
 
 ## 1. CreateCredentialIssueRequest
 - **Actor**: Authenticated User
@@ -11,7 +11,7 @@
 ### Service Flow
 1. **Auth Context**: Receive `userId` from `JwtAuthGuard`-verified Internal JWT.
 3. **Validation**: Confirm user, wallet, document type, and issuer eligibility through approved boundaries.
-4. **Create Request**: Create `CredentialIssueRequest` with 4-stage pipeline ending at `APOSTILLE_RECEIVED` or appropriate current stage.
+4. **Create Request**: Create `CredentialIssueRequest` with 5-stage pipeline ending at `APOSTILLE_DOC_ISSUED` or appropriate current stage.
 5. **Persistence**: Save request and initial stage snapshots transactionally.
 6. **Output**: Return request id, status, current stage, and pipeline.
 
@@ -21,13 +21,13 @@
 
 ## 2. AdvanceIssuePipeline
 - **Actor**: System or approved operator flow
-- **Trigger**: Backend processing advances a request through the 4-stage pipeline.
+- **Trigger**: Backend processing advances a request through the 5-stage pipeline.
 - **Implementation Gate**: Operator force-advance requires Admin/Auth spec.
 
 ### Service Flow
 1. **Load Request**: Find request and current pipeline stage.
 2. **Validate Transition**: Ensure next stage follows allowed order.
-3. **Complete Credential**: When stage reaches `APOSTILLE_RECEIVED` and credential creation succeeds, create `Credential`.
+3. **Complete Credential**: When stage reaches `APOSTILLE_DOC_ISSUED` and credential creation succeeds, create `Credential`.
 4. **Persist**: Save request, stage snapshots, credential result, and failure reason if failed.
 
 ### Input / Output
