@@ -51,8 +51,9 @@ MyApo는 이 네 단계를 하나의 디지털 플로우로 묶습니다.
 ## Environments
 
 | Type           | Name                     | Version |
-| -------------- | ------------------------ | ------- |
+|----------------|--------------------------|---------|
 | Runtime        | Node.js                  | 24+     |
+| Framework      | NestJS                   | -       |
 | Database       | PostgreSQL               | -       |
 | Object Storage | S3                       | -       |
 | Blockchain     | XRPL                     | -       |
