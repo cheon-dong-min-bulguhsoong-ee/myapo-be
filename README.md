@@ -61,17 +61,20 @@ MyApo는 이 네 단계를 하나의 디지털 플로우로 묶습니다.
 
 ## XRPL Native Tech Stack
 
-| Standards | Name                 | Transaction              | Status |
-| --------- | -------------------- | ------------------------ | ------ |
-| XLS-70    | Credentials          | CredentialCreate         | 적용     |
-|           |                      | CredentialAccept         | 적용     |
-|           |                      | CredentialDelete         | 진행중    |
-| XLS-80    | Permissioned Domains | PermissionedDomainSet    | 예정     |
-|           |                      | PermissionedDomainDelete | 예정     |
-| XLS-85    | Token Escrow         | EscrowCreate             | 예정     |
-|           |                      | EscrowFinish             | 예정     |
-|           |                      | EscrowCancel             | 예정     |
-| -         | RLUSD                |                          | 검토중    |
+| Standards | Name                 | Transaction              | Status | Notes |
+|-----------|----------------------|--------------------------|-------|-------|
+| XLS-40    | DID                  | DIDSet                   | 예정    |       |
+|     |                   | DIDGet                   | 예정    |       |
+|     |                   | DIDDelete                | 예정    |       |
+| XLS-70    | Credentials          | CredentialCreate         | 적용    |       |
+|           |                      | CredentialAccept         | 적용    |       |
+|           |                      | CredentialDelete         | 진행중   |       |
+| XLS-80    | Permissioned Domains | PermissionedDomainSet    | 예정    |       |
+|           |                      | PermissionedDomainDelete | 예정    |       |
+| XLS-85    | Token Escrow         | EscrowCreate             | 예정    |       |
+|           |                      | EscrowFinish             | 예정    |       |
+|           |                      | EscrowCancel             | 예정    |       |
+| -         | RLUSD                |                          | 검토중   |       |
 
 
 ## Tech Stack
